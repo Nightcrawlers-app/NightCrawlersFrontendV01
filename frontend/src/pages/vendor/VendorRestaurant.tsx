@@ -13,6 +13,7 @@ import {
   updateMenuItem,
   VendorStore,
   MenuItem,
+  toErrorMessage,
 } from '../../services/api';
 import { resolveImageUrl } from '../../lib/imageUtils';
 
@@ -29,40 +30,80 @@ const VendorRestaurant: React.FC = () => {
   const storeState = location.state as Partial<VendorStore> | undefined;
   const storeId = id || (storeState?.id ? String(storeState.id) : undefined);
 
-  const resolveStore = () => {
-    const fromStore = storeId ? getStoreById(storeId) : null;
-    if (fromStore) return fromStore;
+  // Placeholder shown while the real store loads, or if it can't be found.
+  const buildFallbackStore = (): VendorStore => ({
+    id: storeId || 'unknown-store',
+    vendorId: 'unknown',
+    name: storeState?.name || '',
+    description: storeState?.description || '',
+    address: storeState?.address || '',
+    openingTime: storeState?.openingTime || '',
+    imageUrl:
+      storeState?.imageUrl ||
+      'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop',
+    businessType: storeState?.businessType || 'Food',
+    categories: storeState?.categories || [],
+    createdAt: storeState?.createdAt || new Date().toISOString(),
+    closingTime: storeState?.closingTime || '',
+  });
 
-    const currentVendor = getCurrentVendor();
-    const businessType = storeState?.businessType || currentVendor?.businessType || 'Food';
-
-    return {
-      id: storeId || `${Date.now()}`,
-      vendorId: currentVendor?.id || 'unknown',
-      name: storeState?.name || 'Sample Store',
-      description: storeState?.description || 'Store description goes here.',
-      address: storeState?.address || '123 Main Street, Downtown',
-      openingTime: storeState?.openingTime || '8:00 am - 8:00 pm',
-      imageUrl:
-        storeState?.imageUrl ||
-        'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop',
-      businessType,
-      categories: storeState?.categories || [],
-      createdAt: storeState?.createdAt || new Date().toISOString(),
-      closingTime: storeState?.closingTime || '',
-    };
-  };
-
-  const [store, setStore] = useState<VendorStore>(resolveStore);
+  const [store, setStore] = useState<VendorStore>(buildFallbackStore);
+  const [storeLoading, setStoreLoading] = useState(true);
+  const [pageError, setPageError] = useState('');
 
   useEffect(() => {
-    setStore(resolveStore());
+    let cancelled = false;
+
+    const loadStore = async () => {
+      setStoreLoading(true);
+      try {
+        const fromStore = storeId ? await getStoreById(storeId) : null;
+        if (cancelled) return;
+
+        if (fromStore) {
+          setStore(fromStore);
+          return;
+        }
+
+        // Store not on the backend — fill in what we can from the vendor.
+        const currentVendor = await getCurrentVendor();
+        if (cancelled) return;
+        setStore({
+          ...buildFallbackStore(),
+          vendorId: currentVendor?.id || 'unknown',
+          businessType: storeState?.businessType || currentVendor?.businessType || 'Food',
+        });
+      } catch (error) {
+        if (cancelled) return;
+        setPageError(toErrorMessage(error, 'Could not load this store.'));
+      } finally {
+        if (!cancelled) setStoreLoading(false);
+      }
+    };
+
+    loadStore();
+    return () => {
+      cancelled = true;
+    };
   }, [storeId, storeState]);
 
   useEffect(() => {
-    if (store.id) {
-      setMenuItems(getMenuItemsForStore(store.id));
-    }
+    if (!store.id) return;
+    let cancelled = false;
+
+    const loadMenu = async () => {
+      try {
+        const items = await getMenuItemsForStore(store.id);
+        if (!cancelled) setMenuItems(items);
+      } catch (error) {
+        if (!cancelled) setPageError(toErrorMessage(error, 'Could not load the menu.'));
+      }
+    };
+
+    loadMenu();
+    return () => {
+      cancelled = true;
+    };
   }, [store.id, refreshTrigger, viewMode]);
 
   const typeMeta = getBusinessTypeMeta(store.businessType);
@@ -86,12 +127,18 @@ const VendorRestaurant: React.FC = () => {
     setItemToDelete(itemId);
   };
 
-  const confirmDelete = () => {
-    if (itemToDelete) {
-      deleteMenuItem(itemToDelete);
+  const confirmDelete = async () => {
+    if (!itemToDelete) return;
+
+    const deletingId = itemToDelete;
+    setItemToDelete(null);
+    try {
+      await deleteMenuItem(deletingId);
+      // Drop it locally straight away, then refetch to stay in sync.
+      setMenuItems(prev => prev.filter(item => item.id !== deletingId));
       setRefreshTrigger(prev => prev + 1);
-      setItemToDelete(null);
-      setTimeout(() => window.location.reload(), 300);
+    } catch (error) {
+      setPageError(toErrorMessage(error, 'Could not delete that item. Please try again.'));
     }
   };
 
@@ -148,7 +195,7 @@ const VendorRestaurant: React.FC = () => {
   const handleUpdateItemSubmit = async (e: React.FormEvent, itemId: string) => {
     e.preventDefault();
     if (!editItemForm.name.trim() || !editItemForm.price.trim()) {
-      alert('Please fill in required fields (Name and Price)');
+      setPageError('Please fill in the required fields (Name and Price).');
       return;
     }
 
@@ -158,16 +205,16 @@ const VendorRestaurant: React.FC = () => {
     if (editItemImageFile) {
       try {
         finalImageUrl = await readFileAsDataUrl(editItemImageFile);
-      } catch (error) {
+      } catch {
         setIsUpdatingItem(false);
-        alert('Unable to upload the image. Please try again.');
+        setPageError('Unable to upload the image. Please try again.');
         return;
       }
     } else if (finalImageUrl) {
       const resolvedUrl = await resolveImageUrl(finalImageUrl);
       if (!resolvedUrl) {
         setIsUpdatingItem(false);
-        alert('Please use a direct image URL or upload a file.');
+        setPageError('Please use a direct image URL or upload a file.');
         return;
       }
       finalImageUrl = resolvedUrl;
@@ -176,7 +223,7 @@ const VendorRestaurant: React.FC = () => {
     }
 
     try {
-      updateMenuItem(itemId, {
+      await updateMenuItem(itemId, {
         name: editItemForm.name.trim(),
         categories: editItemCategories,
         price: Number(editItemForm.price) || 0,
@@ -186,12 +233,11 @@ const VendorRestaurant: React.FC = () => {
 
       setRefreshTrigger(prev => prev + 1);
       setEditingItemId(null);
-      setIsUpdatingItem(false);
-      // Let the user see changes immediately
-      setTimeout(() => window.location.reload(), 300);
+      setViewMode('menu');
     } catch (error) {
+      setPageError(toErrorMessage(error, 'Failed to update item. Please try again.'));
+    } finally {
       setIsUpdatingItem(false);
-      alert('Failed to update item. Please try again.');
     }
   };
 
@@ -230,7 +276,7 @@ const VendorRestaurant: React.FC = () => {
   const handleAddItemSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!addItemForm.name.trim() || !addItemForm.price.trim()) {
-      alert('Please fill in required fields (Name and Price)');
+      setPageError('Please fill in the required fields (Name and Price).');
       return;
     }
 
@@ -240,16 +286,16 @@ const VendorRestaurant: React.FC = () => {
     if (addItemImageFile) {
       try {
         finalImageUrl = await readFileAsDataUrl(addItemImageFile);
-      } catch (error) {
+      } catch {
         setIsAddingItem(false);
-        alert('Unable to upload the image. Please try again.');
+        setPageError('Unable to upload the image. Please try again.');
         return;
       }
     } else if (finalImageUrl) {
       const resolvedUrl = await resolveImageUrl(finalImageUrl);
       if (!resolvedUrl) {
         setIsAddingItem(false);
-        alert('Please use a direct image URL or upload a file.');
+        setPageError('Please use a direct image URL or upload a file.');
         return;
       }
       finalImageUrl = resolvedUrl;
@@ -258,7 +304,7 @@ const VendorRestaurant: React.FC = () => {
     }
 
     try {
-      createMenuItem({
+      await createMenuItem({
         storeId: store.id,
         name: addItemForm.name.trim(),
         categories: addItemCategories,
@@ -272,13 +318,10 @@ const VendorRestaurant: React.FC = () => {
       setAddItemImageFile(null);
       setRefreshTrigger(prev => prev + 1);
       setViewMode('menu');
-      setIsAddingItem(false);
-      alert('Item added successfully!');
-      // Reload so item appears fresh
-      window.location.reload();
     } catch (error) {
+      setPageError(toErrorMessage(error, 'Failed to add item. Please try again.'));
+    } finally {
       setIsAddingItem(false);
-      alert('Failed to add item. Please try again.');
     }
   };
 
@@ -312,12 +355,6 @@ const VendorRestaurant: React.FC = () => {
     setEditMessage('');
     setEditError('');
   }, [store.id, store.name, store.address, store.description, store.imageUrl, store.openingTime, store.closingTime, store.categories]);
-
-  const parseCategories = (value: string) =>
-    value
-      .split(',')
-      .map((category) => category.trim())
-      .filter(Boolean);
 
   const readFileAsDataUrl = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -406,7 +443,7 @@ const VendorRestaurant: React.FC = () => {
     if (editImageFile) {
       try {
         imageUrl = await readFileAsDataUrl(editImageFile);
-      } catch (error) {
+      } catch {
         setIsSaving(false);
         setEditError('Unable to upload the image. Please try again.');
         return;
@@ -422,7 +459,7 @@ const VendorRestaurant: React.FC = () => {
     }
 
     try {
-      const updated = updateStore(store.id, {
+      const updated = await updateStore(store.id, {
         name: editForm.name.trim(),
         categories: editCategories,
         address: editForm.address.trim(),
@@ -432,17 +469,27 @@ const VendorRestaurant: React.FC = () => {
         closingTime: editForm.closingTime.trim(),
       });
 
+      // The response is the source of truth — no reload needed.
       setStore(updated);
       setEditImageFile(null);
-      setIsSaving(false);
       setEditMessage('Details updated.');
-      // Reload after a moment so user sees the success message
-      setTimeout(() => window.location.reload(), 800);
-    } catch (error: any) {
+    } catch (error) {
+      setEditError(toErrorMessage(error, 'Failed to update store details.'));
+    } finally {
       setIsSaving(false);
-      setEditError(error.message || 'Failed to update store details.');
     }
   };
+
+  if (storeLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center font-poppins">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[#C62222] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-[#667085]">Loading store…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-white flex flex-col font-poppins">
@@ -462,6 +509,18 @@ const VendorRestaurant: React.FC = () => {
             Back to Dashboard
           </Link>
         </div>
+
+        {pageError && (
+          <div className="mb-6 p-4 rounded-lg bg-[#FEECEC] border border-[#F5C2C2] flex items-start justify-between gap-3">
+            <p className="text-sm text-[#991B1B] font-medium">{pageError}</p>
+            <button
+              onClick={() => setPageError('')}
+              className="text-xs text-[#991B1B] font-semibold hover:underline flex-shrink-0"
+            >
+              Dismiss
+            </button>
+          </div>
+        )}
 
         <div className="pt-2 pb-10">
           <div className="rounded-lg overflow-hidden mb-8">

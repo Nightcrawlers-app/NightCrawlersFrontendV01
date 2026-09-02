@@ -5,7 +5,14 @@ import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import { useCart } from '../../context/CartContext';
 import { useAuth, Transaction } from '../../context/AuthContext';
-import { createOrder } from '../../services/api';
+import { createOrder, toErrorMessage, formatPaymentMethod } from '../../services/api';
+import type { PaymentMethod } from '../../services/api';
+import { useDeliveryLocation } from '../../context/DeliveryLocationContext';
+
+// Nothing is charged online — there's no payment gateway wired up. The customer
+// settles with the rider at the door. When a gateway lands this becomes a real
+// choice on this screen; see the Payments section of BACKEND_API_GUIDE.md.
+const PAYMENT_METHOD: PaymentMethod = 'cash_on_delivery';
 
 const OrderSummary: React.FC = () => {
     const navigate = useNavigate();
@@ -14,11 +21,15 @@ const OrderSummary: React.FC = () => {
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderPlaced, setOrderPlaced] = useState(false);
     const [orderId, setOrderId] = useState<string | null>(null);
+    const [submitError, setSubmitError] = useState('');
 
-    // Use the user's default address, fallback to generic
+    // Whatever the customer picked on Explore or the vendor page, falling back
+    // to their default saved address. Previously this ignored the choice
+    // entirely and could deliver somewhere they never selected.
+    const { deliveryAddress: chosenAddress, coords: chosenCoords } = useDeliveryLocation();
     const defaultAddr = user?.addresses.find(a => a.isDefault) || user?.addresses[0];
     const [deliveryAddress, setDeliveryAddress] = useState(
-        defaultAddr?.address || 'Nmdpra HQ, 123 Main Street, Downtown'
+        chosenAddress || defaultAddr?.address || ''
     );
     const [customerName, setCustomerName] = useState(
         user ? `${user.firstName} ${user.lastName}` : 'Customer'
@@ -27,15 +38,18 @@ const OrderSummary: React.FC = () => {
         user?.phone || '+234 801 234 5678'
     );
 
-    // Keep fields in sync if user logs in after page load
+    // Keep fields in sync if the user signs in after page load, or changes
+    // their delivery address elsewhere. The chosen address wins over the saved
+    // default, otherwise picking one on Explore would be silently discarded.
     useEffect(() => {
         if (user) {
             setCustomerName(`${user.firstName} ${user.lastName}`);
             setCustomerPhone(user.phone);
-            const da = user.addresses.find(a => a.isDefault) || user.addresses[0];
-            if (da) setDeliveryAddress(da.address);
         }
-    }, [user]);
+        const fallback = user?.addresses.find(a => a.isDefault) || user?.addresses[0];
+        const next = chosenAddress || fallback?.address;
+        if (next) setDeliveryAddress(next);
+    }, [user, chosenAddress]);
 
     const deliveryFee = 800; // Mock delivery fee
     const serviceFee = Math.round(cartTotal * 0.05); // 5% service fee
@@ -53,39 +67,64 @@ const OrderSummary: React.FC = () => {
         }
     };
 
-    const handlePlaceOrder = () => {
-        if (cartItems.length === 0) return;
+    const handlePlaceOrder = async () => {
+        if (cartItems.length === 0 || isSubmitting) return;
+
+        // An order belongs to exactly one store. The cart doesn't enforce that,
+        // so check it here rather than sending the backend a basket whose items
+        // come from two different kitchens.
+        const storeIds = Array.from(new Set(cartItems.map(item => item.storeId)));
+        if (storeIds.length > 1) {
+            setSubmitError(
+                'Your cart has items from more than one store. Please order from one store at a time.',
+            );
+            return;
+        }
+
+        // No fallback here on purpose. A missing storeId used to become the
+        // literal string 'store-1', which would file the order against a store
+        // that doesn't exist instead of failing where someone can see it.
+        const storeId = cartItems[0]?.storeId;
+        const storeName = cartItems[0]?.storeName;
+        if (!storeId || !storeName) {
+            setSubmitError(
+                "We couldn't tell which store this order is for. Please empty your cart and add the items again.",
+            );
+            return;
+        }
 
         setIsSubmitting(true);
+        setSubmitError('');
 
-        // Simulate payment processing delay
-        setTimeout(() => {
-            // Get store info from first cart item (assuming all items from same store)
-            const storeId = cartItems[0]?.storeId || 'store-1';
-            const storeName = cartItems[0]?.storeName || 'Restaurant';
-
-            const order = createOrder({
+        try {
+            // customerId is NOT sent — the backend reads it from the session.
+            const order = await createOrder({
                 storeId,
                 storeName,
                 customerName,
                 customerPhone,
                 customerLocation: 'Lagos',
                 customerAddress: deliveryAddress,
+                // Sent when the customer shared a real point, so the rider can
+                // navigate to it rather than guessing from the address text.
+                customerLatitude: chosenCoords?.latitude ?? null,
+                customerLongitude: chosenCoords?.longitude ?? null,
                 items: cartItems.map(item => ({
                     name: item.name,
                     quantity: item.quantity,
                     price: item.price
                 })),
                 deliveryFee,
+                paymentMethod: PAYMENT_METHOD,
             });
 
-            // Create a transaction in the user's profile so it appears in their history
+            // Mirror the order into the profile's history so it shows immediately.
+            // The authoritative list comes from the backend on next load.
             if (isAuthenticated) {
-                const orderNum = Math.floor(10000 + Math.random() * 90000);
                 const txn: Transaction = {
                     id: 'txn_' + order.id,
-                    orderId: `#NC-${orderNum}`,
-                    date: new Date().toISOString(),
+                    orderId: `#NC-${order.id}`,
+                    date: order.createdAt ?? new Date().toISOString(),
                     status: 'preparing',
                     items: cartItems.map(item => ({
                         name: item.name,
@@ -98,7 +137,7 @@ const OrderSummary: React.FC = () => {
                     total: finalTotal,
                     vendorName: storeName,
                     vendorImage: cartItems[0]?.vendorImage,
-                    paymentMethod: 'Card on Delivery',
+                    paymentMethod: PAYMENT_METHOD,
                     deliveryAddress,
                 };
                 addTransaction(txn);
@@ -106,9 +145,13 @@ const OrderSummary: React.FC = () => {
 
             setOrderId(order.id);
             setOrderPlaced(true);
-            setIsSubmitting(false);
             clearCart();
-        }, 1500);
+        } catch (error) {
+            // Cart is deliberately left intact so the customer can retry.
+            setSubmitError(toErrorMessage(error, 'Could not place your order. Please try again.'));
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     // Order Success Screen
@@ -367,9 +410,16 @@ const OrderSummary: React.FC = () => {
                                 </div>
                             </div>
 
-                            <div className="flex justify-between items-center mb-6">
+                            <div className="flex justify-between items-center mb-4">
                                 <span className="text-[#222222] font-bold text-lg">Total</span>
                                 <span className="text-[#C62222] font-bold text-xl">₦ {finalTotal.toLocaleString()}</span>
+                            </div>
+
+                            <div className="flex items-center gap-2 mb-6 px-3 py-2.5 bg-gray-50 border border-[#EAECF0] rounded-lg">
+                                <CreditCard size={14} className="text-gray-400 flex-shrink-0" />
+                                <p className="text-xs text-[#667085]">
+                                    Pay <span className="font-medium text-[#222222]">{formatPaymentMethod(PAYMENT_METHOD)}</span> — you settle with the rider when your order arrives.
+                                </p>
                             </div>
 
                             {/* Not logged in warning */}
@@ -414,6 +464,12 @@ const OrderSummary: React.FC = () => {
                                 </div>
                             )}
 
+                            {submitError && (
+                                <div className="mb-3 p-3 rounded-lg bg-[#FEECEC] border border-[#F5C2C2]">
+                                    <p className="text-[12px] text-[#991B1B] font-medium">{submitError}</p>
+                                </div>
+                            )}
+
                             <button
                                 onClick={handlePlaceOrder}
                                 disabled={isSubmitting || !user || !user.phone || user.addresses.length === 0}
@@ -426,7 +482,7 @@ const OrderSummary: React.FC = () => {
                                     </>
                                 ) : (
                                     <>
-                                        Pay Securely
+                                        Place Order
                                         <ChevronLeft size={16} className="rotate-180 group-hover:translate-x-1 transition-transform" />
                                     </>
                                 )}

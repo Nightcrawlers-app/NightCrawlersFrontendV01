@@ -1,8 +1,8 @@
-import React, { useMemo, useState } from 'react';
-import { Link, useLocation, useParams, useNavigate } from 'react-router-dom';
+import React, { useMemo, useState, useEffect } from 'react';
+import { Link, useLocation, useParams } from 'react-router-dom';
 import Footer from '../../components/layout/Footer';
 import { Store, ChevronLeft, Upload, X } from 'lucide-react';
-import { createMenuItem, getBusinessTypeMeta, getStoreById, getCurrentVendor, BusinessType } from '../../services/api';
+import { createMenuItem, getBusinessTypeMeta, getStoreById, getCurrentVendor, BusinessType, toErrorMessage } from '../../services/api';
 
 type StoreInfo = {
   id: string;
@@ -17,36 +17,61 @@ type StoreInfo = {
 const VendorAddMenuItem: React.FC = () => {
   const { id } = useParams();
   const location = useLocation();
-  const navigate = useNavigate();
   const storeState = location.state as Partial<StoreInfo> | undefined;
 
-  const store: StoreInfo = useMemo(() => {
-    // Try to get the store from the backend first
-    const existingStore = id ? getStoreById(id) : null;
-    if (existingStore) {
-      return {
-        id: existingStore.id,
-        name: existingStore.name,
-        description: existingStore.description,
-        address: existingStore.address,
-        openingTime: existingStore.openingTime,
-        imageUrl: existingStore.imageUrl,
-        businessType: existingStore.businessType,
-      };
-    }
+  // Fallback used while the store loads, or if it can't be found.
+  const fallbackStore: StoreInfo = useMemo(() => ({
+    id: id || storeState?.id || 'unknown-store',
+    name: storeState?.name || '',
+    description: storeState?.description || '',
+    address: storeState?.address || '',
+    openingTime: storeState?.openingTime || '',
+    imageUrl: storeState?.imageUrl || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop',
+    businessType: storeState?.businessType || 'Food',
+  }), [id, storeState]);
 
-    // Fall back to state or defaults
-    const currentVendor = getCurrentVendor();
-    return {
-      id: id || storeState?.id || `${Date.now()}`,
-      name: storeState?.name || 'Sample Store',
-      description: storeState?.description || 'Store description goes here.',
-      address: storeState?.address || '123 Main Street, Downtown',
-      openingTime: '8:00 am - 8:00 pm',
-      imageUrl: storeState?.imageUrl || 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop',
-      businessType: storeState?.businessType || currentVendor?.businessType || 'Food',
+  const [store, setStore] = useState<StoreInfo>(fallbackStore);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadStore = async () => {
+      try {
+        const existingStore = id ? await getStoreById(id) : null;
+        if (cancelled) return;
+
+        if (existingStore) {
+          setStore({
+            id: existingStore.id,
+            name: existingStore.name,
+            description: existingStore.description,
+            address: existingStore.address,
+            openingTime: existingStore.openingTime,
+            imageUrl: existingStore.imageUrl,
+            businessType: existingStore.businessType,
+          });
+          return;
+        }
+
+        // No store on the backend — fill the business type from the vendor.
+        const currentVendor = await getCurrentVendor();
+        if (cancelled) return;
+        setStore({
+          ...fallbackStore,
+          businessType: storeState?.businessType || currentVendor?.businessType || 'Food',
+        });
+      } catch {
+        // Keep the fallback — this page is for adding items, not viewing the
+        // store, so a failed lookup shouldn't block the form.
+        if (!cancelled) setStore(fallbackStore);
+      }
     };
-  }, [id, storeState]);
+
+    loadStore();
+    return () => {
+      cancelled = true;
+    };
+  }, [id, fallbackStore, storeState]);
 
   // Get the business type metadata for dynamic labels
   const typeMeta = getBusinessTypeMeta(store.businessType);
@@ -60,6 +85,9 @@ const VendorAddMenuItem: React.FC = () => {
   });
 
   const [categories, setCategories] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [formError, setFormError] = useState('');
+  const [successMessage, setSuccessMessage] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -81,14 +109,19 @@ const VendorAddMenuItem: React.FC = () => {
     setCategories(prev => prev.filter(cat => cat !== categoryToRemove));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setFormError('');
+    setSuccessMessage('');
+
     if (!form.name || !form.price) {
-      alert('Please fill in required fields (Name and Price)');
+      setFormError('Please fill in the required fields (Name and Price).');
       return;
     }
+
+    setIsSaving(true);
     try {
-      createMenuItem({
+      await createMenuItem({
         storeId: String(id),
         name: form.name,
         categories: categories,
@@ -98,11 +131,11 @@ const VendorAddMenuItem: React.FC = () => {
       });
       setForm({ name: '', categoryInput: '', price: '', description: '', imageUrl: '' });
       setCategories([]);
-      alert('Menu item added successfully!');
-      // Refresh so the new item appears in the menu
-      window.location.reload();
+      setSuccessMessage('Menu item added successfully.');
     } catch (error) {
-      alert('Failed to add menu item. Please try again.');
+      setFormError(toErrorMessage(error, 'Failed to add menu item. Please try again.'));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -236,12 +269,25 @@ const VendorAddMenuItem: React.FC = () => {
                 />
               </div>
 
+              {formError && (
+                <div className="p-3 rounded-md bg-[#FEECEC] border border-[#F5C2C2]">
+                  <p className="text-sm text-[#991B1B] font-medium">{formError}</p>
+                </div>
+              )}
+
+              {successMessage && (
+                <div className="p-3 rounded-md bg-[#ECFDF3] border border-[#ABEFC6]">
+                  <p className="text-sm text-[#067647] font-medium">{successMessage}</p>
+                </div>
+              )}
+
               <button
                 type="submit"
-                className="inline-flex items-center justify-center gap-2 w-full h-10 px-4 bg-[#C62222] text-white text-sm font-medium rounded-md hover:bg-[#A01B1B] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C62222]"
+                disabled={isSaving}
+                className="inline-flex items-center justify-center gap-2 w-full h-10 px-4 bg-[#C62222] text-white text-sm font-medium rounded-md hover:bg-[#A01B1B] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C62222] disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <Upload className="w-4 h-4" />
-                Add {typeMeta.itemSingular}
+                {isSaving ? 'Adding…' : `Add ${typeMeta.itemSingular}`}
               </button>
             </form>
           </section>

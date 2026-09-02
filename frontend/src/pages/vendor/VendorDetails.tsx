@@ -1,11 +1,13 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Search, ChevronDown, Clock, Plus, Trash2, ShoppingBasket, Minus, ChevronLeft, X, UtensilsCrossed } from 'lucide-react';
+import AddressModal from '../../components/modals/AddressModal';
+import { useDeliveryLocation } from '../../context/DeliveryLocationContext';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import { useCart } from '../../context/CartContext';
 import pinIcon from '../../assets/location-pin-red.svg';
-import { VendorStore, getMenuItemsForStore, MenuItem } from '../../services/api';
+import { VendorStore, getMenuItemsForStore, MenuItem, toErrorMessage } from '../../services/api';
 
 
 
@@ -15,15 +17,25 @@ const VendorDetails: React.FC = () => {
   const { cartItems, addToCart, removeFromCart, updateQuantity, clearCart, cartTotal } = useCart();
   const [isMobileCartOpen, setIsMobileCartOpen] = useState(false);
   const [activeCategory, setActiveCategory] = useState<string>('All');
+  const [searchQuery, setSearchQuery] = useState('');
+  const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
+  // Shared with the Explore page so the chosen delivery address follows the
+  // customer around instead of resetting on every navigation.
+  const { label: selectedAddress, setLocation } = useDeliveryLocation();
   const storeState = location.state as VendorStore | undefined;
+
+  // This page is reached by clicking a store on Explore, which passes the store
+  // through router state. Landing here directly (bookmark, refresh, pasted URL)
+  // means there's nothing to show — previously it invented a fake restaurant,
+  // which let customers try to order from a store that doesn't exist.
   const store: VendorStore = storeState || {
-    id: 'default-store',
-    vendorId: 'default-vendor',
-    name: 'Amala Central Foods',
-    description: 'Authentic african cuisine with a modern twist',
-    address: '123 Main Street, Downtown',
-    openingTime: '8:00 am - 8:00 pm',
-    imageUrl: 'https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=2070&auto=format&fit=crop',
+    id: '',
+    vendorId: '',
+    name: '',
+    description: '',
+    address: '',
+    openingTime: '',
+    imageUrl: '',
     businessType: 'Food',
     categories: [],
     createdAt: new Date().toISOString(),
@@ -31,7 +43,33 @@ const VendorDetails: React.FC = () => {
   };
 
   // Fetch real menu items for this store
-  const menuItems = useMemo(() => getMenuItemsForStore(store.id), [store.id]);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
+  const [menuLoading, setMenuLoading] = useState(true);
+  const [menuError, setMenuError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const loadMenu = async () => {
+      setMenuLoading(true);
+      setMenuError('');
+      try {
+        const items = await getMenuItemsForStore(store.id);
+        if (!cancelled) setMenuItems(items);
+      } catch (error) {
+        if (cancelled) return;
+        setMenuItems([]);
+        setMenuError(toErrorMessage(error, 'Could not load the menu. Please try again.'));
+      } finally {
+        if (!cancelled) setMenuLoading(false);
+      }
+    };
+
+    loadMenu();
+    return () => {
+      cancelled = true;
+    };
+  }, [store.id]);
 
   // Get unique categories from menu items and store categories
   const displayCategories = useMemo(() => {
@@ -41,11 +79,21 @@ const VendorDetails: React.FC = () => {
     return ['All', ...uniqueCategories];
   }, [menuItems, store.categories]);
 
-  // Filter menu items by selected category
+  // Filter menu items by selected category, then by the search box
   const filteredMenuItems = useMemo(() => {
-    if (activeCategory === 'All') return menuItems;
-    return menuItems.filter((item) => item.categories.includes(activeCategory));
-  }, [menuItems, activeCategory]);
+    const byCategory = activeCategory === 'All'
+      ? menuItems
+      : menuItems.filter((item) => item.categories.includes(activeCategory));
+
+    const q = searchQuery.trim().toLowerCase();
+    if (!q) return byCategory;
+
+    return byCategory.filter((item) =>
+      item.name.toLowerCase().includes(q) ||
+      item.description.toLowerCase().includes(q) ||
+      item.categories.some((c) => c.toLowerCase().includes(q)),
+    );
+  }, [menuItems, activeCategory, searchQuery]);
 
   const handleAddToCart = (item: MenuItem) => {
     addToCart({
@@ -71,6 +119,32 @@ const VendorDetails: React.FC = () => {
     }
   };
 
+  if (!store.id) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col font-poppins">
+        <Header onCartClick={() => setIsMobileCartOpen(true)} />
+        <main className="flex-grow flex items-center justify-center px-6 py-20">
+          <div className="text-center max-w-sm">
+            <div className="w-16 h-16 bg-[#FEECEC] rounded-full flex items-center justify-center mx-auto mb-5">
+              <UtensilsCrossed className="w-8 h-8 text-[#C62222]" />
+            </div>
+            <h1 className="text-xl font-semibold text-[#222222] mb-2">Store not found</h1>
+            <p className="text-sm text-[#667085] mb-6">
+              We couldn't tell which store you meant. Pick one from Explore and try again.
+            </p>
+            <button
+              onClick={() => navigate('/explore')}
+              className="px-5 py-2.5 bg-[#C62222] text-white text-sm font-semibold rounded-lg hover:bg-[#A01B1B] transition-colors"
+            >
+              Browse stores
+            </button>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-white flex flex-col font-poppins relative overflow-x-hidden">
       <Header onCartClick={() => setIsMobileCartOpen(true)} />
@@ -83,19 +157,42 @@ const VendorDetails: React.FC = () => {
           <div className="flex-1 flex items-center h-[36px] sm:h-[40px] border border-[#D0D5DD] rounded-[6px] sm:rounded-[8px] overflow-hidden bg-white max-w-[400px]">
             <input
               type="text"
-              placeholder="Search here"
+              placeholder="Search this menu"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
               className="flex-grow h-full px-[12px] sm:px-[16px] text-[12px] sm:text-[13px] text-[#667085] bg-transparent outline-none placeholder:text-[#98A2B3]"
             />
-            <button className="w-[36px] sm:w-[40px] h-full bg-[#C62222] flex items-center justify-center text-white hover:bg-[#A01B1B] transition-colors">
-              <Search size={16} className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
-            </button>
+            {searchQuery ? (
+              <button
+                type="button"
+                onClick={() => setSearchQuery('')}
+                aria-label="Clear search"
+                className="w-[36px] sm:w-[40px] h-full bg-[#C62222] flex items-center justify-center text-white hover:bg-[#A01B1B] transition-colors"
+              >
+                <X size={16} className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
+              </button>
+            ) : (
+              <button
+                type="button"
+                aria-label="Search"
+                className="w-[36px] sm:w-[40px] h-full bg-[#C62222] flex items-center justify-center text-white hover:bg-[#A01B1B] transition-colors"
+              >
+                <Search size={16} className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
+              </button>
+            )}
           </div>
-          <div className="flex items-center gap-[3px] sm:gap-[4px]">
-            <img src={pinIcon} alt="Location" className="w-4 h-4" />
-            <span className="text-[#222222] text-[13px] sm:text-[15px] font-semibold hidden sm:inline">Nmdpra HQ</span>
+          <button
+            type="button"
+            onClick={() => setIsAddressModalOpen(true)}
+            className="flex items-center gap-[3px] sm:gap-[4px] hover:opacity-70 transition-opacity"
+          >
+            <img src={pinIcon} alt="" className="w-4 h-4" />
+            <span className="text-[#222222] text-[13px] sm:text-[15px] font-semibold hidden sm:inline">
+              {selectedAddress || 'Select address'}
+            </span>
             <span className="text-[#222222] text-[13px] sm:text-[15px] font-semibold sm:hidden">Address</span>
             <ChevronDown className="text-[#222222]" size={14} />
-          </div>
+          </button>
         </div>
 
         {/* Breadcrumb */}
@@ -172,7 +269,25 @@ const VendorDetails: React.FC = () => {
             )}
 
             {/* Menu Grid */}
-            {filteredMenuItems.length === 0 ? (
+            {menuLoading ? (
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-[16px] md:gap-[20px]">
+                {Array.from({ length: 6 }).map((_, i) => (
+                  <div key={i} className="w-full animate-pulse">
+                    <div className="w-full h-[140px] rounded-[12px] bg-gray-100" />
+                    <div className="h-[14px] w-2/3 rounded bg-gray-100 mt-[12px]" />
+                    <div className="h-[12px] w-1/3 rounded bg-gray-100 mt-[8px]" />
+                  </div>
+                ))}
+              </div>
+            ) : menuError ? (
+              <div className="flex flex-col items-center justify-center py-[60px] px-[24px] text-center">
+                <div className="w-[80px] h-[80px] bg-[#FEECEC] rounded-full flex items-center justify-center mb-[16px]">
+                  <UtensilsCrossed size={32} className="text-[#C62222]" />
+                </div>
+                <h3 className="text-[18px] font-semibold text-[#222222] mb-[8px]">Couldn't load the menu</h3>
+                <p className="text-[#667085] text-[14px] max-w-[300px]">{menuError}</p>
+              </div>
+            ) : filteredMenuItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-[60px] px-[24px] text-center">
                 <div className="w-[80px] h-[80px] bg-[#FEECEC] rounded-full flex items-center justify-center mb-[16px]">
                   <UtensilsCrossed size={32} className="text-[#C62222]" />
@@ -298,6 +413,15 @@ const VendorDetails: React.FC = () => {
       </main>
 
       <Footer />
+
+      <AddressModal
+        isOpen={isAddressModalOpen}
+        onClose={() => setIsAddressModalOpen(false)}
+        onSelectAddress={(address, coords) => {
+          setLocation(address || null, coords);
+          setIsAddressModalOpen(false);
+        }}
+      />
 
       {/* Mobile Cart Drawer */}
       {isMobileCartOpen && (

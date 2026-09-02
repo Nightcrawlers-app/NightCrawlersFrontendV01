@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGlobalLoader } from '../../context/GlobalLoaderContext';
 import {
@@ -14,8 +14,10 @@ import {
     getCurrentVendor,
     getOrdersForVendor,
     updateOrderStatus,
+    toErrorMessage,
     Order,
-    OrderStatus
+    OrderStatus,
+    VendorAccount
 } from '../../services/api';
 
 const STATUS_COLORS: Record<string, string> = {
@@ -44,43 +46,90 @@ const VendorOrders: React.FC = () => {
     const navigate = useNavigate();
     const { showLoaderWithDelay } = useGlobalLoader();
     const [orders, setOrders] = useState<Order[]>([]);
-    const [vendor, setVendor] = useState<any>(null);
+    const [vendor, setVendor] = useState<VendorAccount | null>(null);
+    const [isLoading, setIsLoading] = useState(true);
+    const [loadError, setLoadError] = useState('');
+
+    // `cancelled` guards against setting state after the page unmounts, which
+    // matters here because polling keeps requests in flight.
+    const cancelledRef = useRef(false);
+
+    const loadOrders = useCallback(async (vendorId: string) => {
+        try {
+            const vendorOrders = await getOrdersForVendor(vendorId);
+            if (cancelledRef.current) return;
+            // Sort so newer and actionable orders are at the top
+            const sorted = [...vendorOrders].sort((a, b) => {
+                const aTime = new Date(a.createdAt).getTime();
+                const bTime = new Date(b.createdAt).getTime();
+                return bTime - aTime;
+            });
+            setOrders(sorted);
+            setLoadError('');
+        } catch (error) {
+            if (cancelledRef.current) return;
+            setLoadError(toErrorMessage(error, 'Could not load orders.'));
+        }
+    }, []);
 
     useEffect(() => {
-        const currentVendor = getCurrentVendor();
-        if (!currentVendor) {
-            navigate('/vendor-signin');
-            return;
+        cancelledRef.current = false;
+        let interval: ReturnType<typeof setInterval> | undefined;
+
+        const init = async () => {
+            try {
+                const currentVendor = await getCurrentVendor();
+                if (cancelledRef.current) return;
+
+                if (!currentVendor) {
+                    navigate('/vendor-signin');
+                    return;
+                }
+
+                setVendor(currentVendor);
+                await loadOrders(currentVendor.id);
+
+                // Poll for new orders. Swap for WebSockets when the backend
+                // supports them — see BACKEND_API_GUIDE.md.
+                interval = setInterval(() => {
+                    loadOrders(currentVendor.id);
+                }, 5000);
+            } catch (error) {
+                if (cancelledRef.current) return;
+                setLoadError(toErrorMessage(error, 'Could not load your account.'));
+            } finally {
+                if (!cancelledRef.current) setIsLoading(false);
+            }
+        };
+
+        init();
+
+        return () => {
+            cancelledRef.current = true;
+            if (interval) clearInterval(interval);
+        };
+    }, [navigate, loadOrders]);
+
+    const handleStatusUpdate = async (orderId: string, newStatus: OrderStatus) => {
+        showLoaderWithDelay(400);
+        try {
+            await updateOrderStatus(orderId, newStatus);
+            if (vendor) await loadOrders(vendor.id);
+        } catch (error) {
+            setLoadError(toErrorMessage(error, 'Could not update the order status.'));
         }
-        setVendor(currentVendor);
-        loadOrders(currentVendor.id);
-
-        // Set up polling for new orders (simulated realtime)
-        const interval = setInterval(() => {
-            loadOrders(currentVendor.id);
-        }, 5000);
-
-        return () => clearInterval(interval);
-    }, [navigate]);
-
-    const loadOrders = (vendorId: string) => {
-        const vendorOrders = getOrdersForVendor(vendorId);
-        // Sort so newer and actionable orders are at the top
-        const sorted = [...vendorOrders].sort((a, b) => {
-            const aTime = new Date(a.createdAt).getTime();
-            const bTime = new Date(b.createdAt).getTime();
-            return bTime - aTime;
-        });
-        setOrders(sorted);
     };
 
-    const handleStatusUpdate = (orderId: string, newStatus: OrderStatus) => {
-        showLoaderWithDelay(400); // Simulate network refresh
-        updateOrderStatus(orderId, newStatus);
-        if (vendor) {
-            loadOrders(vendor.id);
-        }
-    };
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center font-poppins">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="w-8 h-8 border-2 border-[#C62222] border-t-transparent rounded-full animate-spin" />
+                    <p className="text-sm text-gray-500">Loading your orders…</p>
+                </div>
+            </div>
+        );
+    }
 
     if (!vendor) return null;
 
@@ -189,6 +238,13 @@ const VendorOrders: React.FC = () => {
                         <span className="text-sm font-semibold">Active</span>
                     </div>
                 </div>
+
+                {loadError && (
+                    <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200">
+                        <p className="text-sm text-red-700 font-medium">{loadError}</p>
+                        <p className="text-xs text-red-600 mt-1">Showing the last orders that loaded successfully.</p>
+                    </div>
+                )}
 
                 <div className="space-y-8">
                     <section>

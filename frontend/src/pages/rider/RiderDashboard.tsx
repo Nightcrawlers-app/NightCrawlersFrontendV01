@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGlobalLoader } from '../../context/GlobalLoaderContext';
 import { MapPin, Package, DollarSign, Clock, Navigation, Power, Bell, CheckCircle, Truck, Phone, ExternalLink, LogOut, ShieldCheck } from 'lucide-react';
@@ -6,17 +6,18 @@ import {
     getCurrentRider,
     RiderAccount,
     Order,
-    EarningsPeriod,
     setRiderOnlineStatus,
     getPendingOrdersForRider,
     getOrdersForRider,
-    getRiderEarnings,
     acceptOrder,
     updateOrderStatus,
     getStoreLocation,
     logoutRider,
-    reloadFromStorage
+    updateRiderLocation,
+    toErrorMessage,
+    Coordinates
 } from '../../services/api';
+import { getCurrentPosition } from '../../lib/geolocation';
 
 const RiderDashboard: React.FC = () => {
     const navigate = useNavigate();
@@ -27,94 +28,176 @@ const RiderDashboard: React.FC = () => {
     const [activeOrders, setActiveOrders] = useState<Order[]>([]);
     const [completedToday, setCompletedToday] = useState(0);
     const [todayEarnings, setTodayEarnings] = useState(0);
-    const [riderEarnings, setRiderEarnings] = useState<EarningsPeriod | null>(null);
 
-    const fetchOrders = useCallback(() => {
+    const [loadError, setLoadError] = useState('');
+    const [isCheckingStatus, setIsCheckingStatus] = useState(false);
+
+    // Guards against setting state after unmount — polling keeps requests in flight.
+    const cancelledRef = useRef(false);
+    // Latest known position. A ref rather than state so refreshing it doesn't
+    // retrigger the polling effect.
+    const coordsRef = useRef<Coordinates | null>(null);
+
+    const fetchOrders = useCallback(async () => {
         if (!rider) return;
 
-        const pending = getPendingOrdersForRider(rider.location);
-        const myOrders = getOrdersForRider(rider.id);
+        try {
+            // Independent requests, so fire them together rather than in sequence.
+            // Coordinates, when the device has shared them, let the backend sort
+            // pending orders by real distance instead of matching location text.
+            const [pending, myOrders] = await Promise.all([
+                getPendingOrdersForRider(rider.location, coordsRef.current),
+                getOrdersForRider(rider.id),
+            ]);
 
-        setPendingOrders(pending);
-        setActiveOrders(myOrders.filter(o => ['accepted', 'picked_up', 'in_transit'].includes(o.status)));
+            if (cancelledRef.current) return;
 
-        // Calculate today's stats
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const todayCompleted = myOrders.filter(o =>
-            o.status === 'delivered' &&
-            new Date(o.deliveredAt || o.createdAt) >= today
-        );
-        setCompletedToday(todayCompleted.length);
-        setTodayEarnings(todayCompleted.reduce((sum, o) => sum + o.deliveryFee, 0));
+            setPendingOrders(pending);
+            setActiveOrders(myOrders.filter(o => ['accepted', 'picked_up', 'in_transit'].includes(o.status)));
 
-        // Load full earnings from backend
-        const earnings = getRiderEarnings(rider.id);
-        setRiderEarnings(earnings);
+            // Calculate today's stats
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayCompleted = myOrders.filter(o =>
+                o.status === 'delivered' &&
+                new Date(o.deliveredAt || o.createdAt) >= today
+            );
+            setCompletedToday(todayCompleted.length);
+            setTodayEarnings(todayCompleted.reduce((sum, o) => sum + o.deliveryFee, 0));
+            setLoadError('');
+        } catch (error) {
+            if (cancelledRef.current) return;
+            setLoadError(toErrorMessage(error, 'Could not refresh your orders.'));
+        }
     }, [rider]);
 
     useEffect(() => {
-        const currentRider = getCurrentRider();
-        if (!currentRider) {
-            navigate('/vendor-signin');
-            return;
-        }
-        setRider(currentRider);
-        setIsOnline(currentRider.isOnline || false);
+        cancelledRef.current = false;
+
+        const loadRider = async () => {
+            try {
+                const currentRider = await getCurrentRider();
+                if (cancelledRef.current) return;
+
+                if (!currentRider) {
+                    navigate('/vendor-signin');
+                    return;
+                }
+                setRider(currentRider);
+                setIsOnline(currentRider.isOnline || false);
+            } catch (error) {
+                if (cancelledRef.current) return;
+                setLoadError(toErrorMessage(error, 'Could not load your account.'));
+            }
+        };
+
+        loadRider();
+
+        return () => {
+            cancelledRef.current = true;
+        };
     }, [navigate]);
 
     useEffect(() => {
         if (!rider) return;
+        cancelledRef.current = false;
         fetchOrders();
 
         // Poll for new orders every 5 seconds
         const interval = setInterval(fetchOrders, 5000);
-        return () => clearInterval(interval);
+        return () => {
+            cancelledRef.current = true;
+            clearInterval(interval);
+        };
     }, [rider, fetchOrders]);
 
-    const toggleOnlineStatus = () => {
+    const toggleOnlineStatus = async () => {
         if (!rider) return;
         showLoaderWithDelay(500);
+
         const newStatus = !isOnline;
-        setIsOnline(newStatus);
-        setRiderOnlineStatus(rider.id, newStatus);
+        setIsOnline(newStatus); // optimistic — revert below if the server rejects it
+        try {
+            await setRiderOnlineStatus(rider.id, newStatus);
+        } catch (error) {
+            setIsOnline(!newStatus);
+            setLoadError(toErrorMessage(error, 'Could not change your status. Please try again.'));
+            return;
+        }
+
+        if (newStatus) {
+            // Going online is a deliberate tap, so it's the right moment to ask
+            // for location permission. Declining just means dispatch falls back
+            // to matching on the rider's location text.
+            try {
+                const coords = await getCurrentPosition();
+                coordsRef.current = coords;
+                await updateRiderLocation(rider.id, coords);
+                await fetchOrders();
+            } catch {
+                // Not fatal — the rider can still work without sharing position.
+            }
+        } else {
+            coordsRef.current = null;
+        }
     };
 
-    const handleAcceptOrder = (orderId: string) => {
+    const handleAcceptOrder = async (orderId: string) => {
         if (!rider) return;
-        const accepted = acceptOrder(orderId, rider.id);
-        if (accepted) {
-            fetchOrders();
+        try {
+            const accepted = await acceptOrder(orderId, rider.id);
+            if (accepted) {
+                await fetchOrders();
+            } else {
+                // Another rider got there first — refresh so it disappears.
+                setLoadError('That order was already taken by another rider.');
+                await fetchOrders();
+            }
+        } catch (error) {
+            setLoadError(toErrorMessage(error, 'Could not accept the order.'));
         }
     };
 
-    const handleUpdateStatus = (orderId: string, status: 'picked_up' | 'in_transit' | 'delivered') => {
-        updateOrderStatus(orderId, status);
-        fetchOrders();
+    const handleUpdateStatus = async (orderId: string, status: 'picked_up' | 'in_transit' | 'delivered') => {
+        try {
+            await updateOrderStatus(orderId, status);
+            await fetchOrders();
+        } catch (error) {
+            setLoadError(toErrorMessage(error, 'Could not update the delivery status.'));
+        }
     };
 
-    const openNavigation = (order: Order, destination: 'store' | 'customer') => {
-        let address = '';
+    const openNavigation = async (order: Order, destination: 'store' | 'customer') => {
+        const buildMapsUrl = (address: string) => {
+            const encodedAddress = encodeURIComponent(address);
+            // Try to detect if iOS or Android, default to Google Maps
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+            return isIOS
+                ? `maps://maps.apple.com/?daddr=${encodedAddress}`
+                : `https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`;
+        };
 
-        if (destination === 'store') {
-            const storeAddress = getStoreLocation(order.storeId);
-            address = storeAddress || order.storeName;
-        } else {
-            address = order.customerAddress;
+        if (destination === 'customer') {
+            window.open(buildMapsUrl(order.customerAddress), '_blank');
+            return;
         }
 
-        // Encode the address for URL
-        const encodedAddress = encodeURIComponent(address);
+        // The store address needs a round trip. Open the tab NOW, while we still
+        // have the click gesture — opening it after the await would be caught by
+        // the popup blocker — then point it at the real address once it arrives.
+        const tab = window.open('', '_blank');
+        let address = order.storeName;
+        try {
+            address = (await getStoreLocation(order.storeId)) || order.storeName;
+        } catch {
+            // Fall back to the store name; it's usually enough for maps search.
+        }
 
-        // Try to detect if iOS or Android, default to Google Maps
-        const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-
-        if (isIOS) {
-            // Apple Maps
-            window.open(`maps://maps.apple.com/?daddr=${encodedAddress}`, '_blank');
+        if (tab) {
+            tab.location.href = buildMapsUrl(address);
         } else {
-            // Google Maps
-            window.open(`https://www.google.com/maps/dir/?api=1&destination=${encodedAddress}`, '_blank');
+            // Popup was blocked entirely — navigate in place as a last resort.
+            window.open(buildMapsUrl(address), '_blank');
         }
     };
 
@@ -163,23 +246,31 @@ const RiderDashboard: React.FC = () => {
 
                     <div className="space-y-3">
                         <button
-                            onClick={() => {
-                                // Reload from localStorage to get latest verification status
-                                reloadFromStorage();
-                                const currentRider = getCurrentRider();
-                                if (currentRider) setRider(currentRider);
+                            disabled={isCheckingStatus}
+                            onClick={async () => {
+                                // Re-fetch the rider so an admin approval shows up.
+                                setIsCheckingStatus(true);
+                                try {
+                                    const currentRider = await getCurrentRider();
+                                    if (currentRider) setRider(currentRider);
+                                } catch (error) {
+                                    setLoadError(toErrorMessage(error, 'Could not check your status.'));
+                                } finally {
+                                    setIsCheckingStatus(false);
+                                }
                             }}
-                            className="w-full py-3 bg-[#C62222] text-white font-semibold rounded-xl hover:bg-[#a01b1b] transition-colors"
+                            className="w-full py-3 bg-[#C62222] text-white font-semibold rounded-xl hover:bg-[#a01b1b] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            Check Status
+                            {isCheckingStatus ? 'Checking…' : 'Check Status'}
                         </button>
                         <button
-                            onClick={() => {
+                            onClick={async () => {
                                 showLoaderWithDelay(600);
-                                setTimeout(() => {
-                                    logoutRider();
+                                try {
+                                    await logoutRider();
+                                } finally {
                                     navigate('/vendor-signin');
-                                }, 300);
+                                }
                             }}
                             className="w-full py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
                         >
@@ -222,12 +313,13 @@ const RiderDashboard: React.FC = () => {
                         <Bell size={20} className="text-gray-400 group-hover:text-[#C62222] transition-colors" />
                     </div>
                     <button
-                        onClick={() => {
+                        onClick={async () => {
                             showLoaderWithDelay(600);
-                            setTimeout(() => {
-                                logoutRider();
+                            try {
+                                await logoutRider();
+                            } finally {
                                 navigate('/vendor-signin');
-                            }, 300);
+                            }
                         }}
                         className="p-2 bg-red-50 hover:bg-[#C62222] rounded-full text-[#C62222] hover:text-white transition-colors border border-red-100"
                         title="Logout"
@@ -238,6 +330,17 @@ const RiderDashboard: React.FC = () => {
             </header>
 
             <main className="max-w-2xl mx-auto px-6 py-6 space-y-6">
+                {loadError && (
+                    <div className="p-4 rounded-xl bg-red-50 border border-red-200 flex items-start justify-between gap-3">
+                        <p className="text-sm text-red-700 font-medium">{loadError}</p>
+                        <button
+                            onClick={() => setLoadError('')}
+                            className="text-xs text-red-600 font-semibold hover:underline flex-shrink-0"
+                        >
+                            Dismiss
+                        </button>
+                    </div>
+                )}
 
                 {/* Status Toggle */}
                 <section className="relative overflow-hidden rounded-3xl bg-white border border-gray-100 shadow-sm h-44 flex flex-col items-center justify-center">

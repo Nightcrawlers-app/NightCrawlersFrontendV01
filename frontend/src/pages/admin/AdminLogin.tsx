@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import logo from '../../assets/logo.png';
-import { signInAdmin } from '../../services/api';
+import { signInAdmin, toErrorMessage } from '../../services/api';
 import { ShieldCheck, ArrowRight } from 'lucide-react';
 
 const AdminLogin: React.FC = () => {
@@ -13,25 +13,28 @@ const AdminLogin: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [errorMessage, setErrorMessage] = useState('');
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setErrorMessage('');
-        setLoading(true);
 
         if (!email.trim() || !password.trim()) {
             setErrorMessage('Credentials required.');
-            setLoading(false);
             return;
         }
 
-        const admin = signInAdmin(email, password);
-        if (!admin) {
-            setErrorMessage('Access Denied: Invalid credentials.');
+        setLoading(true);
+        try {
+            const admin = await signInAdmin(email, password);
+            if (!admin) {
+                setErrorMessage('Access Denied: Invalid credentials.');
+                return;
+            }
+            navigate('/admin-dashboard');
+        } catch (error) {
+            setErrorMessage(toErrorMessage(error, 'Could not sign in. Please try again.'));
+        } finally {
             setLoading(false);
-            return;
         }
-
-        navigate('/admin-dashboard');
     };
 
     return (

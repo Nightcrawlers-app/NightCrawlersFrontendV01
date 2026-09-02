@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { X, ShoppingCart, User, LogOut, Settings, CreditCard, MapPin } from 'lucide-react';
+import { X, ShoppingCart, User, LogOut, CreditCard } from 'lucide-react';
 import { NAVIGATION_LINKS } from '../../utils/constants';
 import { useAuth, getInitials } from '../../context/AuthContext';
 

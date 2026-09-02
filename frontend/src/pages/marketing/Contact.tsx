@@ -2,25 +2,41 @@ import React, { useState } from 'react';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import { Mail, MessageCircle, Phone } from 'lucide-react';
+import { sendContactMessage, toErrorMessage } from '../../services/api';
+
+const EMPTY_FORM = { firstName: '', lastName: '', email: '', message: '' };
 
 const Contact: React.FC = () => {
-    const [formData, setFormData] = useState({
-        firstName: '',
-        lastName: '',
-        email: '',
-        message: ''
-    });
+    const [formData, setFormData] = useState(EMPTY_FORM);
+    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [status, setStatus] = useState('');
+    const [isError, setIsError] = useState(false);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
         setFormData({
             ...formData,
             [e.target.name]: e.target.value
         });
+        setStatus('');
     };
 
-    const handleSubmit = (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        console.log('Form submitted:', formData);
+        if (isSubmitting) return;
+
+        setIsSubmitting(true);
+        setStatus('');
+        setIsError(false);
+        try {
+            await sendContactMessage(formData);
+            setFormData(EMPTY_FORM);
+            setStatus("Thanks, we've got your message. We'll be in touch shortly.");
+        } catch (error) {
+            setIsError(true);
+            setStatus(toErrorMessage(error, "Couldn't send your message just now. Please try again."));
+        } finally {
+            setIsSubmitting(false);
+        }
     };
 
     return (
@@ -106,6 +122,7 @@ const Contact: React.FC = () => {
                                                 name="firstName"
                                                 value={formData.firstName}
                                                 onChange={handleInputChange}
+                                                required
                                                 placeholder="First name"
                                                 className="flex-1 outline-none text-[16px] leading-[24px] text-gray-500 placeholder-gray-500 font-poppins"
                                             />
@@ -124,6 +141,7 @@ const Contact: React.FC = () => {
                                                 name="lastName"
                                                 value={formData.lastName}
                                                 onChange={handleInputChange}
+                                                required
                                                 placeholder="Last name"
                                                 className="flex-1 outline-none text-[16px] leading-[24px] text-gray-500 placeholder-gray-500 font-poppins"
                                             />
@@ -143,6 +161,7 @@ const Contact: React.FC = () => {
                                             name="email"
                                             value={formData.email}
                                             onChange={handleInputChange}
+                                            required
                                             placeholder="you@gmail.com"
                                             className="flex-1 outline-none text-[16px] leading-[24px] text-gray-500 placeholder-gray-500 font-poppins"
                                         />
@@ -160,6 +179,7 @@ const Contact: React.FC = () => {
                                             name="message"
                                             value={formData.message}
                                             onChange={handleInputChange}
+                                            required
                                             placeholder="Your message..."
                                             className="flex-1 outline-none text-[16px] leading-[24px] text-gray-500 placeholder-gray-500 font-poppins resize-none h-full min-h-[120px]"
                                         />
@@ -168,12 +188,26 @@ const Contact: React.FC = () => {
                             </div>
 
                             {/* Submit Button */}
-                            <button
-                                type="submit"
-                                className="flex items-center self-stretch justify-center gap-[8px] border border-[#C62222] rounded-[4px] bg-[#C62222] shadow-sm px-[19px] py-[10px] sm:py-[11px] hover:bg-[#a51d1d] transition-colors"
-                            >
-                                <p className="text-white text-[14px] sm:text-[20px] font-medium leading-[24px] font-poppins">Send message</p>
-                            </button>
+                            <div className="flex flex-col items-stretch self-stretch gap-[8px] w-full">
+                                <button
+                                    type="submit"
+                                    disabled={isSubmitting}
+                                    className="flex items-center self-stretch justify-center gap-[8px] border border-[#C62222] rounded-[4px] bg-[#C62222] shadow-sm px-[19px] py-[10px] sm:py-[11px] hover:bg-[#a51d1d] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                                >
+                                    <p className="text-white text-[14px] sm:text-[20px] font-medium leading-[24px] font-poppins">
+                                        {isSubmitting ? 'Sending...' : 'Send message'}
+                                    </p>
+                                </button>
+
+                                {status && (
+                                    <p
+                                        className={`text-[13px] font-poppins ${isError ? 'text-[#991B1B]' : 'text-[#067647]'}`}
+                                        role="status"
+                                    >
+                                        {status}
+                                    </p>
+                                )}
+                            </div>
                         </form>
                     </div>
                 </div>

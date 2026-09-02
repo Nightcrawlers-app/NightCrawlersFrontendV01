@@ -1,14 +1,18 @@
 /**
  * Night Crawlers — API Service Layer
  *
- * This file contains all the function signatures that the backend needs to implement.
- * Each function currently returns a stub (empty data / null) so that the frontend
- * compiles and renders without errors. The backend engineer should replace each
- * stub with a real API call (e.g. fetch / axios).
+ * Every function here is a real HTTP call to the backend. They are all async
+ * and return Promises — callers must `await` them and handle failures.
  *
- * TODO: Replace every function body below with actual API calls.
+ * Requests go through `lib/apiClient.ts`, which owns the base URL, sends
+ * cookies for authentication, and converts failures into `ApiError`.
+ *
+ * Endpoint paths below are the contract described in BACKEND_API_GUIDE.md.
+ * If the backend uses a different path or shape, change it HERE — never in a
+ * page component.
  */
 
+import { apiFetch, apiFetchOrNull } from '../lib/apiClient';
 import type {
     BusinessType,
     BusinessTypeMeta,
@@ -31,6 +35,14 @@ import type {
     EarningsPeriod,
     StoreEarnings,
     EntityEarnings,
+    CustomerProfile,
+    CreateCustomerInput,
+    UpdateCustomerInput,
+    UserAddress,
+    Transaction,
+    Coordinates,
+    PaymentMethod,
+    ContactMessageInput,
 } from '../types/models';
 
 // Re-export types so existing imports keep working
@@ -56,12 +68,38 @@ export type {
     EarningsPeriod,
     StoreEarnings,
     EntityEarnings,
+    CustomerProfile,
+    CreateCustomerInput,
+    UpdateCustomerInput,
+    UserAddress,
+    Transaction,
+    Coordinates,
+    PaymentMethod,
+    ContactMessageInput,
 };
 
 // Re-export the constants
 export { BUSINESS_TYPES } from '../types/models';
+export { PAYMENT_METHOD_LABELS, formatPaymentMethod } from '../types/models';
+
+// Re-export error helpers so pages can render failures without importing the client
+export { ApiError, toErrorMessage } from '../lib/apiClient';
+
+/** Shape returned by `GET /api/admin/orders/stats`. */
+export type OrderStats = {
+    totalOrders: number;
+    todayOrders: number;
+    pendingOrders: number;
+    activeOrders: number;
+    completedOrders: number;
+    totalRevenue: number;
+    todayRevenue: number;
+    onlineRiders: number;
+    totalRiders: number;
+};
 
 // ─── Business Type Helpers ───────────────────────────────────────────────────
+// These are pure frontend display helpers — no API involved, so they stay sync.
 
 const BUSINESS_TYPE_META: Record<BusinessType, BusinessTypeMeta> = {
     Food: {
@@ -129,329 +167,343 @@ export const resolveBusinessType = (input: string): BusinessType => {
 
 // ─── Vendor Actions ──────────────────────────────────────────────────────────
 
-/** TODO: POST /api/vendors — Create a new vendor account */
-export const createVendorAccount = (_input: CreateVendorInput): VendorAccount => {
-    console.warn('[API STUB] createVendorAccount — replace with real API call');
-    throw new Error('Backend not connected yet. Please implement the API.');
-};
+/** POST /api/vendors — Create a new vendor account */
+export const createVendorAccount = (input: CreateVendorInput): Promise<VendorAccount> =>
+    apiFetch<VendorAccount>('/api/vendors', { method: 'POST', body: input });
 
-/** TODO: POST /api/vendors/login — Sign in a vendor */
-export const signInVendor = (_email: string, _password: string): VendorAccount | null => {
-    console.warn('[API STUB] signInVendor — replace with real API call');
-    return null;
-};
+/** POST /api/vendors/login — Sign in a vendor. Resolves to null on bad credentials. */
+export const signInVendor = (email: string, password: string): Promise<VendorAccount | null> =>
+    apiFetchOrNull<VendorAccount>('/api/vendors/login', {
+        method: 'POST',
+        body: { email, password },
+    });
 
-/** TODO: GET /api/vendors/me — Get the currently authenticated vendor */
-export const getCurrentVendor = (): VendorAccount | null => {
-    console.warn('[API STUB] getCurrentVendor — replace with real API call');
-    return null;
-};
+/** GET /api/vendors/me — Get the currently authenticated vendor */
+export const getCurrentVendor = (): Promise<VendorAccount | null> =>
+    apiFetchOrNull<VendorAccount>('/api/vendors/me');
 
-/** TODO: POST /api/vendors/logout — Clear the current vendor session */
-export const clearCurrentVendor = (): void => {
-    console.warn('[API STUB] clearCurrentVendor — replace with real API call');
-};
+/** POST /api/vendors/logout — Clear the current vendor session */
+export const clearCurrentVendor = (): Promise<void> =>
+    apiFetch<void>('/api/vendors/logout', { method: 'POST' });
 
 // ─── Store Actions ───────────────────────────────────────────────────────────
 
-/** TODO: POST /api/stores — Create a new store for the current vendor */
-export const createStore = (_input: CreateStoreInput): VendorStore => {
-    console.warn('[API STUB] createStore — replace with real API call');
-    throw new Error('Backend not connected yet. Please implement the API.');
-};
+/** POST /api/stores — Create a new store for the current vendor */
+export const createStore = (input: CreateStoreInput): Promise<VendorStore> =>
+    apiFetch<VendorStore>('/api/stores', { method: 'POST', body: input });
 
-/** TODO: PATCH /api/stores/:id — Update store details */
-export const updateStore = (_storeId: string, _updates: UpdateStoreInput): VendorStore => {
-    console.warn('[API STUB] updateStore — replace with real API call');
-    throw new Error('Backend not connected yet. Please implement the API.');
-};
+/** PATCH /api/stores/:id — Update store details */
+export const updateStore = (storeId: string, updates: UpdateStoreInput): Promise<VendorStore> =>
+    apiFetch<VendorStore>(`/api/stores/${storeId}`, { method: 'PATCH', body: updates });
 
-/** TODO: GET /api/vendors/:vendorId/stores — Get all stores for a vendor */
-export const getStoresForVendor = (_vendorId: string): VendorStore[] => {
-    console.warn('[API STUB] getStoresForVendor — replace with real API call');
-    return [];
-};
+/** GET /api/vendors/:vendorId/stores — Get all stores for a vendor */
+export const getStoresForVendor = (vendorId: string): Promise<VendorStore[]> =>
+    apiFetch<VendorStore[]>(`/api/vendors/${vendorId}/stores`);
 
-/** TODO: GET /api/stores/:id — Get a single store by ID */
-export const getStoreById = (_storeId: string): VendorStore | null => {
-    console.warn('[API STUB] getStoreById — replace with real API call');
-    return null;
-};
+/** GET /api/stores/:id — Get a single store by ID */
+export const getStoreById = (storeId: string): Promise<VendorStore | null> =>
+    apiFetchOrNull<VendorStore>(`/api/stores/${storeId}`);
 
-/** TODO: GET /api/stores?address=...&category=... — Get stores for the explore page */
+/**
+ * GET /api/stores?address=...&category=...&lat=...&lng=... — Explore page.
+ *
+ * When `coords` is supplied (the customer used "current location", or picked a
+ * saved address that has coordinates), the backend should do a proximity search
+ * and may return a `distance` on each store. Otherwise it falls back to
+ * matching on the address string.
+ */
 export const getStoresForExplore = (
-    _address: string | null | undefined,
-    _category?: BusinessType | 'All',
-): VendorStore[] => {
-    console.warn('[API STUB] getStoresForExplore — replace with real API call');
-    return [];
-};
+    address: string | null | undefined,
+    category?: BusinessType | 'All',
+    coords?: Coordinates | null,
+): Promise<VendorStore[]> =>
+    apiFetch<VendorStore[]>('/api/stores', {
+        params: {
+            address: address ?? undefined,
+            category: !category || category === 'All' ? undefined : category,
+            lat: coords?.latitude ?? undefined,
+            lng: coords?.longitude ?? undefined,
+        },
+    });
 
 // ─── Menu Item Actions ───────────────────────────────────────────────────────
 
-/** TODO: POST /api/menu-items — Create a new menu item */
-export const createMenuItem = (_input: CreateMenuItemInput): MenuItem => {
-    console.warn('[API STUB] createMenuItem — replace with real API call');
-    throw new Error('Backend not connected yet. Please implement the API.');
-};
+/** POST /api/menu-items — Create a new menu item */
+export const createMenuItem = (input: CreateMenuItemInput): Promise<MenuItem> =>
+    apiFetch<MenuItem>('/api/menu-items', { method: 'POST', body: input });
 
-/** TODO: PATCH /api/menu-items/:id — Update a menu item */
-export const updateMenuItem = (_itemId: string, _updates: Partial<MenuItem>): MenuItem | null => {
-    console.warn('[API STUB] updateMenuItem — replace with real API call');
-    return null;
-};
+/** PATCH /api/menu-items/:id — Update a menu item */
+export const updateMenuItem = (itemId: string, updates: Partial<MenuItem>): Promise<MenuItem | null> =>
+    apiFetchOrNull<MenuItem>(`/api/menu-items/${itemId}`, { method: 'PATCH', body: updates });
 
-/** TODO: GET /api/stores/:storeId/menu-items — Get all menu items for a store */
-export const getMenuItemsForStore = (_storeId: string): MenuItem[] => {
-    console.warn('[API STUB] getMenuItemsForStore — replace with real API call');
-    return [];
-};
+/** GET /api/stores/:storeId/menu-items — Get all menu items for a store */
+export const getMenuItemsForStore = (storeId: string): Promise<MenuItem[]> =>
+    apiFetch<MenuItem[]>(`/api/stores/${storeId}/menu-items`);
 
-/** TODO: DELETE /api/menu-items/:id — Delete a menu item */
-export const deleteMenuItem = (_menuItemId: string): void => {
-    console.warn('[API STUB] deleteMenuItem — replace with real API call');
-};
+/** DELETE /api/menu-items/:id — Delete a menu item */
+export const deleteMenuItem = (menuItemId: string): Promise<void> =>
+    apiFetch<void>(`/api/menu-items/${menuItemId}`, { method: 'DELETE' });
 
 // ─── Rider Actions ───────────────────────────────────────────────────────────
 
-/** TODO: POST /api/riders — Create a new rider account */
-export const createRiderAccount = (_input: CreateRiderInput): RiderAccount => {
-    console.warn('[API STUB] createRiderAccount — replace with real API call');
-    throw new Error('Backend not connected yet. Please implement the API.');
-};
+/** POST /api/riders — Create a new rider account */
+export const createRiderAccount = (input: CreateRiderInput): Promise<RiderAccount> =>
+    apiFetch<RiderAccount>('/api/riders', { method: 'POST', body: input });
 
-/** TODO: POST /api/riders/login — Sign in a rider */
-export const signInRider = (_email: string, _password: string): RiderAccount | null => {
-    console.warn('[API STUB] signInRider — replace with real API call');
-    return null;
-};
+/** POST /api/riders/login — Sign in a rider. Resolves to null on bad credentials. */
+export const signInRider = (email: string, password: string): Promise<RiderAccount | null> =>
+    apiFetchOrNull<RiderAccount>('/api/riders/login', {
+        method: 'POST',
+        body: { email, password },
+    });
 
-/** TODO: GET /api/riders/me — Get the currently authenticated rider */
-export const getCurrentRider = (): RiderAccount | null => {
-    console.warn('[API STUB] getCurrentRider — replace with real API call');
-    return null;
-};
+/** GET /api/riders/me — Get the currently authenticated rider */
+export const getCurrentRider = (): Promise<RiderAccount | null> =>
+    apiFetchOrNull<RiderAccount>('/api/riders/me');
 
-/** TODO: POST /api/riders/logout — Log out the current rider */
-export const logoutRider = (): void => {
-    console.warn('[API STUB] logoutRider — replace with real API call');
-};
+/** POST /api/riders/logout — Log out the current rider */
+export const logoutRider = (): Promise<void> =>
+    apiFetch<void>('/api/riders/logout', { method: 'POST' });
 
-/** TODO: PATCH /api/riders/:id/status — Set rider online/offline status */
-export const setRiderOnlineStatus = (_riderId: string, _isOnline: boolean): void => {
-    console.warn('[API STUB] setRiderOnlineStatus — replace with real API call');
-};
+/** PATCH /api/riders/:id/status — Set rider online/offline status */
+export const setRiderOnlineStatus = (riderId: string, isOnline: boolean): Promise<void> =>
+    apiFetch<void>(`/api/riders/${riderId}/status`, { method: 'PATCH', body: { isOnline } });
 
-/** TODO: GET /api/riders/online — Get all online riders */
-export const getOnlineRiders = (): RiderAccount[] => {
-    console.warn('[API STUB] getOnlineRiders — replace with real API call');
-    return [];
-};
+/**
+ * PATCH /api/riders/:id/location — Report the rider's current position.
+ *
+ * Sent while a rider is online so dispatch can match them to nearby orders and
+ * the admin fleet view can show where they are.
+ */
+export const updateRiderLocation = (riderId: string, coords: Coordinates): Promise<void> =>
+    apiFetch<void>(`/api/riders/${riderId}/location`, { method: 'PATCH', body: coords });
 
-/** TODO: GET /api/riders/:id — Get a rider by ID */
-export const getRiderById = (_riderId: string): RiderAccount | null => {
-    console.warn('[API STUB] getRiderById — replace with real API call');
-    return null;
-};
+/** GET /api/riders/online — Get all online riders */
+export const getOnlineRiders = (): Promise<RiderAccount[]> =>
+    apiFetch<RiderAccount[]>('/api/riders/online');
+
+/** GET /api/riders/:id — Get a rider by ID */
+export const getRiderById = (riderId: string): Promise<RiderAccount | null> =>
+    apiFetchOrNull<RiderAccount>(`/api/riders/${riderId}`);
+
+// ─── Customer Actions ────────────────────────────────────────────────────────
+
+/** POST /api/customers — Register a new customer */
+export const createCustomerAccount = (input: CreateCustomerInput): Promise<CustomerProfile> =>
+    apiFetch<CustomerProfile>('/api/customers', { method: 'POST', body: input });
+
+/** POST /api/customers/login — Sign in a customer. Resolves to null on bad credentials. */
+export const signInCustomer = (email: string, password: string): Promise<CustomerProfile | null> =>
+    apiFetchOrNull<CustomerProfile>('/api/customers/login', {
+        method: 'POST',
+        body: { email, password },
+    });
+
+/** GET /api/customers/me — Get the currently authenticated customer */
+export const getCurrentCustomer = (): Promise<CustomerProfile | null> =>
+    apiFetchOrNull<CustomerProfile>('/api/customers/me');
+
+/** POST /api/customers/logout — Clear the current customer session */
+export const logoutCustomer = (): Promise<void> =>
+    apiFetch<void>('/api/customers/logout', { method: 'POST' });
+
+/** PATCH /api/customers/me — Update the current customer's profile */
+export const updateCustomerProfile = (updates: UpdateCustomerInput): Promise<CustomerProfile> =>
+    apiFetch<CustomerProfile>('/api/customers/me', { method: 'PATCH', body: updates });
+
+/** POST /api/customers/me/password — Change the current customer's password */
+export const changeCustomerPassword = (
+    currentPassword: string,
+    newPassword: string,
+): Promise<void> =>
+    apiFetch<void>('/api/customers/me/password', {
+        method: 'POST',
+        body: { currentPassword, newPassword },
+    });
+
+/** DELETE /api/customers/me — Permanently delete the current customer's account */
+export const deleteCustomerAccount = (): Promise<void> =>
+    apiFetch<void>('/api/customers/me', { method: 'DELETE' });
+
+/** GET /api/customers/me/transactions — Order history for the current customer */
+export const getCustomerTransactions = (): Promise<Transaction[]> =>
+    apiFetch<Transaction[]>('/api/customers/me/transactions');
+
+// ─── Customer Addresses ──────────────────────────────────────────────────────
+
+/** POST /api/customers/me/addresses — Add a delivery address */
+export const addCustomerAddress = (address: Omit<UserAddress, 'id'>): Promise<CustomerProfile> =>
+    apiFetch<CustomerProfile>('/api/customers/me/addresses', { method: 'POST', body: address });
+
+/** PATCH /api/customers/me/addresses/:id — Update a delivery address */
+export const updateCustomerAddress = (
+    addressId: string,
+    updates: Partial<Omit<UserAddress, 'id'>>,
+): Promise<CustomerProfile> =>
+    apiFetch<CustomerProfile>(`/api/customers/me/addresses/${addressId}`, {
+        method: 'PATCH',
+        body: updates,
+    });
+
+/** DELETE /api/customers/me/addresses/:id — Remove a delivery address */
+export const deleteCustomerAddress = (addressId: string): Promise<CustomerProfile> =>
+    apiFetch<CustomerProfile>(`/api/customers/me/addresses/${addressId}`, { method: 'DELETE' });
+
+/** POST /api/customers/me/addresses/:id/default — Mark an address as the default */
+export const setDefaultCustomerAddress = (addressId: string): Promise<CustomerProfile> =>
+    apiFetch<CustomerProfile>(`/api/customers/me/addresses/${addressId}/default`, {
+        method: 'POST',
+    });
+
+// ─── Marketing site ──────────────────────────────────────────────────────────
+
+/** POST /api/contact — Send a message from the contact form */
+export const sendContactMessage = (input: ContactMessageInput): Promise<void> =>
+    apiFetch<void>('/api/contact', { method: 'POST', body: input });
+
+/** POST /api/newsletter — Subscribe an email to the marketing newsletter */
+export const subscribeToNewsletter = (email: string): Promise<void> =>
+    apiFetch<void>('/api/newsletter', { method: 'POST', body: { email } });
 
 // ─── Admin Actions ───────────────────────────────────────────────────────────
 
-/** TODO: POST /api/admins — Create a new admin account */
-export const createAdminAccount = (_input: { username: string; email: string; password: string }): AdminAccount => {
-    console.warn('[API STUB] createAdminAccount — replace with real API call');
-    throw new Error('Backend not connected yet. Please implement the API.');
-};
+/** POST /api/admins/login — Sign in an admin. Resolves to null on bad credentials. */
+export const signInAdmin = (email: string, password: string): Promise<AdminAccount | null> =>
+    apiFetchOrNull<AdminAccount>('/api/admins/login', {
+        method: 'POST',
+        body: { email, password },
+    });
 
-/** TODO: POST /api/admins/login — Sign in an admin */
-export const signInAdmin = (_email: string, _password: string): AdminAccount | null => {
-    console.warn('[API STUB] signInAdmin — replace with real API call');
-    return null;
-};
+/** GET /api/admins/me — Get the currently authenticated admin */
+export const getCurrentAdmin = (): Promise<AdminAccount | null> =>
+    apiFetchOrNull<AdminAccount>('/api/admins/me');
 
-/** TODO: GET /api/admins/me — Get the currently authenticated admin */
-export const getCurrentAdmin = (): AdminAccount | null => {
-    console.warn('[API STUB] getCurrentAdmin — replace with real API call');
-    return null;
-};
+/** POST /api/admins/logout — Clear the current admin session */
+export const logoutAdmin = (): Promise<void> =>
+    apiFetch<void>('/api/admins/logout', { method: 'POST' });
 
 // ─── Admin Stats & Activity ──────────────────────────────────────────────────
 
-/** TODO: GET /api/admin/stats — Get platform-wide statistics */
-export const getPlatformStats = (): PlatformStats => {
-    console.warn('[API STUB] getPlatformStats — replace with real API call');
-    return {
-        totalVendors: 0,
-        totalStores: 0,
-        totalRiders: 0,
-        totalMenuItems: 0,
-        totalOrders: 0,
-        totalRevenue: 0,
-    };
-};
+/** GET /api/admin/stats — Get platform-wide statistics */
+export const getPlatformStats = (): Promise<PlatformStats> =>
+    apiFetch<PlatformStats>('/api/admin/stats');
 
-/** TODO: GET /api/admin/activity — Get recent system activity */
-export const getSystemActivity = (): ActivityItem[] => {
-    console.warn('[API STUB] getSystemActivity — replace with real API call');
-    return [];
-};
+/** GET /api/admin/activity — Get recent system activity */
+export const getSystemActivity = (): Promise<ActivityItem[]> =>
+    apiFetch<ActivityItem[]>('/api/admin/activity');
 
-/** TODO: GET /api/admin/pending — Get pending verification items */
-export const getPendingActions = (): PendingItem[] => {
-    console.warn('[API STUB] getPendingActions — replace with real API call');
-    return [];
-};
+/** GET /api/admin/pending — Get pending verification items */
+export const getPendingActions = (): Promise<PendingItem[]> =>
+    apiFetch<PendingItem[]>('/api/admin/pending');
 
-/** TODO: POST /api/admin/verify — Approve or reject a vendor/rider */
-export const verifyUser = (_id: string, _type: 'vendor' | 'rider', _action: 'approve' | 'reject'): void => {
-    console.warn('[API STUB] verifyUser — replace with real API call');
-};
+/** POST /api/admin/verify — Approve or reject a vendor/rider */
+export const verifyUser = (
+    id: string,
+    type: 'vendor' | 'rider',
+    action: 'approve' | 'reject',
+): Promise<void> => apiFetch<void>('/api/admin/verify', { method: 'POST', body: { id, type, action } });
 
 // ─── Admin Lists ─────────────────────────────────────────────────────────────
 
-/** TODO: GET /api/admin/vendors — Get all vendors */
-export const getAllVendors = (): VendorAccount[] => {
-    console.warn('[API STUB] getAllVendors — replace with real API call');
-    return [];
-};
+/** GET /api/admin/vendors — Get all vendors */
+export const getAllVendors = (): Promise<VendorAccount[]> =>
+    apiFetch<VendorAccount[]>('/api/admin/vendors');
 
-/** TODO: GET /api/admin/riders — Get all riders */
-export const getAllRiders = (): RiderAccount[] => {
-    console.warn('[API STUB] getAllRiders — replace with real API call');
-    return [];
-};
+/** GET /api/admin/riders — Get all riders */
+export const getAllRiders = (): Promise<RiderAccount[]> =>
+    apiFetch<RiderAccount[]>('/api/admin/riders');
 
-/** TODO: GET /api/admin/stores — Get all stores */
-export const getAllStores = (): VendorStore[] => {
-    console.warn('[API STUB] getAllStores — replace with real API call');
-    return [];
-};
+/** GET /api/admin/stores — Get all stores */
+export const getAllStores = (): Promise<VendorStore[]> =>
+    apiFetch<VendorStore[]>('/api/admin/stores');
 
-/** TODO: GET /api/admin/orders — Get all orders */
-export const getAllOrders = (): Order[] => {
-    console.warn('[API STUB] getAllOrders — replace with real API call');
-    return [];
-};
+/** GET /api/admin/orders — Get all orders */
+export const getAllOrders = (): Promise<Order[]> => apiFetch<Order[]>('/api/admin/orders');
 
 // ─── Order Management ────────────────────────────────────────────────────────
 
-/** TODO: POST /api/orders — Create a new order */
-export const createOrder = (_input: CreateOrderInput): Order => {
-    console.warn('[API STUB] createOrder — replace with real API call');
-    throw new Error('Backend not connected yet. Please implement the API.');
+/**
+ * POST /api/orders — Create a new order.
+ *
+ * `customerId` is NOT sent by the frontend — the backend must read it from the
+ * authenticated session so a client can't place an order as somebody else.
+ */
+export const createOrder = (input: CreateOrderInput): Promise<Order> =>
+    apiFetch<Order>('/api/orders', { method: 'POST', body: input });
+
+/**
+ * GET /api/orders/pending?location=...&lat=...&lng=... — Pending orders near a rider.
+ *
+ * Coordinates are sent when the rider's device has shared them, in which case
+ * the backend should sort by real distance rather than matching the location
+ * string.
+ */
+export const getPendingOrdersForRider = (
+    riderLocation: string,
+    coords?: Coordinates | null,
+): Promise<Order[]> =>
+    apiFetch<Order[]>('/api/orders/pending', {
+        params: {
+            location: riderLocation,
+            lat: coords?.latitude ?? undefined,
+            lng: coords?.longitude ?? undefined,
+        },
+    });
+
+/** GET /api/riders/:id/orders — Get all orders assigned to a rider */
+export const getOrdersForRider = (riderId: string): Promise<Order[]> =>
+    apiFetch<Order[]>(`/api/riders/${riderId}/orders`);
+
+/** POST /api/orders/:id/accept — Accept an order as a rider */
+export const acceptOrder = (orderId: string, riderId: string): Promise<Order | null> =>
+    apiFetchOrNull<Order>(`/api/orders/${orderId}/accept`, { method: 'POST', body: { riderId } });
+
+/** PATCH /api/orders/:id/status — Update an order's status */
+export const updateOrderStatus = (orderId: string, status: OrderStatus): Promise<Order | null> =>
+    apiFetchOrNull<Order>(`/api/orders/${orderId}/status`, { method: 'PATCH', body: { status } });
+
+/** GET /api/orders/:id — Get an order by ID */
+export const getOrderById = (orderId: string): Promise<Order | null> =>
+    apiFetchOrNull<Order>(`/api/orders/${orderId}`);
+
+/** GET /api/stores/:id/location — Get store address for navigation */
+export const getStoreLocation = async (storeId: string): Promise<string | null> => {
+    const result = await apiFetchOrNull<{ address: string }>(`/api/stores/${storeId}/location`);
+    return result?.address ?? null;
 };
 
-/** TODO: GET /api/orders/pending?location=... — Get pending orders near a rider */
-export const getPendingOrdersForRider = (_riderLocation: string): Order[] => {
-    console.warn('[API STUB] getPendingOrdersForRider — replace with real API call');
-    return [];
-};
-
-/** TODO: GET /api/riders/:id/orders — Get all orders assigned to a rider */
-export const getOrdersForRider = (_riderId: string): Order[] => {
-    console.warn('[API STUB] getOrdersForRider — replace with real API call');
-    return [];
-};
-
-/** TODO: POST /api/orders/:id/accept — Accept an order as a rider */
-export const acceptOrder = (_orderId: string, _riderId: string): Order | null => {
-    console.warn('[API STUB] acceptOrder — replace with real API call');
-    return null;
-};
-
-/** TODO: PATCH /api/orders/:id/status — Update an order's status */
-export const updateOrderStatus = (_orderId: string, _status: OrderStatus): Order | null => {
-    console.warn('[API STUB] updateOrderStatus — replace with real API call');
-    return null;
-};
-
-/** TODO: GET /api/orders/:id — Get an order by ID */
-export const getOrderById = (_orderId: string): Order | null => {
-    console.warn('[API STUB] getOrderById — replace with real API call');
-    return null;
-};
-
-/** TODO: GET /api/stores/:id/location — Get store address for navigation */
-export const getStoreLocation = (_storeId: string): string | null => {
-    console.warn('[API STUB] getStoreLocation — replace with real API call');
-    return null;
-};
-
-/** TODO: GET /api/admin/orders/stats — Get order statistics */
-export const getOrderStats = () => {
-    console.warn('[API STUB] getOrderStats — replace with real API call');
-    return {
-        totalOrders: 0,
-        todayOrders: 0,
-        pendingOrders: 0,
-        activeOrders: 0,
-        completedOrders: 0,
-        totalRevenue: 0,
-        todayRevenue: 0,
-        onlineRiders: 0,
-        totalRiders: 0,
-    };
-};
+/** GET /api/admin/orders/stats — Get order statistics */
+export const getOrderStats = (): Promise<OrderStats> =>
+    apiFetch<OrderStats>('/api/admin/orders/stats');
 
 // ─── Vendor Orders ───────────────────────────────────────────────────────────
 
-/** TODO: GET /api/vendors/:id/orders — Get all orders for a vendor's stores */
-export const getOrdersForVendor = (_vendorId: string): Order[] => {
-    console.warn('[API STUB] getOrdersForVendor — replace with real API call');
-    return [];
-};
+/** GET /api/vendors/:id/orders — Get all orders for a vendor's stores */
+export const getOrdersForVendor = (vendorId: string): Promise<Order[]> =>
+    apiFetch<Order[]>(`/api/vendors/${vendorId}/orders`);
 
 // ─── Earnings ────────────────────────────────────────────────────────────────
 
-/** TODO: GET /api/vendors/:id/earnings — Get earnings for a vendor */
-export const getVendorEarnings = (_vendorId: string): EarningsPeriod => {
-    console.warn('[API STUB] getVendorEarnings — replace with real API call');
-    return { today: 0, thisMonth: 0, thisYear: 0, todayOrders: 0, monthOrders: 0, yearOrders: 0 };
-};
+/** GET /api/vendors/:id/earnings — Get earnings for a vendor */
+export const getVendorEarnings = (vendorId: string): Promise<EarningsPeriod> =>
+    apiFetch<EarningsPeriod>(`/api/vendors/${vendorId}/earnings`);
 
-/** TODO: GET /api/stores/:id/earnings — Get earnings for a specific store */
-export const getStoreEarnings = (_storeId: string): StoreEarnings => {
-    console.warn('[API STUB] getStoreEarnings — replace with real API call');
-    return {
-        storeId: _storeId,
-        storeName: '',
-        vendorId: '',
-        vendorName: '',
-        todayEarnings: 0,
-        todayOrders: 0,
-        monthEarnings: 0,
-        monthOrders: 0,
-        yearEarnings: 0,
-        yearOrders: 0,
-    };
-};
+/** GET /api/stores/:id/earnings — Get earnings for a specific store */
+export const getStoreEarnings = (storeId: string): Promise<StoreEarnings> =>
+    apiFetch<StoreEarnings>(`/api/stores/${storeId}/earnings`);
 
-/** TODO: GET /api/vendors/:id/stores/earnings — Get earnings for all vendor stores */
-export const getVendorStoreEarnings = (_vendorId: string): StoreEarnings[] => {
-    console.warn('[API STUB] getVendorStoreEarnings — replace with real API call');
-    return [];
-};
+/** GET /api/vendors/:id/stores/earnings — Get earnings for all vendor stores */
+export const getVendorStoreEarnings = (vendorId: string): Promise<StoreEarnings[]> =>
+    apiFetch<StoreEarnings[]>(`/api/vendors/${vendorId}/stores/earnings`);
 
-/** TODO: GET /api/admin/stores/earnings — Get all store earnings (admin) */
-export const getAllStoreEarningsForAdmin = (): StoreEarnings[] => {
-    console.warn('[API STUB] getAllStoreEarningsForAdmin — replace with real API call');
-    return [];
-};
+/** GET /api/admin/stores/earnings — Get all store earnings (admin) */
+export const getAllStoreEarningsForAdmin = (): Promise<StoreEarnings[]> =>
+    apiFetch<StoreEarnings[]>('/api/admin/stores/earnings');
 
-/** TODO: GET /api/riders/:id/earnings — Get earnings for a rider */
-export const getRiderEarnings = (_riderId: string): EarningsPeriod => {
-    console.warn('[API STUB] getRiderEarnings — replace with real API call');
-    return { today: 0, thisMonth: 0, thisYear: 0, todayOrders: 0, monthOrders: 0, yearOrders: 0 };
-};
+/** GET /api/riders/:id/earnings — Get earnings for a rider */
+export const getRiderEarnings = (riderId: string): Promise<EarningsPeriod> =>
+    apiFetch<EarningsPeriod>(`/api/riders/${riderId}/earnings`);
 
-/** TODO: GET /api/admin/earnings — Get all entity earnings (admin) */
-export const getAllEarningsForAdmin = (): EntityEarnings[] => {
-    console.warn('[API STUB] getAllEarningsForAdmin — replace with real API call');
-    return [];
-};
-
-// ─── Misc ────────────────────────────────────────────────────────────────────
-
-/** TODO: POST /api/reload — Reload state (needed for cross-tab sync) */
-export const reloadFromStorage = (): void => {
-    console.warn('[API STUB] reloadFromStorage — no-op in real backend (use WebSockets or polling)');
-};
+/** GET /api/admin/earnings — Get all entity earnings (admin) */
+export const getAllEarningsForAdmin = (): Promise<EntityEarnings[]> =>
+    apiFetch<EntityEarnings[]>('/api/admin/earnings');

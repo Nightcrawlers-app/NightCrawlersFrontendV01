@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useGlobalLoader } from '../../context/GlobalLoaderContext';
 import Footer from '../../components/layout/Footer';
@@ -17,7 +17,7 @@ import {
   EarningsPeriod,
   StoreEarnings,
   clearCurrentVendor,
-  reloadFromStorage,
+  toErrorMessage,
 } from '../../services/api';
 import { resolveImageUrl } from '../../lib/imageUtils';
 
@@ -53,36 +53,95 @@ const VendorDashboard: React.FC = () => {
     imageUrl: '',
   });
   const [categoryTags, setCategoryTags] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
+  const [isCheckingStatus, setIsCheckingStatus] = useState(false);
 
-  useEffect(() => {
-    const currentVendor = getCurrentVendor();
-    if (!currentVendor) {
-      navigate('/vendor-signin');
-      return;
-    }
-    setVendor(currentVendor);
-    setStores(getStoresForVendor(currentVendor.id));
+  // Guards against setting state after the page unmounts.
+  const cancelledRef = useRef(false);
 
-    // Load earnings
-    const vendorEarnings = getVendorEarnings(currentVendor.id);
+  const loadDashboard = useCallback(async (vendorId: string) => {
+    // Independent requests, so fire them together rather than in sequence.
+    const [vendorStores, vendorEarnings, perStoreEarnings, allOrders] = await Promise.all([
+      getStoresForVendor(vendorId),
+      getVendorEarnings(vendorId),
+      getVendorStoreEarnings(vendorId),
+      getOrdersForVendor(vendorId),
+    ]);
+
+    if (cancelledRef.current) return;
+
+    setStores(vendorStores);
     setEarnings(vendorEarnings);
-
-    // Load per-store earnings
-    setStoreEarnings(getVendorStoreEarnings(currentVendor.id));
+    setStoreEarnings(perStoreEarnings);
 
     // Count today's orders (all statuses)
-    const allOrders = getOrdersForVendor(currentVendor.id);
     const todayStart = new Date();
     todayStart.setHours(0, 0, 0, 0);
     const todayOrders = allOrders.filter(o => new Date(o.createdAt) >= todayStart);
     setTodayOrderCount(todayOrders.length);
     setActiveOrdersCount(allOrders.filter(o => ['pending', 'preparing', 'ready'].includes(o.status)).length);
-  }, [navigate]);
+  }, []);
+
+  useEffect(() => {
+    cancelledRef.current = false;
+
+    const init = async () => {
+      try {
+        const currentVendor = await getCurrentVendor();
+        if (cancelledRef.current) return;
+
+        if (!currentVendor) {
+          navigate('/vendor-signin');
+          return;
+        }
+
+        setVendor(currentVendor);
+
+        // An unverified vendor sees the pending screen, which needs no data.
+        if (currentVendor.verified) {
+          await loadDashboard(currentVendor.id);
+        }
+      } catch (error) {
+        if (cancelledRef.current) return;
+        setLoadError(toErrorMessage(error, 'Could not load your dashboard.'));
+      } finally {
+        if (!cancelledRef.current) setIsLoading(false);
+      }
+    };
+
+    init();
+
+    return () => {
+      cancelledRef.current = true;
+    };
+  }, [navigate, loadDashboard]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center font-poppins">
+        <div className="flex flex-col items-center gap-3">
+          <div className="w-8 h-8 border-2 border-[#C62222] border-t-transparent rounded-full animate-spin" />
+          <p className="text-sm text-[#667085]">Loading your dashboard…</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!vendor) {
     return (
-      <div className="min-h-screen bg-white flex items-center justify-center font-poppins">
-        <p className="text-sm text-[#667085]">Loading...</p>
+      <div className="min-h-screen bg-white flex items-center justify-center font-poppins p-6">
+        <div className="text-center max-w-sm">
+          <p className="text-sm text-[#667085] mb-4">
+            {loadError || 'Could not load your account.'}
+          </p>
+          <button
+            onClick={() => navigate('/vendor-signin')}
+            className="px-5 py-2.5 bg-[#C62222] text-white text-sm font-medium rounded-lg hover:bg-[#A01B1B] transition-colors"
+          >
+            Back to sign in
+          </button>
+        </div>
       </div>
     );
   }
@@ -110,24 +169,35 @@ const VendorDashboard: React.FC = () => {
 
           <div className="space-y-3">
             <button
-              onClick={() => {
-                showLoaderWithDelay(400); // Simulate network refresh
-                // Reload from localStorage to get latest verification status
-                reloadFromStorage();
-                const currentVendor = getCurrentVendor();
-                if (currentVendor) setVendor(currentVendor);
+              disabled={isCheckingStatus}
+              onClick={async () => {
+                showLoaderWithDelay(400);
+                // Re-fetch the vendor so an admin approval shows up.
+                setIsCheckingStatus(true);
+                try {
+                  const currentVendor = await getCurrentVendor();
+                  if (currentVendor) {
+                    setVendor(currentVendor);
+                    if (currentVendor.verified) await loadDashboard(currentVendor.id);
+                  }
+                } catch (error) {
+                  setLoadError(toErrorMessage(error, 'Could not check your status.'));
+                } finally {
+                  setIsCheckingStatus(false);
+                }
               }}
-              className="w-full py-3 bg-[#C62222] text-white font-semibold rounded-xl hover:bg-[#a01b1b] transition-colors"
+              className="w-full py-3 bg-[#C62222] text-white font-semibold rounded-xl hover:bg-[#a01b1b] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
             >
-              Check Status
+              {isCheckingStatus ? 'Checking…' : 'Check Status'}
             </button>
             <button
-              onClick={() => {
+              onClick={async () => {
                 showLoaderWithDelay(500);
-                setTimeout(() => {
-                  clearCurrentVendor();
+                try {
+                  await clearCurrentVendor();
+                } finally {
                   navigate('/vendor-signin');
-                }, 300);
+                }
               }}
               className="w-full py-3 bg-gray-100 text-gray-700 font-medium rounded-xl hover:bg-gray-200 transition-colors flex items-center justify-center gap-2"
             >
@@ -229,7 +299,7 @@ const VendorDashboard: React.FC = () => {
     if (imageFile) {
       try {
         imageUrl = await readFileAsDataUrl(imageFile);
-      } catch (error) {
+      } catch {
         setIsSaving(false);
         setErrorMessage('Unable to upload the image. Please try again.');
         return;
@@ -244,31 +314,36 @@ const VendorDashboard: React.FC = () => {
       imageUrl = resolvedUrl;
     }
 
-    const created = createStore({
-      name: form.name,
-      categories: categoryTags,
-      address: form.address,
-      description: form.description,
-      imageUrl,
-      openingTime: form.openingTime,
-      closingTime: form.closingTime,
-    });
+    try {
+      const created = await createStore({
+        name: form.name,
+        categories: categoryTags,
+        address: form.address,
+        description: form.description,
+        imageUrl,
+        openingTime: form.openingTime,
+        closingTime: form.closingTime,
+      });
 
-    setStores((prev) => [...prev, created]);
-    setForm({
-      name: '',
-      openingTime: '',
-      closingTime: '',
-      categoryInput: '',
-      address: '',
-      description: '',
-      imageUrl: '',
-    });
-    setCategoryTags([]);
-    setImageFile(null);
-    setIsSaving(false);
+      setStores((prev) => [...prev, created]);
+      setForm({
+        name: '',
+        openingTime: '',
+        closingTime: '',
+        categoryInput: '',
+        address: '',
+        description: '',
+        imageUrl: '',
+      });
+      setCategoryTags([]);
+      setImageFile(null);
 
-    navigate(`/vendor-dashboard/restaurant/${created.id}`, { state: created });
+      navigate(`/vendor-dashboard/restaurant/${created.id}`, { state: created });
+    } catch (error) {
+      setErrorMessage(toErrorMessage(error, 'Could not create the store. Please try again.'));
+    } finally {
+      setIsSaving(false);
+    }
   };
 
   return (
@@ -289,12 +364,13 @@ const VendorDashboard: React.FC = () => {
               </div>
             </div>
             <button
-              onClick={() => {
+              onClick={async () => {
                 showLoaderWithDelay(500);
-                setTimeout(() => {
-                  clearCurrentVendor();
+                try {
+                  await clearCurrentVendor();
+                } finally {
                   navigate('/vendor-signin');
-                }, 300);
+                }
               }}
               className="flex items-center gap-2 px-4 py-2.5 bg-red-50 hover:bg-[#C62222] text-[#C62222] hover:text-white rounded-xl text-sm font-semibold transition-colors border border-red-100"
             >

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import logo from '../../assets/logo.png';
 import vendorSignUpImage from '../../assets/signin-image.png';
-import { BUSINESS_TYPES, createVendorAccount, createRiderAccount } from '../../services/api';
+import { BUSINESS_TYPES, createVendorAccount, createRiderAccount, toErrorMessage } from '../../services/api';
 
 type SignUpType = 'partner' | 'rider';
 
@@ -45,7 +45,7 @@ const VendorSignUp: React.FC = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
@@ -73,7 +73,7 @@ const VendorSignUp: React.FC = () => {
 
     try {
       if (signUpType === 'partner') {
-        createVendorAccount({
+        await createVendorAccount({
           firstName: formData.firstName,
           lastName: formData.lastName,
           businessType: formData.businessType,
@@ -82,10 +82,9 @@ const VendorSignUp: React.FC = () => {
           location: formData.location,
           password: formData.password,
         });
-        setIsSubmitting(false);
         navigate('/vendor-dashboard');
       } else {
-        createRiderAccount({
+        await createRiderAccount({
           firstName: formData.firstName,
           lastName: formData.lastName,
           vehicleType: formData.vehicleType,
@@ -94,11 +93,11 @@ const VendorSignUp: React.FC = () => {
           location: formData.location,
           password: formData.password,
         });
-        setIsSubmitting(false);
         navigate('/rider-dashboard');
       }
-    } catch (err: any) {
-      setErrorMessage(err.message || 'Error occurred during signup.');
+    } catch (err) {
+      setErrorMessage(toErrorMessage(err, 'Error occurred during signup.'));
+    } finally {
       setIsSubmitting(false);
     }
   };

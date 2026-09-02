@@ -18,6 +18,21 @@ export const BUSINESS_TYPES: BusinessType[] = [
     'Clubs/Lounges',
 ];
 
+// ─── Location ────────────────────────────────────────────────────────────────
+
+/**
+ * A point on the map. Optional everywhere for now: addresses typed by hand have
+ * no coordinates until someone geocodes them, and the app still works without.
+ *
+ * The browser's geolocation API gives us these directly when a customer taps
+ * "use my current location". Turning a typed address into coordinates needs a
+ * paid geocoding service and isn't wired up yet.
+ */
+export type Coordinates = {
+    latitude: number;
+    longitude: number;
+};
+
 export type BusinessTypeMeta = {
     type: BusinessType;
     singular: string;
@@ -38,7 +53,6 @@ export type VendorAccount = {
     phoneNumber: string;
     email: string;
     location: string;
-    password: string;
     createdAt: string;
     verified: boolean;
 };
@@ -52,6 +66,11 @@ export type VendorStore = {
     address: string;
     description: string;
     imageUrl: string;
+    /** Null until the store's address has been geocoded. */
+    latitude?: number | null;
+    longitude?: number | null;
+    /** Metres from the search point. Only present on proximity searches. */
+    distance?: number | null;
     openingTime: string;
     closingTime?: string;
     createdAt: string;
@@ -119,7 +138,9 @@ export type RiderAccount = {
     phoneNumber: string;
     email: string;
     location: string;
-    password: string;
+    /** Last reported position, for dispatch and the admin fleet view. */
+    latitude?: number | null;
+    longitude?: number | null;
     createdAt: string;
     isOnline?: boolean;
     lastSeen?: string;
@@ -136,6 +157,28 @@ export type CreateRiderInput = {
     password: string;
 };
 
+// ─── Payments ────────────────────────────────────────────────────────────────
+
+/**
+ * How the customer pays.
+ *
+ * There is no payment gateway in this version — nothing is charged online. The
+ * customer settles with the rider at the door, either in cash or on a POS
+ * terminal, so this records an intent rather than a completed transaction.
+ * See the Payments section of BACKEND_API_GUIDE.md before adding a gateway.
+ */
+export type PaymentMethod = 'cash_on_delivery' | 'card_on_delivery';
+
+/** Display text for each payment method. The stored value stays machine-readable. */
+export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
+    cash_on_delivery: 'Cash on Delivery',
+    card_on_delivery: 'Card on Delivery',
+};
+
+/** Human-readable label for a payment method, safe on unrecognised values. */
+export const formatPaymentMethod = (method: PaymentMethod | string): string =>
+    PAYMENT_METHOD_LABELS[method as PaymentMethod] ?? String(method);
+
 // ─── Orders ──────────────────────────────────────────────────────────────────
 
 export type OrderStatus = 'pending' | 'preparing' | 'ready' | 'accepted' | 'picked_up' | 'in_transit' | 'delivered' | 'cancelled';
@@ -149,10 +192,15 @@ export type Order = {
     customerPhone: string;
     customerLocation: string;
     customerAddress: string;
+    /** Where to deliver, when the customer shared a real point. */
+    customerLatitude?: number | null;
+    customerLongitude?: number | null;
     riderId: string | null;
     items: { name: string; quantity: number; price: number }[];
     totalAmount: number;
     deliveryFee: number;
+    /** How the customer intends to pay. Nothing is charged online — see PaymentMethod. */
+    paymentMethod: PaymentMethod;
     status: OrderStatus;
     createdAt: string;
     acceptedAt?: string;
@@ -167,8 +215,11 @@ export type CreateOrderInput = {
     customerPhone: string;
     customerLocation: string;
     customerAddress: string;
+    customerLatitude?: number | null;
+    customerLongitude?: number | null;
     items: { name: string; quantity: number; price: number }[];
     deliveryFee: number;
+    paymentMethod: PaymentMethod;
 };
 
 // ─── Admin ───────────────────────────────────────────────────────────────────
@@ -177,27 +228,81 @@ export type AdminAccount = {
     id: string;
     username: string;
     email: string;
-    password: string;
     createdAt: string;
 };
 
-export type CreateAdminInput = {
+// ─── Customer ────────────────────────────────────────────────────────────────
+
+export type UserAddress = {
+    id: string;
+    label: string;
+    address: string;
+    city: string;
+    /** Set when the customer picked this via "use my current location". */
+    latitude?: number | null;
+    longitude?: number | null;
+    isDefault: boolean;
+};
+
+export type NotificationPreferences = {
+    orderUpdates: boolean;
+    promotions: boolean;
+    newsletter: boolean;
+};
+
+/**
+ * The signed-in customer. Returned by `GET /api/customers/me` and by the
+ * signup/login endpoints. Never contains a password or hash.
+ */
+export type CustomerProfile = {
+    id: string;
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    avatar: string | null;
+    location: string;
+    joinedDate: string;
+    addresses: UserAddress[];
+    favoriteVendors: string[];
+    notifications: NotificationPreferences;
+};
+
+export type CreateCustomerInput = {
     username: string;
     email: string;
     password: string;
 };
 
-// ─── User Profile ────────────────────────────────────────────────────────────
+/** Fields a customer is allowed to change on their own profile. */
+export type UpdateCustomerInput = Partial<
+    Pick<CustomerProfile, 'firstName' | 'lastName' | 'phone' | 'avatar' | 'location' | 'favoriteVendors' | 'notifications'>
+>;
 
-export type UserProfile = {
+export type OrderItemSummary = {
+    name: string;
+    quantity: number;
+    price: number;
+    image: string;
+};
+
+/**
+ * A customer-facing order record — the order history shown in the profile page.
+ * Returned by `GET /api/customers/me/transactions`.
+ */
+export type Transaction = {
     id: string;
-    firstName: string;
-    lastName: string;
-    email: string;
-    phoneNumber: string;
-    location: string;
-    avatarUrl?: string;
-    createdAt: string;
+    orderId: string;
+    date: string;
+    status: 'delivered' | 'in-transit' | 'preparing' | 'cancelled' | 'refunded';
+    items: OrderItemSummary[];
+    subtotal: number;
+    deliveryFee: number;
+    total: number;
+    vendorName: string;
+    vendorImage?: string;
+    paymentMethod: PaymentMethod;
+    deliveryAddress: string;
 };
 
 // ─── Platform / Admin Stats ──────────────────────────────────────────────────
@@ -254,4 +359,14 @@ export type EntityEarnings = {
     name: string;
     type: 'vendor' | 'rider';
     earnings: EarningsPeriod;
+};
+
+// ─── Marketing site ──────────────────────────────────────────────────────────
+
+/** What the "Chat to our friendly team" form on /contact sends. */
+export type ContactMessageInput = {
+    firstName: string;
+    lastName: string;
+    email: string;
+    message: string;
 };

@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Users, Store, Package, TrendingUp, ShieldAlert, Activity, Bike, LogOut, Search, CheckCircle, X, Check, XCircle, Truck, Clock, Phone, MapPin, DollarSign, Calendar, BarChart3, ChevronRight } from 'lucide-react';
-import { getCurrentAdmin, AdminAccount, getPlatformStats, PlatformStats, getSystemActivity, getPendingActions, ActivityItem, PendingItem, verifyUser, getOrderStats, getOnlineRiders, RiderAccount, getAllRiders, getAllEarningsForAdmin, EntityEarnings, getAllStoreEarningsForAdmin, StoreEarnings } from '../../services/api';
+import { getCurrentAdmin, AdminAccount, getPlatformStats, PlatformStats, getSystemActivity, getPendingActions, ActivityItem, PendingItem, verifyUser, getOrderStats, OrderStats, getOnlineRiders, RiderAccount, getAllRiders, getAllEarningsForAdmin, EntityEarnings, getAllStoreEarningsForAdmin, StoreEarnings, logoutAdmin, toErrorMessage } from '../../services/api';
 import Footer from '../../components/layout/Footer';
 
 import Loader from '../../components/ui/Loader';
@@ -21,7 +21,7 @@ const AdminDashboard: React.FC = () => {
     const [stats, setStats] = useState<PlatformStats | null>(null);
     const [activity, setActivity] = useState<ActivityItem[]>([]);
     const [pending, setPending] = useState<PendingItem[]>([]);
-    const [orderStats, setOrderStats] = useState<ReturnType<typeof getOrderStats> | null>(null);
+    const [orderStats, setOrderStats] = useState<OrderStats | null>(null);
     const [onlineRiders, setOnlineRiders] = useState<RiderAccount[]>([]);
 
     // Modal State
@@ -36,53 +36,148 @@ const AdminDashboard: React.FC = () => {
     const [earningsTab, setEarningsTab] = useState<'vendors' | 'stores' | 'riders'>('vendors');
     const [earningsPeriod, setEarningsPeriod] = useState<'today' | 'month' | 'year'>('today');
 
-    const fetchData = () => {
-        setStats(getPlatformStats());
-        setActivity(getSystemActivity());
-        setPending(getPendingActions());
-        setOrderStats(getOrderStats());
-        setOnlineRiders(getOnlineRiders());
-        setAllRiders(getAllRiders());
-        setAllEarnings(getAllEarningsForAdmin());
-        setAllStoreEarnings(getAllStoreEarningsForAdmin());
-    };
+    const [loadError, setLoadError] = useState('');
+    const [isProcessingAction, setIsProcessingAction] = useState(false);
+    const [reloadKey, setReloadKey] = useState(0);
 
-    useEffect(() => {
-        const currentAdmin = getCurrentAdmin();
-        if (!currentAdmin) {
-            navigate('/admin-login');
-            return;
+    // Guards against setting state after unmount — polling keeps requests in flight.
+    const cancelledRef = useRef(false);
+
+    const fetchData = useCallback(async () => {
+        try {
+            // All independent, so fetch them concurrently rather than one by one.
+            const [
+                platformStats,
+                systemActivity,
+                pendingActions,
+                orderStatistics,
+                ridersOnline,
+                riders,
+                earnings,
+                storeEarnings,
+            ] = await Promise.all([
+                getPlatformStats(),
+                getSystemActivity(),
+                getPendingActions(),
+                getOrderStats(),
+                getOnlineRiders(),
+                getAllRiders(),
+                getAllEarningsForAdmin(),
+                getAllStoreEarningsForAdmin(),
+            ]);
+
+            if (cancelledRef.current) return;
+
+            setStats(platformStats);
+            setActivity(systemActivity);
+            setPending(pendingActions);
+            setOrderStats(orderStatistics);
+            setOnlineRiders(ridersOnline);
+            setAllRiders(riders);
+            setAllEarnings(earnings);
+            setAllStoreEarnings(storeEarnings);
+            setLoadError('');
+        } catch (error) {
+            if (cancelledRef.current) return;
+            setLoadError(toErrorMessage(error, 'Could not load dashboard data.'));
         }
-        setAdmin(currentAdmin);
-        fetchData();
-    }, [navigate]);
-
-    // Refresh stats every 5 seconds for "real-time" feel
-    useEffect(() => {
-        const interval = setInterval(() => {
-            fetchData();
-        }, 5000);
-        return () => clearInterval(interval);
     }, []);
 
-    const handleLogout = () => {
-        // In a real app we would clear session here
-        navigate('/admin-login');
+    useEffect(() => {
+        cancelledRef.current = false;
+        let interval: ReturnType<typeof setInterval> | undefined;
+
+        const init = async () => {
+            try {
+                const currentAdmin = await getCurrentAdmin();
+                if (cancelledRef.current) return;
+
+                if (!currentAdmin) {
+                    navigate('/admin-login');
+                    return;
+                }
+                setAdmin(currentAdmin);
+                await fetchData();
+
+                // Refresh every 5 seconds for a "real-time" feel. Only starts
+                // once we know the admin is signed in.
+                interval = setInterval(fetchData, 5000);
+            } catch (error) {
+                if (cancelledRef.current) return;
+                setLoadError(toErrorMessage(error, 'Could not load your account.'));
+            }
+        };
+
+        init();
+
+        return () => {
+            cancelledRef.current = true;
+            if (interval) clearInterval(interval);
+        };
+    }, [navigate, fetchData, reloadKey]);
+
+    const handleLogout = async () => {
+        try {
+            await logoutAdmin();
+        } finally {
+            navigate('/admin-login');
+        }
     };
 
-    const handleProcessAction = (action: 'approve' | 'reject') => {
-        if (!selectedAction) return;
-        verifyUser(selectedAction.id, selectedAction.type, action);
+    const handleProcessAction = async (action: 'approve' | 'reject') => {
+        if (!selectedAction || isProcessingAction) return;
 
-        // Optimistic update
-        setPending(prev => prev.filter(p => p.id !== selectedAction.id));
-        setSelectedAction(null);
-        fetchData();
-        // Reload so data is fresh
-        setTimeout(() => window.location.reload(), 500);
+        const target = selectedAction;
+        setIsProcessingAction(true);
+        try {
+            await verifyUser(target.id, target.type, action);
+            // Drop it locally straight away, then refetch to stay in sync.
+            setPending(prev => prev.filter(p => p.id !== target.id));
+            setSelectedAction(null);
+            await fetchData();
+        } catch (error) {
+            setLoadError(toErrorMessage(error, `Could not ${action} this ${target.type}.`));
+        } finally {
+            setIsProcessingAction(false);
+        }
     };
 
     if (!admin || !stats) {
+        if (loadError) {
+            return (
+                <div className="min-h-screen bg-gray-50 flex items-center justify-center font-poppins p-6">
+                    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 max-w-md w-full text-center">
+                        <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-5">
+                            <ShieldAlert className="w-7 h-7 text-[#C62222]" />
+                        </div>
+                        <h1 className="text-xl font-bold text-gray-900 mb-2">Can't reach the server</h1>
+                        <p className="text-sm text-gray-500 mb-1">{loadError}</p>
+                        <p className="text-xs text-gray-400 mb-6">
+                            The admin console needs the backend API to be running.
+                        </p>
+                        <div className="space-y-3">
+                            <button
+                                onClick={() => {
+                                    // Re-runs the whole init effect, so the admin
+                                    // session is re-checked too, not just the data.
+                                    setLoadError('');
+                                    setReloadKey((k) => k + 1);
+                                }}
+                                className="w-full py-2.5 bg-[#C62222] text-white text-sm font-semibold rounded-lg hover:bg-[#A01B1B] transition-colors"
+                            >
+                                Try again
+                            </button>
+                            <button
+                                onClick={() => navigate('/admin-login')}
+                                className="w-full py-2.5 bg-gray-100 text-gray-700 text-sm font-medium rounded-lg hover:bg-gray-200 transition-colors"
+                            >
+                                Back to login
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
         return <Loader fullScreen />;
     }
 

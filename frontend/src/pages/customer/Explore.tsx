@@ -1,12 +1,14 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Search, ChevronDown, ShoppingBasket, Pill, Disc, Utensils, Wine, X, Clock, Heart, Trash2 } from 'lucide-react';
+import { Search, ChevronDown, ShoppingBasket, X, Clock, Heart, Trash2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import AddressModal from '../../components/modals/AddressModal';
 import { useCart } from '../../context/CartContext';
 import pinIcon from '../../assets/location-pin-red.svg';
-import { BusinessType, VendorStore, getStoresForExplore } from '../../services/api';
+import { BusinessType, VendorStore, getStoresForExplore, toErrorMessage } from '../../services/api';
+import { useDeliveryLocation } from '../../context/DeliveryLocationContext';
+import type { Coordinates } from '../../types/models';
 import groceriesIcon from '../../assets/category-groceries.png';
 import pharmacyIcon from '../../assets/category-pharmacy.png';
 import clubsIcon from '../../assets/category-clubs.png';
@@ -85,10 +87,17 @@ const Explore: React.FC = () => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { cartItems, removeFromCart, clearCart, cartTotal } = useCart();
   const promoContainerRef = useRef<HTMLDivElement | null>(null);
-  const [promoIndex, setPromoIndex] = useState(0);
-  const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
+  // Carousel position. A ref, not state: nothing renders it, so updating it
+  // shouldn't trigger a re-render.
+  const promoIndexRef = useRef(0);
+  // One source of truth, shared with the vendor page and checkout.
+  const { label: selectedAddress, coords: selectedCoords, setLocation } = useDeliveryLocation();
   const [selectedCategory, setSelectedCategory] = useState<string>('All');
   const [searchQuery, setSearchQuery] = useState('');
+  const [stores, setStores] = useState<VendorStore[]>([]);
+  const [storesLoading, setStoresLoading] = useState(true);
+  const [storesError, setStoresError] = useState('');
+  const [storesReloadKey, setStoresReloadKey] = useState(0);
   const storesSectionRef = useRef<HTMLDivElement | null>(null);
 
   const handleOpenAddressModal = () => {
@@ -99,8 +108,8 @@ const Explore: React.FC = () => {
     setIsAddressModalOpen(false);
   };
 
-  const handleSelectAddress = (address: string) => {
-    setSelectedAddress(address);
+  const handleSelectAddress = (address: string, coords?: Coordinates | null) => {
+    setLocation(address || null, coords);
     setIsAddressModalOpen(false);
   };
 
@@ -112,18 +121,40 @@ const Explore: React.FC = () => {
     navigate('/vendor-details', { state: store });
   };
 
-  const filteredStores = getStoresForExplore(
-    selectedAddress,
-    selectedCategory === 'All' ? undefined : (selectedCategory as BusinessType),
-  );
-  const fallbackStores = getStoresForExplore(
-    null,
-    selectedCategory === 'All' ? undefined : (selectedCategory as BusinessType),
-  );
-  const shouldUseFallback = Boolean(selectedAddress) && filteredStores.length === 0;
-  const initialDisplayedStores = shouldUseFallback ? fallbackStores : filteredStores;
+  // Load stores whenever the address or category changes. If an address is
+  // selected but returns nothing, fall back to showing stores from everywhere.
+  useEffect(() => {
+    let cancelled = false;
+    const category = selectedCategory === 'All' ? undefined : (selectedCategory as BusinessType);
 
-  const displayedStores = initialDisplayedStores.filter((store) => {
+    const loadStores = async () => {
+      setStoresLoading(true);
+      setStoresError('');
+      try {
+        // Coordinates, when we have them, let the backend do a real proximity
+        // search instead of matching the address text.
+        let results = await getStoresForExplore(selectedAddress, category, selectedCoords);
+        if (selectedAddress && results.length === 0) {
+          results = await getStoresForExplore(null, category);
+        }
+        if (cancelled) return;
+        setStores(results);
+      } catch (error) {
+        if (cancelled) return;
+        setStores([]);
+        setStoresError(toErrorMessage(error, 'Could not load stores. Please try again.'));
+      } finally {
+        if (!cancelled) setStoresLoading(false);
+      }
+    };
+
+    loadStores();
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedAddress, selectedCoords, selectedCategory, storesReloadKey]);
+
+  const displayedStores = stores.filter((store) => {
     if (!searchQuery) return true;
     const q = searchQuery.toLowerCase();
     return (
@@ -147,16 +178,13 @@ const Explore: React.FC = () => {
     if (!slides.length) return;
 
     // Ensure we start from the first slide when showing the carousel
-    setPromoIndex(0);
+    promoIndexRef.current = 0;
     container.scrollTo({ left: slides[0].offsetLeft, behavior: 'auto' });
 
     const id = window.setInterval(() => {
-      setPromoIndex((prev) => {
-        const next = (prev + 1) % slides.length;
-        const target = slides[next];
-        container.scrollTo({ left: target.offsetLeft, behavior: 'smooth' });
-        return next;
-      });
+      const next = (promoIndexRef.current + 1) % slides.length;
+      promoIndexRef.current = next;
+      container.scrollTo({ left: slides[next].offsetLeft, behavior: 'smooth' });
     }, 3000);
 
     return () => window.clearInterval(id);
@@ -271,7 +299,33 @@ const Explore: React.FC = () => {
 
 
               </div>
-              {displayedStores.length > 0 ? (
+              {storesLoading ? (
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[16px] md:gap-[20px] lg:gap-[24px] justify-items-center">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="w-full max-w-[280px] animate-pulse">
+                      <div className="w-full h-[160px] rounded-[12px] bg-gray-100" />
+                      <div className="h-[14px] w-2/3 rounded bg-gray-100 mt-[12px]" />
+                      <div className="h-[12px] w-1/3 rounded bg-gray-100 mt-[8px]" />
+                    </div>
+                  ))}
+                </div>
+              ) : storesError ? (
+                <div className="w-full flex flex-col items-center justify-center py-10 gap-[12px]">
+                  <p className="font-poppins font-medium text-[16px] leading-[24px] text-center text-[#101828]">
+                    Couldn't load stores
+                  </p>
+                  <p className="font-poppins font-normal text-[14px] leading-[20px] text-center text-[#667085] max-w-[352px]">
+                    {storesError}
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setStoresReloadKey((k) => k + 1)}
+                    className="mt-[4px] px-[20px] py-[10px] rounded-[8px] bg-[#C62222] text-white text-[14px] font-medium hover:bg-[#991B1B] transition-colors"
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : displayedStores.length > 0 ? (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-[16px] md:gap-[20px] lg:gap-[24px] justify-items-center">
                   {displayedStores.map((store) => (
                     <StoreCard

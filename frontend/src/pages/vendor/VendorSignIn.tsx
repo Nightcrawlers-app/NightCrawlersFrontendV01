@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import partnerLogo from '../../assets/vendor-partner-logo.svg';
-import { signInVendor, signInRider } from '../../services/api';
+import { signInVendor, signInRider, toErrorMessage } from '../../services/api';
 
 type LoginType = 'partner' | 'rider';
 
@@ -15,39 +15,41 @@ const VendorSignIn: React.FC = () => {
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
-    setLoading(true);
 
     if (!email.trim()) {
       setErrorMessage('Please enter your email.');
-      setLoading(false);
       return;
     }
 
     if (!password.trim()) {
       setErrorMessage('Please enter your password.');
-      setLoading(false);
       return;
     }
 
-    if (loginType === 'partner') {
-      const vendor = signInVendor(email, password);
-      if (!vendor) {
-        setErrorMessage('Incorrect email or password.');
-        setLoading(false);
-        return;
+    setLoading(true);
+    try {
+      if (loginType === 'partner') {
+        const vendor = await signInVendor(email, password);
+        if (!vendor) {
+          setErrorMessage('Incorrect email or password.');
+          return;
+        }
+        navigate('/vendor-dashboard');
+      } else {
+        const rider = await signInRider(email, password);
+        if (!rider) {
+          setErrorMessage('Incorrect email or password.');
+          return;
+        }
+        navigate('/rider-dashboard');
       }
-      navigate('/vendor-dashboard');
-    } else {
-      const rider = signInRider(email, password);
-      if (!rider) {
-        setErrorMessage('Incorrect email or password.');
-        setLoading(false);
-        return;
-      }
-      navigate('/rider-dashboard');
+    } catch (error) {
+      setErrorMessage(toErrorMessage(error, 'Could not sign in. Please try again.'));
+    } finally {
+      setLoading(false);
     }
   };
 

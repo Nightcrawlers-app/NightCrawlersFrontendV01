@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { NewsletterForm } from '../../types';
+import { subscribeToNewsletter, toErrorMessage } from '../../services/api';
 import subscribeImage from '../../../../.figma/image/mje7taht-9jmjknp.png';
 
 const NewsletterSection: React.FC = () => {
@@ -7,21 +8,31 @@ const NewsletterSection: React.FC = () => {
     email: ''
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [message, setMessage] = useState('');
+  const [isError, setIsError] = useState(false);
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ email: e.target.value });
+    setMessage('');
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsSubmitting(true);
+    if (isSubmitting) return;
 
-    // Simulate API call
-    setTimeout(() => {
-      setIsSubmitting(false);
-      alert('Thank you for subscribing!');
+    setIsSubmitting(true);
+    setMessage('');
+    setIsError(false);
+    try {
+      await subscribeToNewsletter(formData.email);
       setFormData({ email: '' });
-    }, 2000);
+      setMessage("Thanks, you're on the list.");
+    } catch (error) {
+      setIsError(true);
+      setMessage(toErrorMessage(error, "Couldn't subscribe you just now. Please try again."));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -53,6 +64,15 @@ const NewsletterSection: React.FC = () => {
                 {isSubmitting ? '...' : 'Subscribe'}
               </button>
             </div>
+
+            {message && (
+              <p
+                className={`mt-2 text-[13px] font-poppins ${isError ? 'text-[#991B1B]' : 'text-[#067647]'}`}
+                role="status"
+              >
+                {message}
+              </p>
+            )}
           </form>
         </div>
 

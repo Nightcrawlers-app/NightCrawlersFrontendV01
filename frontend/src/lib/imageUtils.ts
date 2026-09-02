@@ -60,6 +60,19 @@ const normalizeMetaUrl = (sourceUrl: string, metaUrl: string) => {
   return metaUrl;
 };
 
+/**
+ * Last resort for a bare host like "example.com/menu" that isn't obviously an
+ * image: fetch the page through r.jina.ai, a public text-extraction proxy, and
+ * read its og:image tag.
+ *
+ * Two things worth knowing before relying on this. It sends the URL a vendor
+ * typed to a third party we have no agreement with, and it's an outbound
+ * dependency with no SLA — if r.jina.ai is down or rate-limits us, this returns
+ * null and the vendor sees no image. It only fires for input that is neither a
+ * data/blob URL nor an http(s) URL, so in practice it almost never runs. The
+ * plan is to delete it once uploads move to S3 or Cloudinary; see the Images
+ * section of BACKEND_API_GUIDE.md.
+ */
 const resolveViaProxy = async (sourceUrl: string) => {
   const target = sourceUrl.replace(/^https?:\/\//i, '');
   const response = await fetch(`https://r.jina.ai/http://${target}`);

@@ -1,5 +1,5 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Loader from './components/ui/Loader';
 import ScrollToTop from './components/ScrollToTop';
 import { GlobalLoaderProvider } from './context/GlobalLoaderContext';
@@ -44,6 +44,9 @@ const FAQ = lazy(() => import('./pages/marketing/FAQ'));
 const Terms = lazy(() => import('./pages/legal/Terms'));
 const Privacy = lazy(() => import('./pages/legal/Privacy'));
 
+// Fallback for unmatched URLs
+const NotFound = lazy(() => import('./pages/NotFound'));
+
 function App() {
   return (
     <Router basename={import.meta.env.BASE_URL}>
@@ -78,6 +81,15 @@ function App() {
             <Route path="/about" element={<About />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/privacy" element={<Privacy />} />
+
+            {/* Shorthand URLs people type by hand */}
+            <Route path="/admin" element={<Navigate to="/admin-dashboard" replace />} />
+            <Route path="/vendor" element={<Navigate to="/vendor-dashboard" replace />} />
+            <Route path="/rider" element={<Navigate to="/rider-dashboard" replace />} />
+            <Route path="/profile" element={<Navigate to="/user-profile" replace />} />
+
+            {/* Anything else. Without this, an unknown URL renders a blank page. */}
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
       </GlobalLoaderProvider>

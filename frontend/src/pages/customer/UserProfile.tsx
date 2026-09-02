@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Footer from '../../components/layout/Footer';
 import Header from '../../components/layout/Header';
-import { useAuth, Transaction, getInitials, UserAddress } from '../../context/AuthContext';
+import { useAuth, getInitials, UserAddress } from '../../context/AuthContext';
 import { useGlobalLoader } from '../../context/GlobalLoaderContext';
 import {
     User, Mail, MapPin, Phone, Edit2, ShoppingBag, CreditCard,
@@ -10,6 +10,7 @@ import {
     Truck, Package, Plus, Heart, Star, TrendingUp, Calendar,
     Shield, ChevronDown, Eye, RotateCcw, X, Camera, Trash2, Check
 } from 'lucide-react';
+import { formatPaymentMethod } from '../../services/api';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
     'delivered': { label: 'Delivered', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', icon: <CheckCircle2 size={14} /> },
@@ -22,7 +23,7 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
 type TabType = 'profile' | 'transactions' | 'addresses' | 'settings';
 
 const UserProfile: React.FC = () => {
-    const { user, transactions, isAuthenticated, logout, updateProfile,
+    const { user, transactions, isAuthenticated, isInitializing, logout, updateProfile,
         addAddress, updateAddress, deleteAddress, setDefaultAddress,
         changePassword, deleteAccount } = useAuth();
     const navigate = useNavigate();
@@ -58,12 +59,13 @@ const UserProfile: React.FC = () => {
         }
     }, [toast]);
 
-    // Redirect if not authenticated
+    // Redirect if not authenticated — but wait for the initial session check,
+    // otherwise a signed-in user gets bounced to /signin on every page load.
     useEffect(() => {
-        if (!isAuthenticated) {
+        if (!isInitializing && !isAuthenticated) {
             navigate('/signin');
         }
-    }, [isAuthenticated, navigate]);
+    }, [isInitializing, isAuthenticated, navigate]);
 
     useEffect(() => {
         if (user) {
@@ -85,13 +87,13 @@ const UserProfile: React.FC = () => {
 
         // Validate file type
         if (!file.type.startsWith('image/')) {
-            alert('Please select an image file.');
+            setToast({ message: 'Please select an image file.', type: 'error' });
             return;
         }
 
         // Validate file size (max 5MB)
         if (file.size > 5 * 1024 * 1024) {
-            alert('Image must be under 5MB.');
+            setToast({ message: 'Image must be under 5MB.', type: 'error' });
             return;
         }
 
@@ -110,11 +112,12 @@ const UserProfile: React.FC = () => {
         updateProfile({ avatar: null });
     };
 
-    const handleSaveProfile = () => {
-        updateProfile(editForm);
+    // No page reload needed any more — the context updates from the server's
+    // response, so React re-renders with the saved data on its own.
+    const handleSaveProfile = async () => {
+        await updateProfile(editForm);
         setIsEditing(false);
         setToast({ message: 'Profile updated successfully!', type: 'success' });
-        setTimeout(() => window.location.reload(), 1200);
     };
 
     // ---- Address Handlers ----
@@ -130,35 +133,33 @@ const UserProfile: React.FC = () => {
         setShowAddressModal(true);
     };
 
-    const handleSaveAddress = () => {
+    const handleSaveAddress = async () => {
         if (!addressForm.label.trim() || !addressForm.address.trim() || !addressForm.city.trim()) {
             setToast({ message: 'Please fill in all address fields', type: 'error' });
             return;
         }
         if (editingAddress) {
-            updateAddress(editingAddress.id, addressForm);
+            await updateAddress(editingAddress.id, addressForm);
             setToast({ message: 'Address updated!', type: 'success' });
         } else {
-            addAddress(addressForm);
+            await addAddress(addressForm);
             setToast({ message: 'Address added!', type: 'success' });
         }
         setShowAddressModal(false);
-        setTimeout(() => window.location.reload(), 1200);
     };
 
-    const handleDeleteAddress = (id: string) => {
-        deleteAddress(id);
+    const handleDeleteAddress = async (id: string) => {
+        await deleteAddress(id);
         setToast({ message: 'Address removed', type: 'success' });
-        setTimeout(() => window.location.reload(), 1200);
     };
 
-    const handleSetDefault = (id: string) => {
-        setDefaultAddress(id);
+    const handleSetDefault = async (id: string) => {
+        await setDefaultAddress(id);
         setToast({ message: 'Default address updated', type: 'success' });
     };
 
     // ---- Password Handler ----
-    const handleChangePassword = () => {
+    const handleChangePassword = async () => {
         setPasswordError('');
         if (!passwordForm.current || !passwordForm.newPass || !passwordForm.confirm) {
             setPasswordError('Please fill in all fields');
@@ -168,7 +169,7 @@ const UserProfile: React.FC = () => {
             setPasswordError('New passwords do not match');
             return;
         }
-        const result = changePassword(passwordForm.current, passwordForm.newPass);
+        const result = await changePassword(passwordForm.current, passwordForm.newPass);
         if (!result.success) {
             setPasswordError(result.error || 'Failed to change password');
             return;
@@ -176,12 +177,11 @@ const UserProfile: React.FC = () => {
         setShowPasswordModal(false);
         setPasswordForm({ current: '', newPass: '', confirm: '' });
         setToast({ message: 'Password changed successfully!', type: 'success' });
-        setTimeout(() => window.location.reload(), 1200);
     };
 
     // ---- Delete Account Handler ----
-    const handleDeleteAccount = () => {
-        deleteAccount();
+    const handleDeleteAccount = async () => {
+        await deleteAccount();
         navigate('/');
     };
 
@@ -209,12 +209,13 @@ const UserProfile: React.FC = () => {
         });
     };
 
-    const handleLogout = () => {
+    const handleLogout = async () => {
         showLoaderWithDelay(500);
-        setTimeout(() => {
-            logout();
+        try {
+            await logout();
+        } finally {
             navigate('/');
-        }, 300);
+        }
     };
 
     const SIDEBAR_TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
@@ -632,7 +633,7 @@ const UserProfile: React.FC = () => {
                                                                         <CreditCard size={14} className="text-gray-400 mt-0.5 flex-shrink-0" />
                                                                         <div>
                                                                             <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">Payment</p>
-                                                                            <p className="text-xs text-gray-700">{txn.paymentMethod}</p>
+                                                                            <p className="text-xs text-gray-700">{formatPaymentMethod(txn.paymentMethod)}</p>
                                                                         </div>
                                                                     </div>
                                                                     <div className="flex items-start gap-2 p-3 bg-gray-50/80 rounded-lg">

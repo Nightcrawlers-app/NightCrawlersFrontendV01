@@ -2,7 +2,7 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
-import { Package, Truck, Store, ShoppingBag, Clock, Shield, MapPin, Zap } from 'lucide-react';
+import { Package, Truck, Store, ShoppingBag, Shield, Zap } from 'lucide-react';
 
 const Overview: React.FC = () => {
     return (
