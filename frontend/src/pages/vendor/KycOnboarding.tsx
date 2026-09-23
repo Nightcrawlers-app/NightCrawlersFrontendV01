@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Circle, Clock, ChevronRight, Upload } from 'lucide-react';
-import { apiFetch, toErrorMessage } from '../../lib/apiClient';
-import SmileIDVerification from '../../components/kyc/SmileIDVerification';
+import { apiFetch } from '../../lib/apiClient';
+import { toErrorMessage } from '../../services/api';
+import SmileIDVerification from '../../components/kyc/smileIDVerification';
 
 type Role = 'vendor' | 'rider';
 
