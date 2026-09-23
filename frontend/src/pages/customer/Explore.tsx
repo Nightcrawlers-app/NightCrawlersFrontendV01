@@ -14,6 +14,8 @@ import pharmacyIcon from '../../assets/category-pharmacy.png';
 import clubsIcon from '../../assets/category-clubs.png';
 import foodIcon from '../../assets/category-food.png';
 import drinksIcon from '../../assets/category-drinks.png';
+import PhoneVerificationModal from '../../components/ui/PhoneVerificationModal';
+import { useAuth } from '../../context/AuthContext';
 // import emptyStateImage from '../../assets/empty-state.png';
 // import promoBanner from '../../assets/signin-image.png'; // Using placeholder for now, ideally would be specific promo image
 
@@ -83,6 +85,8 @@ const StoreCard: React.FC<StoreCardProps> = ({ name, rating, time, image, onClic
 
 const Explore: React.FC = () => {
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const [showPhoneGate, setShowPhoneGate] = useState(false);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { cartItems, removeFromCart, clearCart, cartTotal } = useCart();
@@ -459,12 +463,18 @@ const Explore: React.FC = () => {
                   <span className="text-[#667085] text-[14px] font-medium">Total: ₦{cartTotal.toLocaleString()}</span>
                   <div className="flex items-center gap-[12px]">
                     <button
-                      onClick={() => navigate('/order-summary')}
-                      className="h-[36px] px-[16px] bg-[#C62222] text-white text-[12px] font-medium rounded-[4px] hover:bg-[#A01B1B] transition-colors"
+                    onClick={() => {
+                      if (user && !user.phoneVerified) {
+                        setShowPhoneGate(true);
+                        return;
+                      }
+                      navigate('/order-summary');
+                    }}
+                    className="h-[36px] px-[16px] bg-[#C62222] text-white text-[12px] font-medium rounded-[4px] hover:bg-[#A01B1B] transition-colors"
                     >
                       Proceed to Checkout
-                    </button>
-                  </div>
+                      </button>
+                    </div>
                 </div>
               )}
 
@@ -494,6 +504,17 @@ const Explore: React.FC = () => {
         onClose={handleCloseAddressModal}
         onSelectAddress={handleSelectAddress}
       />
+
+      {showPhoneGate && (
+        <PhoneVerificationModal
+        required
+        onClose={() => setShowPhoneGate(false)}
+        onVerified={() => {
+          setShowPhoneGate(false);
+          navigate('/order-summary');
+        }}
+      />
+    )}
     </div >
   );
 };

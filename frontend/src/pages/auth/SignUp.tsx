@@ -49,7 +49,9 @@ const SignUp: React.FC = () => {
         password: formData.password,
       });
       if (result.success) {
-        navigate('/user-profile');
+        // Signup only creates the account and emails a code — it does not
+        // log the user in. Send them to enter that code next.
+        navigate('/verify-email', { state: { email: formData.email } });
       } else {
         setError(result.error || 'Could not create account. Please try again.');
       }

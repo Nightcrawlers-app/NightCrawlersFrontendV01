@@ -4,11 +4,13 @@ import Footer from '../../components/layout/Footer';
 import Header from '../../components/layout/Header';
 import { useAuth, getInitials, UserAddress } from '../../context/AuthContext';
 import { useGlobalLoader } from '../../context/GlobalLoaderContext';
+import PhoneVerificationModal from '../../components/ui/PhoneVerificationModal';
 import {
     User, Mail, MapPin, Phone, Edit2, ShoppingBag, CreditCard,
     Bell, LogOut, ChevronRight, Clock, CheckCircle2, XCircle,
     Truck, Package, Plus, Heart, Star, TrendingUp, Calendar,
-    Shield, ChevronDown, Eye, RotateCcw, X, Camera, Trash2, Check
+    Shield, ChevronDown, Eye, RotateCcw, X, Camera, Trash2, Check,
+    CheckCircle
 } from 'lucide-react';
 import { formatPaymentMethod } from '../../services/api';
 
@@ -35,6 +37,7 @@ const UserProfile: React.FC = () => {
     const [txnFilter, setTxnFilter] = useState<'all' | 'delivered' | 'cancelled'>('all');
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const [showPhoneModal, setShowPhoneModal] = useState(false);
 
     // Address modal state
     const [showAddressModal, setShowAddressModal] = useState(false);
@@ -114,10 +117,14 @@ const UserProfile: React.FC = () => {
 
     // No page reload needed any more — the context updates from the server's
     // response, so React re-renders with the saved data on its own.
-    const handleSaveProfile = async () => {
-        await updateProfile(editForm);
-        setIsEditing(false);
-        setToast({ message: 'Profile updated successfully!', type: 'success' });
+        const handleSaveProfile = async () => {
+            await updateProfile(editForm);
+            setIsEditing(false);
+            setToast({ message: 'Profile updated successfully!', type: 'success' });
+            // If they just added a phone number, prompt to verify it
+            if (editForm.phone && !user?.phoneVerified) {
+                setShowPhoneModal(true);
+            }
     };
 
     // ---- Address Handlers ----
@@ -437,7 +444,21 @@ const UserProfile: React.FC = () => {
                                                 <div className="p-3 bg-gray-50/80 rounded-lg text-sm flex items-center gap-2 border border-gray-100">
                                                     <Phone size={15} className="text-gray-400" />
                                                     {user.phone ? (
-                                                        <span className="text-gray-900">{user.phone}</span>
+                                                        <div className="flex items-center justify-between w-full">
+                                                            <span className="text-gray-900">{user.phone}</span>
+                                                            {user.phoneVerified ? (
+                                                                <span className="flex items-center gap-1 text-[10px] font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
+                                                                    <CheckCircle2 size={10} /> Verified
+                                                                </span>
+                                                            ) : (
+                                                                <button
+                                                                    onClick={() => setShowPhoneModal(true)}
+                                                                    className="text-[10px] font-semibold text-[#C62222] bg-[#FFF0F0] px-2 py-0.5 rounded-full hover:bg-[#C62222] hover:text-white transition-colors"
+                                                                >
+                                                                    Verify
+                                                                </button>
+                                                            )}
+                                                        </div>
                                                     ) : (
                                                         <span className="text-gray-400 italic">Not added yet — click Edit to add</span>
                                                     )}
@@ -1050,6 +1071,16 @@ const UserProfile: React.FC = () => {
                         <X size={14} />
                     </button>
                 </div>
+            )}
+
+                {showPhoneModal && (
+                    <PhoneVerificationModal
+                        onClose={() => setShowPhoneModal(false)}
+                        onVerified={() => {
+                            setShowPhoneModal(false);
+                            setToast({ message: 'Phone number verified!', type: 'success' });
+                    }}
+                />
             )}
         </div>
     );

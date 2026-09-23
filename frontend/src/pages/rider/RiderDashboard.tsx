@@ -299,7 +299,7 @@ const RiderDashboard: React.FC = () => {
                         <h1 className="font-bold text-sm leading-tight text-gray-900">{rider.firstName} {rider.lastName}</h1>
                         <p className="text-[10px] text-gray-500 uppercase tracking-widest flex items-center gap-1">
                             {rider.vehicleType}
-                            {isOnline && <span className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse"></span>}
+                            {isOnline && <span className="w-1.5 h-1.5 bg-night-green-600 rounded-full animate-pulse"></span>}
                         </p>
                     </div>
                 </div>
@@ -346,14 +346,14 @@ const RiderDashboard: React.FC = () => {
                 <section className="relative overflow-hidden rounded-3xl bg-white border border-gray-100 shadow-sm h-44 flex flex-col items-center justify-center">
                     {isOnline && (
                         <div className="absolute inset-0 z-0">
-                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-green-500/5 rounded-full blur-3xl animate-pulse"></div>
+                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-64 h-64 bg-night-green-600/5 rounded-full blur-3xl animate-pulse"></div>
                         </div>
                     )}
 
                     <div className="z-10 flex flex-col items-center gap-3">
                         <button
                             onClick={toggleOnlineStatus}
-                            className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 border-4 ${isOnline ? 'bg-green-500 border-green-400 scale-110' : 'bg-white border-[#C62222] text-[#C62222] hover:bg-red-50 shadow-red-100'}`}
+                            className={`w-16 h-16 rounded-full flex items-center justify-center shadow-lg transition-all duration-300 border-4 ${isOnline ? 'bg-night-green-600 border-night-green-500 scale-110' : 'bg-white border-[#C62222] text-[#C62222] hover:bg-red-50 shadow-red-100'}`}
                         >
                             <Power size={28} className={isOnline ? "text-white" : "text-[#C62222]"} />
                         </button>

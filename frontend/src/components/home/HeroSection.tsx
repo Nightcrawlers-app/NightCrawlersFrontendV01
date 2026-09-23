@@ -4,13 +4,12 @@ import { ChevronRight } from 'lucide-react';
 
 const HeroSection: React.FC = () => {
   return (
-    <section className="flex flex-col items-center w-full max-w-[1032px] mx-auto gap-8 sm:gap-[50px] mt-10 sm:mt-14 lg:mt-[60px] px-4">
-      <h1 className="text-[#222222] text-[32px] sm:text-[40px] lg:text-[48px] font-semibold leading-[40px] sm:leading-[52px] lg:leading-[58px] tracking-[-0.02em] text-center font-poppins m-0 max-w-[729px]">
+    <section className="flex flex-col items-center w-full max-w-[1032px] mx-auto gap-6 sm:gap-8 mt-8 sm:mt-10 lg:mt-12 px-4">      <h1 className="text-[#222222] text-[32px] sm:text-[40px] lg:text-[48px] font-semibold leading-[40px] sm:leading-[52px] lg:leading-[58px] tracking-[-0.02em] text-center font-poppins m-0 max-w-[729px]">
         Every Delivery to your Doorstep
       </h1>
-      <p className="text-[#222222] text-[14px] sm:text-[18px] lg:text-[20px] leading-[20px] sm:leading-[24px] tracking-[-0.02em] text-center font-poppins w-full max-w-[1032px] m-0 px-4 sm:px-0">
-        Night Crawlers is more than a delivery app - we're a platform built to elevate how people discover, enjoy, and experience food. We combine seamless technology with trusted restaurant partners to bring quality meals closer to you, no matter the hour.
-      </p>
+        <p className="text-[#667085] text-[15px] sm:text-[18px] leading-[22px] sm:leading-[26px] tracking-[-0.02em] text-center font-poppins w-full max-w-[560px] m-0 px-4 sm:px-0">
+          Food, groceries, and more — delivered fast, any hour of the night.
+        </p>
       <div className="flex items-center justify-center">
         <Link to="/explore" className="flex items-center gap-2 text-[#c62222] text-[16px] sm:text-[18px] lg:text-[20px] font-semibold tracking-normal font-poppins hover:underline whitespace-nowrap">
           Explore Categories here

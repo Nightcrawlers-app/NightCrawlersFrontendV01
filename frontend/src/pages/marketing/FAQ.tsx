@@ -52,18 +52,18 @@ const FAQ: React.FC = () => {
     <div className="min-h-screen bg-white flex flex-col font-poppins overflow-x-hidden">
       <Header />
 
-      <main className="flex-grow w-full bg-white px-4 sm:px-6 md:px-[40px] pt-[1%] pb-[60px] sm:pb-[80px]">
+      <main className="flex-grow w-full bg-white px-4 sm:px-6 md:px-[40px] pt-[1%] pb-[40px] sm:pb-[56px]">
         <div className="max-w-[1440px] mx-auto">
           {/* FAQ Title Section */}
-          <div className="flex flex-col items-center justify-center gap-[20px] sm:gap-[25px] md:gap-[30px] text-center mb-[60px] sm:mb-[80px]">
+          <div className="flex flex-col items-center justify-center gap-[20px] sm:gap-[25px] md:gap-[30px] text-center mb-[36px] sm:mb-[48px]">
             <div className="inline-flex items-center justify-center gap-[8px] sm:gap-[10px] border border-[#EAECF0] rounded-[50px] bg-[rgba(46,61,134,0.05)] px-[12px] sm:px-[16px] py-[8px] sm:py-[10px]">
               <p className="leading-[22px] sm:leading-[25px] md:leading-[27px] text-[#363838] text-[14px] sm:text-[16px] md:text-[18px]">FAQs</p>
             </div>
             <h1 className="leading-[120%] tracking-[-0.02em] text-[#222222] text-[28px] sm:text-[36px] md:text-[48px] font-semibold max-w-[800px]">
               Questions we Frequently get
             </h1>
-            <p className="leading-[22px] sm:leading-[26px] md:leading-[30px] text-[#667085] text-[14px] sm:text-[17px] md:text-[20px] max-w-[600px]">
-              We'd love to hear from you. Please fill out this form or shoot us an email.
+            <p className="leading-[22px] sm:leading-[26px] text-[#667085] text-[14px] sm:text-[16px] max-w-[500px]">
+              Quick answers to what people ask us most.
             </p>
           </div>
 

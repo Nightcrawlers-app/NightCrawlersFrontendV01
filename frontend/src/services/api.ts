@@ -168,12 +168,12 @@ export const resolveBusinessType = (input: string): BusinessType => {
 // ─── Vendor Actions ──────────────────────────────────────────────────────────
 
 /** POST /api/vendors — Create a new vendor account */
-export const createVendorAccount = (input: CreateVendorInput): Promise<VendorAccount> =>
-    apiFetch<VendorAccount>('/api/vendors', { method: 'POST', body: input });
+export const createVendorAccount = (input: CreateVendorInput): Promise<{ token: string; vendor: VendorAccount }> =>
+    apiFetch<{ token: string; vendor: VendorAccount }>('/api/vendors', { method: 'POST', body: input });
 
 /** POST /api/vendors/login — Sign in a vendor. Resolves to null on bad credentials. */
-export const signInVendor = (email: string, password: string): Promise<VendorAccount | null> =>
-    apiFetchOrNull<VendorAccount>('/api/vendors/login', {
+export const signInVendor = (email: string, password: string): Promise<{ token: string; vendor: VendorAccount } | null> =>
+    apiFetchOrNull<{ token: string; vendor: VendorAccount }>('/api/vendors/login', {
         method: 'POST',
         body: { email, password },
     });
@@ -183,8 +183,9 @@ export const getCurrentVendor = (): Promise<VendorAccount | null> =>
     apiFetchOrNull<VendorAccount>('/api/vendors/me');
 
 /** POST /api/vendors/logout — Clear the current vendor session */
-export const clearCurrentVendor = (): Promise<void> =>
-    apiFetch<void>('/api/vendors/logout', { method: 'POST' });
+export const clearCurrentVendor = async (): Promise<void> => {
+    await apiFetch('/api/vendors/logout', { method: 'POST' });
+};
 
 // ─── Store Actions ───────────────────────────────────────────────────────────
 
@@ -247,12 +248,12 @@ export const deleteMenuItem = (menuItemId: string): Promise<void> =>
 // ─── Rider Actions ───────────────────────────────────────────────────────────
 
 /** POST /api/riders — Create a new rider account */
-export const createRiderAccount = (input: CreateRiderInput): Promise<RiderAccount> =>
-    apiFetch<RiderAccount>('/api/riders', { method: 'POST', body: input });
+export const createRiderAccount = (input: CreateRiderInput): Promise<{ token: string; rider: RiderAccount }> =>
+    apiFetch<{ token: string; rider: RiderAccount }>('/api/riders', { method: 'POST', body: input });
 
 /** POST /api/riders/login — Sign in a rider. Resolves to null on bad credentials. */
-export const signInRider = (email: string, password: string): Promise<RiderAccount | null> =>
-    apiFetchOrNull<RiderAccount>('/api/riders/login', {
+export const signInRider = (email: string, password: string): Promise<{ token: string; rider: RiderAccount } | null> =>
+    apiFetchOrNull<{ token: string; rider: RiderAccount }>('/api/riders/login', {
         method: 'POST',
         body: { email, password },
     });
@@ -262,8 +263,9 @@ export const getCurrentRider = (): Promise<RiderAccount | null> =>
     apiFetchOrNull<RiderAccount>('/api/riders/me');
 
 /** POST /api/riders/logout — Log out the current rider */
-export const logoutRider = (): Promise<void> =>
-    apiFetch<void>('/api/riders/logout', { method: 'POST' });
+export const logoutRider = async (): Promise<void> => {
+    await apiFetch('/api/riders/logout', { method: 'POST' });
+};
 
 /** PATCH /api/riders/:id/status — Set rider online/offline status */
 export const setRiderOnlineStatus = (riderId: string, isOnline: boolean): Promise<void> =>
@@ -287,73 +289,179 @@ export const getRiderById = (riderId: string): Promise<RiderAccount | null> =>
     apiFetchOrNull<RiderAccount>(`/api/riders/${riderId}`);
 
 // ─── Customer Actions ────────────────────────────────────────────────────────
+//
+// The live backend puts customer auth behind email verification, under
+// /api/auth/*, and returns a Bearer token rather than setting a cookie.
+// Everything else about a customer's own data (profile, addresses, password)
+// lives under /api/users/me. This shape was confirmed against the real
+// deployed API on 2026-09-13 — see the raw responses in conversation history
+// if this ever needs re-verifying.
 
-/** POST /api/customers — Register a new customer */
-export const createCustomerAccount = (input: CreateCustomerInput): Promise<CustomerProfile> =>
-    apiFetch<CustomerProfile>('/api/customers', { method: 'POST', body: input });
+/** Raw shape the backend actually returns for a user record ("_id", not "id"). */
+type RawCustomer = Omit<CustomerProfile, 'id'> & { _id: string };
 
-/** POST /api/customers/login — Sign in a customer. Resolves to null on bad credentials. */
-export const signInCustomer = (email: string, password: string): Promise<CustomerProfile | null> =>
-    apiFetchOrNull<CustomerProfile>('/api/customers/login', {
-        method: 'POST',
-        body: { email, password },
-    });
+/** Convert the backend's `_id` field into the frontend's `id` field. */
+function mapCustomer(raw: RawCustomer): CustomerProfile {
+    const { _id, ...rest } = raw;
+    return { id: _id, ...rest };
+}
 
-/** GET /api/customers/me — Get the currently authenticated customer */
-export const getCurrentCustomer = (): Promise<CustomerProfile | null> =>
-    apiFetchOrNull<CustomerProfile>('/api/customers/me');
+/** Response from POST /api/auth/signup — no token yet, account isn't verified. */
+export type SignupResponse = {
+    message: string;
+    email: string;
+};
 
-/** POST /api/customers/logout — Clear the current customer session */
-export const logoutCustomer = (): Promise<void> =>
-    apiFetch<void>('/api/customers/logout', { method: 'POST' });
+/** POST /api/auth/signup — Start creating a customer account. Sends a verification code by email. */
+export const createCustomerAccount = (input: CreateCustomerInput): Promise<SignupResponse> =>
+    apiFetch<SignupResponse>('/api/auth/signup', { method: 'POST', body: input });
 
-/** PATCH /api/customers/me — Update the current customer's profile */
-export const updateCustomerProfile = (updates: UpdateCustomerInput): Promise<CustomerProfile> =>
-    apiFetch<CustomerProfile>('/api/customers/me', { method: 'PATCH', body: updates });
+/** POST /api/auth/resend-code — Request a new verification code. */
+export const resendVerificationCode = (email: string): Promise<{ message: string }> =>
+    apiFetch<{ message: string }>('/api/auth/resend-code', { method: 'POST', body: { email } });
 
-/** POST /api/customers/me/password — Change the current customer's password */
+/**
+ * POST /api/auth/verify — Confirm the emailed code. This is what actually
+ * creates the session: on success the backend returns a token + the full
+ * user record, so the customer is logged in immediately after verifying.
+ */
+export const verifyCustomerSignup = async (
+    email: string,
+    code: string,
+): Promise<CustomerProfile> => {
+    const { token, user } = await apiFetch<{ token: string; user: RawCustomer }>(
+        '/api/auth/verify',
+        { method: 'POST', body: { email, code } },
+    );
+    return mapCustomer(user);
+};
+
+/**
+ * POST /api/auth/login — Sign in a customer. Resolves to null on bad
+ * credentials. Unlike signup, this is a single step — no code needed.
+ */
+export const signInCustomer = async (
+    email: string,
+    password: string,
+): Promise<CustomerProfile | null> => {
+    const result = await apiFetchOrNull<{ token: string; user: RawCustomer }>(
+        '/api/auth/login',
+        { method: 'POST', body: { email, password } },
+    );
+    if (!result) return null;
+    return mapCustomer(result.user);
+};
+
+/** GET /api/auth/me — Get the currently authenticated customer. */
+export const getCurrentCustomer = async (): Promise<CustomerProfile | null> => {
+    const raw = await apiFetchOrNull<RawCustomer>('/api/auth/me');
+    return raw ? mapCustomer(raw) : null;
+};
+
+/**
+ * "Log out" the current customer.
+ *
+ * There is no server-side logout endpoint for customers on the live backend —
+ * with Bearer tokens there's no server session to invalidate, so this just
+ * drops the locally stored token.
+ */
+export const logoutCustomer = async (): Promise<void> => {
+    await apiFetch('/api/auth/logout', { method: 'POST' });
+};
+
+/** PATCH /api/users/me — Update the current customer's profile */
+export const updateCustomerProfile = async (updates: UpdateCustomerInput): Promise<CustomerProfile> =>
+    mapCustomer(
+        await apiFetch<RawCustomer>('/api/users/me', { method: 'PATCH', body: updates }),
+    );
+
+/** PATCH /api/users/me/password — Change the current customer's password */
 export const changeCustomerPassword = (
     currentPassword: string,
     newPassword: string,
 ): Promise<void> =>
-    apiFetch<void>('/api/customers/me/password', {
-        method: 'POST',
+    apiFetch<void>('/api/users/me/password', {
+        method: 'PATCH',
         body: { currentPassword, newPassword },
     });
 
-/** DELETE /api/customers/me — Permanently delete the current customer's account */
-export const deleteCustomerAccount = (): Promise<void> =>
-    apiFetch<void>('/api/customers/me', { method: 'DELETE' });
+/** POST /api/auth/forgot-password — request a reset code */
+export const forgotPassword = (email: string): Promise<{ message: string }> =>
+    apiFetch<{ message: string }>('/api/auth/forgot-password', {
+        method: 'POST',
+        body: { email },
+    });
 
-/** GET /api/customers/me/transactions — Order history for the current customer */
+/** POST /api/auth/reset-password — reset password with code */
+export const resetPassword = (
+    email: string,
+    code: string,
+    newPassword: string,
+): Promise<{ message: string }> =>
+    apiFetch<{ message: string }>('/api/auth/reset-password', {
+        method: 'POST',
+        body: { email, code, newPassword },
+    });
+    
+/** POST /api/users/me/phone/send — send OTP to customer's phone */
+export const sendPhoneOtp = (): Promise<{ message: string; phone: string }> =>
+    apiFetch<{ message: string; phone: string }>('/api/users/me/phone/send', {
+        method: 'POST',
+    });
+
+/** POST /api/users/me/phone/verify — verify OTP code */
+export const verifyPhoneOtp = (code: string): Promise<{ message: string; account: CustomerProfile }> =>
+    apiFetch<{ message: string; account: CustomerProfile }>('/api/users/me/phone/verify', {
+        method: 'POST',
+        body: { code },
+    });
+    
+/** DELETE /api/users/me — Permanently delete the current customer's account */
+export const deleteCustomerAccount = (): Promise<void> =>
+    apiFetch<void>('/api/users/me', { method: 'DELETE' });
+
+/**
+ * GET /api/customers/me/transactions — Order history for the current customer.
+ * NOT YET IMPLEMENTED on the backend as of 2026-09-13 (confirmed "not built
+ * yet"). Left pointed at the guide's path; will need re-checking once it
+ * exists — it currently 404s.
+ */
 export const getCustomerTransactions = (): Promise<Transaction[]> =>
     apiFetch<Transaction[]>('/api/customers/me/transactions');
 
 // ─── Customer Addresses ──────────────────────────────────────────────────────
 
-/** POST /api/customers/me/addresses — Add a delivery address */
-export const addCustomerAddress = (address: Omit<UserAddress, 'id'>): Promise<CustomerProfile> =>
-    apiFetch<CustomerProfile>('/api/customers/me/addresses', { method: 'POST', body: address });
+/** POST /api/users/me/addresses — Add a delivery address */
+export const addCustomerAddress = async (address: Omit<UserAddress, 'id'>): Promise<CustomerProfile> =>
+    mapCustomer(
+        await apiFetch<RawCustomer>('/api/users/me/addresses', { method: 'POST', body: address }),
+    );
 
-/** PATCH /api/customers/me/addresses/:id — Update a delivery address */
-export const updateCustomerAddress = (
+/** PATCH /api/users/me/addresses/:id — Update a delivery address */
+export const updateCustomerAddress = async (
     addressId: string,
     updates: Partial<Omit<UserAddress, 'id'>>,
 ): Promise<CustomerProfile> =>
-    apiFetch<CustomerProfile>(`/api/customers/me/addresses/${addressId}`, {
-        method: 'PATCH',
-        body: updates,
-    });
+    mapCustomer(
+        await apiFetch<RawCustomer>(`/api/users/me/addresses/${addressId}`, {
+            method: 'PATCH',
+            body: updates,
+        }),
+    );
 
-/** DELETE /api/customers/me/addresses/:id — Remove a delivery address */
-export const deleteCustomerAddress = (addressId: string): Promise<CustomerProfile> =>
-    apiFetch<CustomerProfile>(`/api/customers/me/addresses/${addressId}`, { method: 'DELETE' });
+/** DELETE /api/users/me/addresses/:id — Remove a delivery address */
+export const deleteCustomerAddress = async (addressId: string): Promise<CustomerProfile> =>
+    mapCustomer(
+        await apiFetch<RawCustomer>(`/api/users/me/addresses/${addressId}`, { method: 'DELETE' }),
+    );
 
-/** POST /api/customers/me/addresses/:id/default — Mark an address as the default */
-export const setDefaultCustomerAddress = (addressId: string): Promise<CustomerProfile> =>
-    apiFetch<CustomerProfile>(`/api/customers/me/addresses/${addressId}/default`, {
-        method: 'POST',
-    });
+/** PATCH /api/users/me/addresses/:id/default — Mark an address as the default */
+export const setDefaultCustomerAddress = async (addressId: string): Promise<CustomerProfile> =>
+    mapCustomer(
+        await apiFetch<RawCustomer>(`/api/users/me/addresses/${addressId}/default`, {
+            method: 'PATCH',
+        }),
+    );
 
 // ─── Marketing site ──────────────────────────────────────────────────────────
 
@@ -379,8 +487,9 @@ export const getCurrentAdmin = (): Promise<AdminAccount | null> =>
     apiFetchOrNull<AdminAccount>('/api/admins/me');
 
 /** POST /api/admins/logout — Clear the current admin session */
-export const logoutAdmin = (): Promise<void> =>
-    apiFetch<void>('/api/admins/logout', { method: 'POST' });
+export const logoutAdmin = async (): Promise<void> => {
+    await apiFetch('/api/admins/logout', { method: 'POST' });
+};
 
 // ─── Admin Stats & Activity ──────────────────────────────────────────────────
 

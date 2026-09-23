@@ -73,7 +73,7 @@ const VendorSignUp: React.FC = () => {
 
     try {
       if (signUpType === 'partner') {
-        await createVendorAccount({
+        const result = await createVendorAccount({
           firstName: formData.firstName,
           lastName: formData.lastName,
           businessType: formData.businessType,
@@ -82,9 +82,15 @@ const VendorSignUp: React.FC = () => {
           location: formData.location,
           password: formData.password,
         });
-        navigate('/vendor-dashboard');
+        navigate('/vendor-kyc', {
+          state: {
+            userId: result.vendor.id,
+            firstName: result.vendor.firstName,
+            lastName: result.vendor.lastName,
+          },
+        });
       } else {
-        await createRiderAccount({
+        const result = await createRiderAccount({
           firstName: formData.firstName,
           lastName: formData.lastName,
           vehicleType: formData.vehicleType,
@@ -93,7 +99,13 @@ const VendorSignUp: React.FC = () => {
           location: formData.location,
           password: formData.password,
         });
-        navigate('/rider-dashboard');
+        navigate('/rider-kyc', {
+          state: {
+            userId: result.rider.id,
+            firstName: result.rider.firstName,
+            lastName: result.rider.lastName,
+          },
+        });
       }
     } catch (err) {
       setErrorMessage(toErrorMessage(err, 'Error occurred during signup.'));

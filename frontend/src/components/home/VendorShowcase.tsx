@@ -10,7 +10,7 @@ import pizzaHutImg from '../../../../.figma/image/mje79tfy-l6ekoeg.png';
 
 const VendorShowcase: React.FC = () => {
   return (
-    <section className="flex flex-col items-center w-full max-w-[1386px] mx-auto h-auto min-h-[500px] lg:min-h-[753px] gap-16 lg:gap-[120px] py-12 lg:py-16 px-4">
+    <section className="flex flex-col items-center w-full max-w-[1386px] mx-auto gap-10 lg:gap-14 py-10 lg:py-14 px-4">
       <div className="flex flex-col sm:flex-row items-center justify-between w-full px-4 lg:px-8 gap-4">
         <h2 className="text-[#222222] text-2xl sm:text-3xl lg:text-[32px] font-semibold leading-[32px] sm:leading-[40px] lg:leading-[40px] tracking-normal font-poppins w-full sm:w-auto text-center sm:text-left">
           Order Tasty Meals through us

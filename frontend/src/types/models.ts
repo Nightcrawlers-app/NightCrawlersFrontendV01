@@ -260,6 +260,7 @@ export type CustomerProfile = {
     lastName: string;
     email: string;
     phone: string;
+    phoneVerified: boolean; 
     avatar: string | null;
     location: string;
     joinedDate: string;

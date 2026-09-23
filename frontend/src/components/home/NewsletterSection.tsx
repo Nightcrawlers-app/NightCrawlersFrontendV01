@@ -39,11 +39,11 @@ const NewsletterSection: React.FC = () => {
     <section className="flex justify-center w-full py-10 px-4">
       <div className="flex flex-col lg:flex-row items-center lg:justify-between w-full max-w-[1362px] min-h-[442px] bg-[rgba(249,250,251,0.05)] border border-[#EAECF0] rounded-[10px] shadow-[4px_4px_15px_2px_rgba(168,166,166,0.32)] px-4 sm:px-6 md:px-8 lg:px-[29px] py-8 gap-8 lg:gap-[80px]">
         <div className="flex flex-col items-start gap-4 w-full lg:w-[470px] text-left">
-          <h2 className="text-[#222222] text-[28px] sm:text-[36px] lg:text-[48px] font-semibold leading-[36px] sm:leading-[44px] lg:leading-[58px] tracking-[-0.02em] font-poppins m-0">
-            Exclusive Menus & Promotions
+          <h2 className="text-[#222222] text-[24px] sm:text-[30px] lg:text-[38px] font-semibold leading-[32px] sm:leading-[38px] lg:leading-[46px] tracking-[-0.02em] font-poppins m-0">
+            Get deals before anyone else.
           </h2>
-          <p className="text-[#222222] text-[14px] sm:text-[16px] leading-[18px] sm:leading-[19px] tracking-[-0.02em] font-poppins m-0">
-            Join the Night Crawlers tribe! Be the first to know about fresh deals, new food spots, and exclusive night-time treats.
+          <p className="text-[#667085] text-[14px] sm:text-[15px] leading-[20px] tracking-[-0.02em] font-poppins m-0">
+            Join the Nightcrawlers tribe! New spots, fresh deals, straight to your inbox.
           </p>
 
           <form onSubmit={handleSubmit} className="w-full max-w-[470px]">

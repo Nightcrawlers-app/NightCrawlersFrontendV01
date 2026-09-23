@@ -9,7 +9,9 @@ import { GlobalLoaderProvider } from './context/GlobalLoaderContext';
 // Auth pages
 const SignIn = lazy(() => import('./pages/auth/SignIn'));
 const SignUp = lazy(() => import('./pages/auth/SignUp'));
-
+const VerifyEmail = lazy(() => import('./pages/auth/VerifyEmail'));
+const ForgotPassword = lazy(() => import('./pages/auth/ForgotPassword'));
+const ResetPassword = lazy(() => import('./pages/auth/ResetPassword'));
 // Vendor pages
 const Vendors = lazy(() => import('./pages/vendor/Vendors'));
 const VendorSignUp = lazy(() => import('./pages/vendor/VendorSignUp'));
@@ -19,6 +21,7 @@ const VendorOrders = lazy(() => import('./pages/vendor/VendorOrders'));
 const VendorRestaurant = lazy(() => import('./pages/vendor/VendorRestaurant'));
 const VendorAddMenuItem = lazy(() => import('./pages/vendor/VendorAddMenuItem'));
 const VendorDetails = lazy(() => import('./pages/vendor/VendorDetails'));
+const VendorKycOnboarding = lazy(() => import('./pages/vendor/VendorKycOnboarding'));
 
 // Admin pages
 const AdminLogin = lazy(() => import('./pages/admin/AdminLogin'));
@@ -26,7 +29,7 @@ const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboard'));
 
 // Rider pages
 const RiderDashboard = lazy(() => import('./pages/rider/RiderDashboard'));
-
+const RiderKycOnboarding = lazy(() => import('./pages/rider/RiderKycOnboarding'));
 // Customer pages
 const UserProfile = lazy(() => import('./pages/customer/UserProfile'));
 const Explore = lazy(() => import('./pages/customer/Explore'));
@@ -57,12 +60,17 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/signin" element={<SignIn />} />
             <Route path="/signup" element={<SignUp />} />
+            <Route path="/verify-email" element={<VerifyEmail />} />
             <Route path="/contact" element={<Contact />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/vendors" element={<Vendors />} />
             <Route path="/vendor-signup" element={<VendorSignUp />} />
+            <Route path="/vendor-kyc" element={<VendorKycOnboarding />} />
+            <Route path="/rider-kyc" element={<RiderKycOnboarding />} />
             <Route path="/vendor-signin" element={<VendorSignIn />} />
             <Route path="/vendor-dashboard" element={<VendorDashboard />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
             <Route path="/vendor-dashboard/orders" element={<VendorOrders />} />
             <Route path="/vendor-dashboard/restaurant/:id" element={<VendorRestaurant />} />
             <Route path="/vendor-dashboard/restaurant/:id/add-item" element={<VendorAddMenuItem />} />

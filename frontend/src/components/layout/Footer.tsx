@@ -26,22 +26,22 @@ const Footer: React.FC = () => {
           <div className="flex flex-col flex-grow items-start gap-[10px] lg:w-[205px]">
             <p className="text-[#98A2B3] text-[14px] leading-[20px] font-semibold tracking-normal font-night-sans m-0 w-full">Product</p>
             <div className="flex flex-col items-start gap-[6px] w-full">
-              <Link to="/overview" className="text-[#E4E7EC] text-[16px] leading-[24px] font-medium tracking-normal font-night-sans hover:underline">Overview</Link>
-              <Link to="/features" className="text-[#E4E7EC] text-[16px] leading-[24px] font-medium tracking-normal font-night-sans hover:underline">Features</Link>
+              <Link to="/overview" className="text-[#E4E7EC] text-[16px] leading-[24px] font-medium tracking-normal font-night-sans hover:text-night-green-400 transition-colors">Overview</Link>
+              <Link to="/features" className="text-[#E4E7EC] text-[16px] leading-[24px] font-medium tracking-normal font-night-sans hover:text-night-green-400 transition-colors">Features</Link>
             </div>
           </div>
           <div className="flex flex-col flex-grow items-start gap-[10px] lg:w-[205px]">
             <p className="text-[#98A2B3] text-[14px] leading-[20px] font-semibold tracking-normal font-night-sans m-0 w-full">Company</p>
             <div className="flex flex-col items-start gap-[6px] w-full">
-              <Link to="/about" className="text-[#E4E7EC] text-[16px] leading-[24px] font-medium tracking-normal font-night-sans hover:underline">About us</Link>
-              <Link to="/contact" className="text-[#E4E7EC] text-[16px] leading-[24px] font-medium tracking-normal font-night-sans hover:underline">Contact</Link>
+              <Link to="/about" className="text-[#E4E7EC] text-[16px] leading-[24px] font-medium tracking-normal font-night-sans hover:text-night-green-400 transition-colors">About us</Link>
+              <Link to="/contact" className="text-[#E4E7EC] text-[16px] leading-[24px] font-medium tracking-normal font-night-sans hover:text-night-green-400 transition-colors">Contact</Link>
             </div>
           </div>
           <div className="flex flex-col flex-grow items-start gap-[10px] lg:w-[205px]">
             <p className="text-[#98A2B3] text-[14px] leading-[20px] font-semibold tracking-normal font-night-sans m-0 w-full">Legal</p>
             <div className="flex flex-col items-start gap-[6px] w-full">
-              <Link to="/terms" className="text-[#E4E7EC] text-[16px] leading-[24px] font-medium tracking-normal font-night-sans hover:underline">Terms</Link>
-              <Link to="/privacy" className="text-[#E4E7EC] text-[16px] leading-[24px] font-medium tracking-normal font-night-sans hover:underline">Privacy</Link>
+              <Link to="/terms" className="text-[#E4E7EC] text-[16px] leading-[24px] font-medium tracking-normal font-night-sans hover:text-night-green-400 transition-colors">Terms</Link>
+              <Link to="/privacy" className="text-[#E4E7EC] text-[16px] leading-[24px] font-medium tracking-normal font-night-sans hover:text-night-green-400 transition-colors">Privacy</Link>
             </div>
           </div>
         </div>

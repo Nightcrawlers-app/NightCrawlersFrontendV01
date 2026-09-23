@@ -13,10 +13,7 @@ const Contact: React.FC = () => {
     const [isError, setIsError] = useState(false);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
+        setFormData({ ...formData, [e.target.name]: e.target.value });
         setStatus('');
     };
 
@@ -54,8 +51,8 @@ const Contact: React.FC = () => {
                                 Chat to our friendly team
                             </h1>
                         </div>
-                        <p className="text-[#667085] text-lg sm:text-xl leading-relaxed font-poppins">
-                            Weƒ?Td love to hear from you. Please fill out this form or shoot us an email.
+                        <p className="text-[#667085] text-base sm:text-lg leading-relaxed font-poppins">
+                            Questions, feedback, partnerships — we're here.
                         </p>
                     </div>
                 </div>
@@ -64,9 +61,7 @@ const Contact: React.FC = () => {
                 <div className="flex flex-col lg:flex-row items-start gap-12 lg:gap-16 px-4 sm:px-6 lg:px-[32px] w-full mb-16">
                     {/* Left Content - Contact Information */}
                     <div className="flex flex-col grow items-start gap-[48px] w-full">
-                        {/* Email and Live Chat Row */}
                         <div className="flex flex-col sm:flex-row items-start self-stretch gap-[32px]">
-                            {/* Email Contact */}
                             <div className="flex flex-col grow items-start gap-[16px]">
                                 <div className="w-[24px] h-[24px] bg-white rounded-full flex items-center justify-center">
                                     <Mail className="w-[20px] h-[16px] text-[#C62222]" />
@@ -75,10 +70,9 @@ const Contact: React.FC = () => {
                                     <p className="text-[#101828] text-[20px] font-medium leading-[30px] font-poppins">Email</p>
                                     <p className="text-[#667085] text-[16px] leading-[24px] font-poppins">Our friendly team is here to help.</p>
                                 </div>
-                                <a href="mailto:help@nightcrawlers.com" className="text-[#C62222] text-[16px] font-medium leading-[24px] font-poppins hover:underline">help@nightcrawlers.com</a>
+                                <a href="mailto:help@nightcrawlers.app" className="text-[#C62222] text-[16px] font-medium leading-[24px] font-poppins hover:underline">help@nightcrawlers.app</a>
                             </div>
 
-                            {/* Live Chat Contact */}
                             <div className="flex flex-col grow items-start gap-[16px]">
                                 <div className="w-[24px] h-[24px] bg-white rounded-full flex items-center justify-center">
                                     <MessageCircle className="w-[18px] h-[18px] text-[#C62222]" />
@@ -91,7 +85,6 @@ const Contact: React.FC = () => {
                             </div>
                         </div>
 
-                        {/* Phone Contact */}
                         <div className="flex flex-col items-start self-stretch gap-[16px]">
                             <div className="w-[24px] h-[24px] bg-white rounded-full flex items-center justify-center">
                                 <Phone className="w-[20px] h-[16px] text-[#C62222]" />
@@ -104,17 +97,13 @@ const Contact: React.FC = () => {
                         </div>
                     </div>
 
-                    {/* Right Form - Contact Form */}
+                    {/* Right Form */}
                     <div className="flex flex-col items-center border border-[#EAECF0] rounded-[10px] bg-[#F9FAFB] px-[32px] py-[40px] gap-[64px] w-full lg:w-[583px]">
                         <form onSubmit={handleSubmit} className="flex flex-col items-start self-stretch gap-[32px] w-full">
                             <div className="flex flex-col items-start self-stretch gap-[32px] w-full">
-                                {/* First Name and Last Name Row */}
                                 <div className="flex flex-col sm:flex-row items-start self-stretch gap-[32px] w-full">
-                                    {/* First Name */}
                                     <div className="flex flex-col items-start gap-[6px] w-full">
-                                        <label htmlFor="firstName" className="text-[#344054] text-[14px] font-medium leading-[20px] font-poppins">
-                                            First Name
-                                        </label>
+                                        <label htmlFor="firstName" className="text-[#344054] text-[14px] font-medium leading-[20px] font-poppins">First Name</label>
                                         <div className="flex items-center self-stretch gap-[8px] bg-white border border-[#D0D5DD] rounded-[4px] px-[16px] py-[12px] shadow-sm">
                                             <input
                                                 type="text"
@@ -122,18 +111,13 @@ const Contact: React.FC = () => {
                                                 name="firstName"
                                                 value={formData.firstName}
                                                 onChange={handleInputChange}
-                                                required
                                                 placeholder="First name"
                                                 className="flex-1 outline-none text-[16px] leading-[24px] text-gray-500 placeholder-gray-500 font-poppins"
                                             />
                                         </div>
                                     </div>
-
-                                    {/* Last Name */}
                                     <div className="flex flex-col items-start gap-[6px] w-full">
-                                        <label htmlFor="lastName" className="text-[#344054] text-[14px] font-medium leading-[20px] font-poppins">
-                                            Last Name
-                                        </label>
+                                        <label htmlFor="lastName" className="text-[#344054] text-[14px] font-medium leading-[20px] font-poppins">Last Name</label>
                                         <div className="flex items-center self-stretch gap-[8px] bg-white border border-[#D0D5DD] rounded-[4px] px-[16px] py-[12px] shadow-sm">
                                             <input
                                                 type="text"
@@ -141,7 +125,6 @@ const Contact: React.FC = () => {
                                                 name="lastName"
                                                 value={formData.lastName}
                                                 onChange={handleInputChange}
-                                                required
                                                 placeholder="Last name"
                                                 className="flex-1 outline-none text-[16px] leading-[24px] text-gray-500 placeholder-gray-500 font-poppins"
                                             />
@@ -149,11 +132,8 @@ const Contact: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Email */}
                                 <div className="flex flex-col items-start self-stretch gap-[6px] w-full">
-                                    <label htmlFor="email" className="text-[#344054] text-[14px] font-medium leading-[20px] font-poppins">
-                                        Email
-                                    </label>
+                                    <label htmlFor="email" className="text-[#344054] text-[14px] font-medium leading-[20px] font-poppins">Email</label>
                                     <div className="flex items-center self-stretch gap-[8px] bg-white border border-[#D0D5DD] rounded-[4px] px-[16px] py-[12px] shadow-sm">
                                         <input
                                             type="email"
@@ -161,25 +141,20 @@ const Contact: React.FC = () => {
                                             name="email"
                                             value={formData.email}
                                             onChange={handleInputChange}
-                                            required
                                             placeholder="you@gmail.com"
                                             className="flex-1 outline-none text-[16px] leading-[24px] text-gray-500 placeholder-gray-500 font-poppins"
                                         />
                                     </div>
                                 </div>
 
-                                {/* Message */}
                                 <div className="flex flex-col items-start self-stretch h-[154px] gap-[6px] w-full">
-                                    <label htmlFor="message" className="text-[#344054] text-[14px] font-medium leading-[20px] font-poppins">
-                                        Message
-                                    </label>
+                                    <label htmlFor="message" className="text-[#344054] text-[14px] font-medium leading-[20px] font-poppins">Message</label>
                                     <div className="flex items-start self-stretch gap-[8px] bg-white border border-[#D0D5DD] rounded-[4px] px-[16px] py-[12px] shadow-sm flex-1">
                                         <textarea
                                             id="message"
                                             name="message"
                                             value={formData.message}
                                             onChange={handleInputChange}
-                                            required
                                             placeholder="Your message..."
                                             className="flex-1 outline-none text-[16px] leading-[24px] text-gray-500 placeholder-gray-500 font-poppins resize-none h-full min-h-[120px]"
                                         />
@@ -187,7 +162,6 @@ const Contact: React.FC = () => {
                                 </div>
                             </div>
 
-                            {/* Submit Button */}
                             <div className="flex flex-col items-stretch self-stretch gap-[8px] w-full">
                                 <button
                                     type="submit"

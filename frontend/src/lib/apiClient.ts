@@ -1,22 +1,16 @@
 /**
  * Night Crawlers — HTTP client
  *
- * Single place where the backend URL, credentials and error handling live.
- * Every function in `services/api.ts` goes through here, so if the backend
- * moves or the auth scheme changes, this is the only file to touch.
+ * Authentication: httpOnly cookies set by the backend on login/signup.
+ * `credentials: 'include'` sends these cookies automatically on every request —
+ * the frontend never touches a raw token. This protects against XSS.
+ *
+ * CORS: the backend must set `Access-Control-Allow-Origin` to this exact origin
+ * and `Access-Control-Allow-Credentials: true`. Wildcard origins block cookies.
  */
 
-/**
- * Base URL of the backend API.
- *
- * - In development, leave `VITE_API_BASE_URL` unset and Vite proxies `/api`
- *   to the backend (see `server.proxy` in vite.config.ts).
- * - In production (Vercel / Netlify) set `VITE_API_BASE_URL` to the full
- *   backend origin, e.g. `https://api.nightcrawlers.com`.
- */
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 
-/** Error thrown by every failed request, carrying the HTTP status. */
 export class ApiError extends Error {
     status: number;
     body: unknown;
@@ -28,12 +22,10 @@ export class ApiError extends Error {
         this.body = body;
     }
 
-    /** True when the user is not signed in (or their session expired). */
     get isUnauthorized(): boolean {
         return this.status === 401 || this.status === 403;
     }
 
-    /** True when the request never reached the server (backend down, no network). */
     get isNetworkError(): boolean {
         return this.status === 0;
     }
@@ -42,7 +34,6 @@ export class ApiError extends Error {
 type RequestOptions = {
     method?: 'GET' | 'POST' | 'PATCH' | 'PUT' | 'DELETE';
     body?: unknown;
-    /** Query string parameters. `null`/`undefined` values are dropped. */
     params?: Record<string, string | number | boolean | null | undefined>;
     signal?: AbortSignal;
 };
@@ -61,12 +52,6 @@ function buildUrl(path: string, params?: RequestOptions['params']): string {
     return qs ? `${url}?${qs}` : url;
 }
 
-/**
- * Make a request to the backend.
- *
- * Sends cookies (`credentials: 'include'`) so httpOnly session/JWT cookies work
- * without the frontend ever touching the token. Throws `ApiError` on failure.
- */
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
     const { method = 'GET', body, params, signal } = options;
 
@@ -74,14 +59,12 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     try {
         response = await fetch(buildUrl(path, params), {
             method,
-            credentials: 'include',
+            credentials: 'include', // sends httpOnly cookies automatically
             headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
             body: body === undefined ? undefined : JSON.stringify(body),
             signal,
         });
     } catch (error) {
-        // fetch only rejects on network-level failures (server unreachable, CORS,
-        // DNS). An aborted request is expected, so let it through untouched.
         if (error instanceof DOMException && error.name === 'AbortError') throw error;
         throw new ApiError(
             'Could not reach the server. Check your connection and try again.',
@@ -115,13 +98,6 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     return parsed as T;
 }
 
-/**
- * Like `apiFetch`, but returns `null` instead of throwing when the user is not
- * authenticated or the resource does not exist.
- *
- * Used by the `getCurrent*` / `getById` functions, which the UI expects to
- * return `null` rather than blow up when nobody is signed in.
- */
 export async function apiFetchOrNull<T>(
     path: string,
     options: RequestOptions = {},
@@ -136,7 +112,6 @@ export async function apiFetchOrNull<T>(
     }
 }
 
-/** Human-readable message for any thrown value — safe to show in the UI. */
 export function toErrorMessage(error: unknown, fallback = 'Something went wrong.'): string {
     if (error instanceof ApiError) return error.message;
     if (error instanceof Error) return error.message;

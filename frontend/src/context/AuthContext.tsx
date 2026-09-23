@@ -3,6 +3,8 @@ import {
     getCurrentCustomer,
     signInCustomer,
     createCustomerAccount,
+    verifyCustomerSignup,
+    resendVerificationCode,
     logoutCustomer,
     updateCustomerProfile,
     changeCustomerPassword,
@@ -40,7 +42,16 @@ interface AuthContextType {
     error: string;
     clearError: () => void;
     login: (email: string, password: string) => Promise<boolean>;
+    /**
+     * Step 1 of signup: creates the account and triggers an emailed code.
+     * Does NOT log the user in — the backend requires verifying that code
+     * (see `verifySignup`) before a session exists.
+     */
     signup: (data: { username: string; email: string; password: string }) => Promise<{ success: boolean; error?: string }>;
+    /** Step 2 of signup: submits the emailed code. Logs the user in on success. */
+    verifySignup: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
+    /** Re-sends the verification code, e.g. if the user didn't get the first one. */
+    resendSignupCode: (email: string) => Promise<{ success: boolean; error?: string }>;
     logout: () => Promise<void>;
     updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
     addTransaction: (transaction: Transaction) => void;
@@ -53,6 +64,8 @@ interface AuthContextType {
     changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
     // Account management
     deleteAccount: () => Promise<void>;
+    /** Re-fetches the current user from the server and updates state. Used after phone verification. */
+    refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -84,9 +97,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     }, []);
 
-    // Restore the session on first load. The session itself lives in an
-    // httpOnly cookie, so we ask the backend who we are rather than reading
-    // anything from localStorage.
+    // Restore the session on first load. apiClient already restored any saved
+    // token from localStorage at import time; we just ask the backend who
+    // that token belongs to (and get "nobody" for null/expired tokens).
     useEffect(() => {
         let cancelled = false;
 
@@ -134,9 +147,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setIsLoading(true);
         setError('');
         try {
-            const created = await createCustomerAccount(data);
-            setUser(created);
-            await loadTransactions();
+            // This only creates the account and triggers the emailed code —
+            // it deliberately does NOT set `user`. There's no session yet.
+            // The signup page should navigate to a "check your email" /
+            // enter-code screen and call `verifySignup` from there.
+            await createCustomerAccount(data);
             return { success: true };
         } catch (err) {
             const message = toErrorMessage(err, 'Could not create your account. Please try again.');
@@ -145,11 +160,42 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } finally {
             setIsLoading(false);
         }
+    }, []);
+
+    const verifySignup = useCallback(async (
+        email: string,
+        code: string,
+    ): Promise<{ success: boolean; error?: string }> => {
+        setIsLoading(true);
+        setError('');
+        try {
+            const verified = await verifyCustomerSignup(email, code);
+            setUser(verified);
+            await loadTransactions();
+            return { success: true };
+        } catch (err) {
+            const message = toErrorMessage(err, 'That code didn\'t work. Please try again.');
+            setError(message);
+            return { success: false, error: message };
+        } finally {
+            setIsLoading(false);
+        }
     }, [loadTransactions]);
 
+    const resendSignupCode = useCallback(async (
+        email: string,
+    ): Promise<{ success: boolean; error?: string }> => {
+        try {
+            await resendVerificationCode(email);
+            return { success: true };
+        } catch (err) {
+            return { success: false, error: toErrorMessage(err, 'Could not resend the code.') };
+        }
+    }, []);
+
     const logout = useCallback(async () => {
-        // Clear locally first so the UI updates immediately, then tell the
-        // backend to drop the session cookie.
+        // There's no server-side session to end with Bearer tokens — this
+        // just drops the locally stored token (see logoutCustomer in api.ts).
         setUser(null);
         setTransactions([]);
         try {
@@ -239,6 +285,17 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     }, [user]);
 
+    // ---- REFRESH USER ----
+
+    const refreshUser = useCallback(async () => {
+        try {
+            const currentUser = await getCurrentCustomer();
+            setUser(currentUser);
+        } catch {
+            // ignore — user stays as-is if refresh fails
+        }
+    }, []);
+
     // ---- ACCOUNT MANAGEMENT ----
 
     const deleteAccount = useCallback(async () => {
@@ -264,6 +321,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 clearError,
                 login,
                 signup,
+                verifySignup,
+                resendSignupCode,
                 logout,
                 updateProfile,
                 addTransaction,
@@ -273,6 +332,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setDefaultAddress,
                 changePassword,
                 deleteAccount,
+                refreshUser,
             }}
         >
             {children}

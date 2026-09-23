@@ -186,7 +186,7 @@ const VendorDashboard: React.FC = () => {
                   setIsCheckingStatus(false);
                 }
               }}
-              className="w-full py-3 bg-[#C62222] text-white font-semibold rounded-xl hover:bg-[#a01b1b] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+              className="w-full py-3 bg-[#C62222] text-white font-semibold rounded-xl hover:bg-[#a01b1b] transition-colors"
             >
               {isCheckingStatus ? 'Checking…' : 'Check Status'}
             </button>
