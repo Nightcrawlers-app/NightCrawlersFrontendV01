@@ -70,7 +70,7 @@ const Contact: React.FC = () => {
                                     <p className="text-[#101828] text-[20px] font-medium leading-[30px] font-poppins">Email</p>
                                     <p className="text-[#667085] text-[16px] leading-[24px] font-poppins">Our friendly team is here to help.</p>
                                 </div>
-                                <a href="mailto:help@nightcrawlers.app" className="text-[#C62222] text-[16px] font-medium leading-[24px] font-poppins hover:underline">help@nightcrawlers.app</a>
+                                <a href="mailto:support@nightcrawlers.app" className="text-[#C62222] text-[16px] font-medium leading-[24px] font-poppins hover:underline">support@nightcrawlers.app</a>
                             </div>
 
                             <div className="flex flex-col grow items-start gap-[16px]">
