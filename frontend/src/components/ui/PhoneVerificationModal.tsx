@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Phone, CheckCircle } from 'lucide-react';
-import { sendPhoneOtp, verifyPhoneOtp, toErrorMessage } from '../../services/api';
+import { X, Phone, CheckCircle, Pencil } from 'lucide-react';
+import { sendPhoneOtp, verifyPhoneOtp, setPhoneNumber, toErrorMessage } from '../../services/api';
+import type { PhoneRole } from '../../services/api';
 import { useAuth } from '../../context/AuthContext';
 
 interface PhoneVerificationModalProps {
@@ -8,6 +9,10 @@ interface PhoneVerificationModalProps {
   onVerified: () => void;
   /** If true, user cannot dismiss the modal without verifying */
   required?: boolean;
+  /** Whose phone: customer (default), vendor or rider. */
+  role?: PhoneRole;
+  /** The number on file, if any. With none, the modal asks for one first. */
+  currentPhone?: string | null;
 }
 
 const RESEND_COOLDOWN = 60; // seconds
@@ -16,11 +21,16 @@ const PhoneVerificationModal: React.FC<PhoneVerificationModalProps> = ({
   onClose,
   onVerified,
   required = false,
+  role = 'customer',
+  currentPhone,
 }) => {
   const { refreshUser } = useAuth();
-  const [step, setStep] = useState<'send' | 'verify' | 'done'>('send');
+  // Customers pass no number here (their profile has it), so start at 'send'.
+  const needsNumber = role !== 'customer' && !currentPhone;
+  const [step, setStep] = useState<'number' | 'send' | 'verify' | 'done'>(needsNumber ? 'number' : 'send');
+  const [phoneInput, setPhoneInput] = useState(currentPhone ?? '');
   const [code, setCode] = useState('');
-  const [phone, setPhone] = useState('');
+  const [phone, setPhone] = useState(currentPhone ?? '');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [cooldown, setCooldown] = useState(0);
@@ -31,11 +41,25 @@ const PhoneVerificationModal: React.FC<PhoneVerificationModalProps> = ({
     return () => clearTimeout(timer);
   }, [cooldown]);
 
+  const handleSaveNumber = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const res = await setPhoneNumber(phoneInput, role);
+      setPhone(res.phone);
+      setStep('send');
+    } catch (err) {
+      setError(toErrorMessage(err, "Couldn't save that number."));
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleSend = async () => {
     setLoading(true);
     setError('');
     try {
-      const res = await sendPhoneOtp();
+      const res = await sendPhoneOtp(role);
       setPhone(res.phone);
       setStep('verify');
       setCooldown(RESEND_COOLDOWN);
@@ -51,8 +75,8 @@ const PhoneVerificationModal: React.FC<PhoneVerificationModalProps> = ({
     setLoading(true);
     setError('');
     try {
-      await verifyPhoneOtp(code);
-      await refreshUser?.();
+      await verifyPhoneOtp(code, role);
+      if (role === 'customer') await refreshUser?.();
       setStep('done');
       setTimeout(() => {
         onVerified();
@@ -64,6 +88,14 @@ const PhoneVerificationModal: React.FC<PhoneVerificationModalProps> = ({
     }
   };
 
+  const primaryBtn =
+    'w-full py-2.5 bg-[#C62222] text-white rounded-lg text-sm font-semibold hover:bg-[#A01B1B] transition-colors disabled:opacity-50';
+  const icon = (
+    <div className="w-12 h-12 bg-[#FFF0F0] rounded-full flex items-center justify-center mx-auto">
+      <Phone size={22} className="text-[#C62222]" />
+    </div>
+  );
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6 relative">
@@ -71,30 +103,60 @@ const PhoneVerificationModal: React.FC<PhoneVerificationModalProps> = ({
           <button
             onClick={onClose}
             className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+            aria-label="Close"
           >
             <X size={18} />
           </button>
         )}
 
+        {step === 'number' && (
+          <div className="text-center space-y-4">
+            {icon}
+            <div>
+              <h2 className="text-base font-bold text-gray-900">Your phone number</h2>
+              <p className="text-xs text-gray-500 mt-1">We'll text a 6-digit code to confirm it's yours.</p>
+            </div>
+            <input
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel"
+              value={phoneInput}
+              onChange={e => { setPhoneInput(e.target.value); setError(''); }}
+              onKeyDown={e => e.key === 'Enter' && phoneInput.trim() && handleSaveNumber()}
+              placeholder="0803 123 4567"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-center text-lg tracking-wide focus:outline-none focus:border-[#C62222] transition-colors"
+            />
+            {error && <p className="text-xs text-[#C62222]">{error}</p>}
+            <button onClick={handleSaveNumber} disabled={loading || !phoneInput.trim()} className={primaryBtn}>
+              {loading ? 'Saving…' : 'Continue'}
+            </button>
+          </div>
+        )}
+
         {step === 'send' && (
           <div className="text-center space-y-4">
-            <div className="w-12 h-12 bg-[#FFF0F0] rounded-full flex items-center justify-center mx-auto">
-              <Phone size={22} className="text-[#C62222]" />
-            </div>
+            {icon}
             <div>
               <h2 className="text-base font-bold text-gray-900">Verify your phone number</h2>
               <p className="text-xs text-gray-500 mt-1">
                 {required
                   ? 'You need to verify your phone number before placing an order.'
-                  : 'We\'ll send a 6-digit code to your phone number on file.'}
+                  : phone
+                    ? <>We'll send a 6-digit code to <span className="font-medium text-gray-700">{phone}</span>.</>
+                    : "We'll send a 6-digit code to your phone number on file."}
               </p>
+              {role !== 'customer' && (
+                <button
+                  type="button"
+                  onClick={() => { setStep('number'); setError(''); }}
+                  className="mt-1 inline-flex items-center gap-1 text-[11px] text-gray-500 hover:text-[#C62222]"
+                >
+                  <Pencil size={11} /> Change number
+                </button>
+              )}
             </div>
             {error && <p className="text-xs text-[#C62222]">{error}</p>}
-            <button
-              onClick={handleSend}
-              disabled={loading}
-              className="w-full py-2.5 bg-[#C62222] text-white rounded-lg text-sm font-semibold hover:bg-[#A01B1B] transition-colors disabled:opacity-50"
-            >
+            <button onClick={handleSend} disabled={loading} className={primaryBtn}>
               {loading ? 'Sending…' : 'Send Code'}
             </button>
             {!required && (
@@ -107,9 +169,7 @@ const PhoneVerificationModal: React.FC<PhoneVerificationModalProps> = ({
 
         {step === 'verify' && (
           <div className="text-center space-y-4">
-            <div className="w-12 h-12 bg-[#FFF0F0] rounded-full flex items-center justify-center mx-auto">
-              <Phone size={22} className="text-[#C62222]" />
-            </div>
+            {icon}
             <div>
               <h2 className="text-base font-bold text-gray-900">Enter the code</h2>
               <p className="text-xs text-gray-500 mt-1">
@@ -118,6 +178,8 @@ const PhoneVerificationModal: React.FC<PhoneVerificationModalProps> = ({
             </div>
             <input
               type="text"
+              inputMode="numeric"
+              autoComplete="one-time-code"
               value={code}
               onChange={e => { setCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
               placeholder="123456"
@@ -125,11 +187,7 @@ const PhoneVerificationModal: React.FC<PhoneVerificationModalProps> = ({
               className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-center text-xl font-mono tracking-widest focus:outline-none focus:border-[#C62222] transition-colors"
             />
             {error && <p className="text-xs text-[#C62222]">{error}</p>}
-            <button
-              onClick={handleVerify}
-              disabled={loading || code.length !== 6}
-              className="w-full py-2.5 bg-[#C62222] text-white rounded-lg text-sm font-semibold hover:bg-[#A01B1B] transition-colors disabled:opacity-50"
-            >
+            <button onClick={handleVerify} disabled={loading || code.length !== 6} className={primaryBtn}>
               {loading ? 'Verifying…' : 'Verify'}
             </button>
             <button

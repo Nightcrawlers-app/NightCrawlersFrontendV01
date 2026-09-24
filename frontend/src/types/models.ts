@@ -55,7 +55,11 @@ export type VendorAccount = {
     location: string;
     createdAt: string;
     verified: boolean;
+    phoneVerified?: boolean;
+    kycStatus?: KycStatus;
 };
+
+export type KycStatus = 'pending' | 'in_progress' | 'passed' | 'failed';
 
 export type VendorStore = {
     id: string;
@@ -69,8 +73,12 @@ export type VendorStore = {
     /** Null until the store's address has been geocoded. */
     latitude?: number | null;
     longitude?: number | null;
-    /** Metres from the search point. Only present on proximity searches. */
+    /** Kilometres from the search point. Only present on proximity searches. */
     distance?: number | null;
+    /** On search results: up to 3 dishes on this store's menu that matched. */
+    matchedItems?: string[];
+    /** Live promos covering this store, for "50% OFF" badges on cards. */
+    promotions?: { id: string; badge: string; title: string }[];
     openingTime: string;
     closingTime?: string;
     createdAt: string;
@@ -148,6 +156,8 @@ export type RiderAccount = {
     isOnline?: boolean;
     lastSeen?: string;
     verified: boolean;
+    phoneVerified?: boolean;
+    kycStatus?: KycStatus;
 };
 
 export type CreateRiderInput = {
@@ -205,8 +215,14 @@ export type Order = {
     items: { name: string; quantity: number; price: number }[];
     totalAmount: number;
     deliveryFee: number;
+    serviceFee?: number;
+    /** Everything the customer pays (food + delivery + service − discount). */
+    totalPaid?: number | null;
     /** How the customer intends to pay. Nothing is charged online — see PaymentMethod. */
     paymentMethod: PaymentMethod;
+    promotionId?: string | null;
+    promotionTitle?: string | null;
+    discountAmount?: number;
     status: OrderStatus;
     createdAt: string;
     acceptedAt?: string;
@@ -223,9 +239,11 @@ export type CreateOrderInput = {
     customerAddress: string;
     customerLatitude?: number | null;
     customerLongitude?: number | null;
-    items: { name: string; quantity: number; price: number }[];
-    deliveryFee: number;
+    /** Which menu items and how many. Names and prices are looked up by the server. */
+    items: { menuItemId: string; quantity: number }[];
     paymentMethod: PaymentMethod;
+    /** Promo to apply. The backend recalculates the discount itself. */
+    promotionId?: string | null;
 };
 
 // ─── Admin ───────────────────────────────────────────────────────────────────
@@ -376,4 +394,51 @@ export type ContactMessageInput = {
     lastName: string;
     email: string;
     message: string;
+};
+
+// ─── Promotions ──────────────────────────────────────────────────────────────
+
+export type DiscountType = 'percent' | 'fixed' | 'free_delivery';
+export type PromotionScope = 'all' | 'category' | 'stores';
+
+export type Promotion = {
+    id: string;
+    title: string;
+    subtitle: string;
+    /** Short label for store cards, e.g. "50% OFF". */
+    badge: string;
+    imageUrl: string;
+    discountType: DiscountType;
+    discountValue: number;
+    maxDiscount: number | null;
+    minOrderAmount: number;
+    scope: PromotionScope;
+    businessType: BusinessType | null;
+    storeIds: string[];
+    fundedBy: 'platform' | 'vendor';
+    startsAt: string | null;
+    endsAt: string | null;
+    isActive: boolean;
+    isLive: boolean;
+    priority: number;
+};
+
+export type PromotionInput = Partial<Omit<Promotion, 'id' | 'isLive'>>;
+
+export type PromotionQuote = {
+    eligible: boolean;
+    discount: number;
+    reason: string | null;
+    amountNeeded?: number;
+};
+
+/** POST /api/orders/quote — the server's exact price breakdown for a cart. */
+export type OrderQuote = {
+    subtotal: number;
+    deliveryFee: number;
+    serviceFee: number;
+    serviceFeePercent: number;
+    discount: number;
+    total: number;
+    promotion: (PromotionQuote & { id: string; title: string | null }) | null;
 };

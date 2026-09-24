@@ -43,6 +43,10 @@ import type {
     Coordinates,
     PaymentMethod,
     ContactMessageInput,
+    Promotion,
+    PromotionInput,
+    PromotionQuote,
+    OrderQuote,
 } from '../types/models';
 
 // Re-export types so existing imports keep working
@@ -76,6 +80,10 @@ export type {
     Coordinates,
     PaymentMethod,
     ContactMessageInput,
+    Promotion,
+    PromotionInput,
+    PromotionQuote,
+    OrderQuote,
 };
 
 // Re-export the constants
@@ -238,13 +246,17 @@ export const getStoresForExplore = (
     address: string | null | undefined,
     category?: BusinessType | 'All',
     coords?: Coordinates | null,
+    promotionId?: string | null,
+    search?: string | null,
 ): Promise<VendorStore[]> =>
     apiFetch<VendorStore[]>('/api/stores', {
         params: {
+            search: search?.trim() || undefined,
             address: address ?? undefined,
             category: !category || category === 'All' ? undefined : category,
             lat: coords?.latitude ?? undefined,
             lng: coords?.longitude ?? undefined,
+            promotion: promotionId ?? undefined,
         },
     });
 
@@ -263,8 +275,8 @@ export const updateMenuItem = (itemId: string, updates: Partial<MenuItem>): Prom
     apiFetchOrNull<MenuItem>(`/api/menu-items/${itemId}`, { method: 'PATCH', body: updates });
 
 /** GET /api/stores/:storeId/menu-items — Get all menu items for a store */
-export const getMenuItemsForStore = (storeId: string): Promise<MenuItem[]> =>
-    apiFetch<MenuItem[]>(`/api/stores/${storeId}/menu-items`);
+export const getMenuItemsForStore = async (storeId: string): Promise<MenuItem[]> =>
+    (await apiFetch<(MenuItem & { _id?: string })[]>(`/api/stores/${storeId}/menu-items`)).map(withId);
 
 /** DELETE /api/menu-items/:id — Delete a menu item */
 export const deleteMenuItem = (menuItemId: string): Promise<void> =>
@@ -480,18 +492,26 @@ export const resetPassword = (
         body: { email, code, newPassword },
     });
     
-/** POST /api/users/me/phone/send — send OTP to customer's phone */
-export const sendPhoneOtp = (): Promise<{ message: string; phone: string }> =>
-    apiFetch<{ message: string; phone: string }>('/api/users/me/phone/send', {
-        method: 'POST',
-    });
+// ─── Phone verification (customers, vendors and riders) ─────────────────────
 
-/** POST /api/users/me/phone/verify — verify OTP code */
-export const verifyPhoneOtp = (code: string): Promise<{ message: string; account: CustomerProfile }> =>
-    apiFetch<{ message: string; account: CustomerProfile }>('/api/users/me/phone/verify', {
-        method: 'POST',
-        body: { code },
-    });
+export type PhoneRole = 'customer' | 'vendor' | 'rider';
+const PHONE_BASE: Record<PhoneRole, string> = {
+    customer: '/api/users/me/phone',
+    vendor: '/api/vendors/me/phone',
+    rider: '/api/riders/me/phone',
+};
+
+/** POST …/me/phone/number — set or change the number to verify. */
+export const setPhoneNumber = (phone: string, role: PhoneRole = 'customer'): Promise<{ phone: string; phoneVerified: boolean }> =>
+    apiFetch(`${PHONE_BASE[role]}/number`, { method: 'POST', body: { phone } });
+
+/** POST …/me/phone/send — send an OTP to the number on file. */
+export const sendPhoneOtp = (role: PhoneRole = 'customer'): Promise<{ message: string; phone: string }> =>
+    apiFetch<{ message: string; phone: string }>(`${PHONE_BASE[role]}/send`, { method: 'POST' });
+
+/** POST …/me/phone/verify — check the OTP. */
+export const verifyPhoneOtp = (code: string, role: PhoneRole = 'customer'): Promise<{ message: string }> =>
+    apiFetch<{ message: string }>(`${PHONE_BASE[role]}/verify`, { method: 'POST', body: { code } });
     
 /** DELETE /api/users/me — Permanently delete the current customer's account */
 export const deleteCustomerAccount = (): Promise<void> =>
@@ -539,6 +559,52 @@ export const setDefaultCustomerAddress = async (addressId: string): Promise<Cust
             method: 'PATCH',
         }),
     );
+
+// ─── Promotions ──────────────────────────────────────────────────────────────
+
+/** GET /api/promotions — live promos for the banner carousel. */
+export const getLivePromotions = (): Promise<Promotion[]> => apiFetch<Promotion[]>('/api/promotions');
+
+/** GET /api/promotions/:id */
+export const getPromotion = (id: string): Promise<Promotion | null> =>
+    apiFetchOrNull<Promotion>(`/api/promotions/${id}`);
+
+/** POST /api/promotions/:id/quote — the exact discount the server will apply. */
+export const quotePromotion = (
+    id: string,
+    input: { storeId: string; subtotal: number; deliveryFee: number },
+): Promise<PromotionQuote> =>
+    apiFetch<PromotionQuote>(`/api/promotions/${id}/quote`, { method: 'POST', body: input });
+
+/** Admin: every promo, including paused and ended ones. */
+export const getAllPromotionsForAdmin = (): Promise<Promotion[]> =>
+    apiFetch<Promotion[]>('/api/admin/promotions');
+
+export const createPromotion = (input: PromotionInput): Promise<Promotion> =>
+    apiFetch<Promotion>('/api/admin/promotions', { method: 'POST', body: input });
+
+export const updatePromotion = (id: string, input: PromotionInput): Promise<Promotion> =>
+    apiFetch<Promotion>(`/api/admin/promotions/${id}`, { method: 'PATCH', body: input });
+
+export const deletePromotion = (id: string): Promise<void> =>
+    apiFetch<void>(`/api/admin/promotions/${id}`, { method: 'DELETE' });
+
+/** Does a promo cover this store? (Display only — the server has the final say.) */
+export const promotionAppliesToStore = (promo: Promotion, store: Pick<VendorStore, 'id' | 'businessType'>): boolean =>
+    promo.scope === 'all' ||
+    (promo.scope === 'category' && promo.businessType === store.businessType) ||
+    (promo.scope === 'stores' && promo.storeIds.includes(store.id));
+
+/** "50% off (max ₦2,000)", "₦500 off", "Free delivery" */
+export const describeDiscount = (p: Pick<Promotion, 'discountType' | 'discountValue' | 'maxDiscount' | 'minOrderAmount'>): string => {
+    const main =
+        p.discountType === 'percent'
+            ? `${p.discountValue}% off${p.maxDiscount ? ` (up to ₦${p.maxDiscount.toLocaleString()})` : ''}`
+            : p.discountType === 'fixed'
+                ? `₦${p.discountValue.toLocaleString()} off`
+                : 'Free delivery';
+    return p.minOrderAmount ? `${main} on orders over ₦${p.minOrderAmount.toLocaleString()}` : main;
+};
 
 // ─── Geocoding ───────────────────────────────────────────────────────────────
 // Proxied through our backend (OpenStreetMap), which caches and rate-limits.
@@ -640,8 +706,21 @@ export const getAllOrders = (): Promise<Order[]> => apiFetch<Order[]>('/api/admi
  * `customerId` is NOT sent by the frontend — the backend must read it from the
  * authenticated session so a client can't place an order as somebody else.
  */
-export const createOrder = (input: CreateOrderInput): Promise<Order> =>
-    apiFetch<Order>('/api/orders', { method: 'POST', body: input });
+/**
+ * POST /api/orders/quote — what the server will charge for this cart:
+ * menu prices, delivery fee, service fee and any promo discount.
+ */
+export const quoteOrder = (input: {
+    storeId: string;
+    items: { menuItemId: string; quantity: number }[];
+    promotionId?: string | null;
+}, signal?: AbortSignal): Promise<OrderQuote> =>
+    apiFetch<OrderQuote>('/api/orders/quote', { method: 'POST', body: input, signal });
+
+export const createOrder = async (input: CreateOrderInput): Promise<Order> =>
+    // The backend returns `_id`; without mapping, order.id was undefined and
+    // the "Order placed" screen never appeared.
+    withId(await apiFetch<Order & { _id?: string }>('/api/orders', { method: 'POST', body: input }));
 
 /**
  * GET /api/orders/pending?location=...&lat=...&lng=... — Pending orders near a rider.
@@ -686,7 +765,7 @@ export const getStoreLocation = async (storeId: string): Promise<string | null> 
 
 /** GET /api/admin/orders/stats — Get order statistics */
 export const getOrderStats = (): Promise<OrderStats> =>
-    apiFetch<OrderStats>('/api/admin/orders/stats');
+    apiFetch<OrderStats>('/api/admin/order-stats');
 
 // ─── Vendor Orders ───────────────────────────────────────────────────────────
 

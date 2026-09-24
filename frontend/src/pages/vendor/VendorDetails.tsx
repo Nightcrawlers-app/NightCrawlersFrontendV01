@@ -1,13 +1,14 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Search, ChevronDown, Clock, Plus, Trash2, ShoppingBasket, Minus, ChevronLeft, X, UtensilsCrossed } from 'lucide-react';
+import { Search, ChevronDown, Clock, Plus, Trash2, ShoppingBasket, Minus, ChevronLeft, X, UtensilsCrossed, Tag } from 'lucide-react';
+import { usePromotion } from '../../context/PromotionContext';
 import AddressModal from '../../components/modals/AddressModal';
 import { useDeliveryLocation } from '../../context/DeliveryLocationContext';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import { useCart } from '../../context/CartContext';
 import pinIcon from '../../assets/location-pin-red.svg';
-import { VendorStore, getMenuItemsForStore, MenuItem, toErrorMessage } from '../../services/api';
+import { VendorStore, getMenuItemsForStore, MenuItem, toErrorMessage, promotionAppliesToStore, describeDiscount } from '../../services/api';
 
 
 
@@ -23,6 +24,7 @@ const VendorDetails: React.FC = () => {
   // customer around instead of resetting on every navigation.
   const { label: selectedAddress, setLocation } = useDeliveryLocation();
   const storeState = location.state as VendorStore | undefined;
+  const { selectedPromotion } = usePromotion();
 
   // This page is reached by clicking a store on Explore, which passes the store
   // through router state. Landing here directly (bookmark, refresh, pasted URL)
@@ -101,7 +103,11 @@ const VendorDetails: React.FC = () => {
       name: item.name,
       price: item.price,
       image: item.imageUrl,
-      vendorId: store.id,
+      // Checkout needs to know which store the order is for. Without these
+      // every order failed with "We couldn't tell which store this is for".
+      storeId: store.id,
+      storeName: store.name,
+      vendorId: store.vendorId,
       vendorName: store.name,
       vendorImage: store.imageUrl
     });
@@ -222,6 +228,20 @@ const VendorDetails: React.FC = () => {
                 <div>
                   <h1 className="text-[20px] sm:text-[24px] md:text-[28px] font-bold text-[#222222] leading-tight">{store.name}</h1>
                   <p className="text-[#667085] text-[12px] sm:text-[13px] mt-1">{store.address}</p>
+                  {/* The promo the customer tapped, if it covers this store —
+                      otherwise any live promo on the store card */}
+                  {(() => {
+                    const promo = selectedPromotion && store.id && promotionAppliesToStore(selectedPromotion, store)
+                      ? { title: selectedPromotion.title, detail: describeDiscount(selectedPromotion) }
+                      : store.promotions?.[0]
+                        ? { title: store.promotions[0].title, detail: store.promotions[0].badge }
+                        : null;
+                    return promo ? (
+                      <p className="mt-2 inline-flex items-center gap-1.5 bg-[#FFF5F5] border border-[#F5C2C2] text-[#C62222] text-[12px] font-semibold px-3 py-1 rounded-full">
+                        <Tag size={12} /> {promo.title} · {promo.detail} — applied at checkout
+                      </p>
+                    ) : null;
+                  })()}
                 </div>
                 <div className="text-right flex-shrink-0">
                   <span className="block text-[#667085] text-[10px] sm:text-[12px] mb-0.5">Opening & Closing Time</span>

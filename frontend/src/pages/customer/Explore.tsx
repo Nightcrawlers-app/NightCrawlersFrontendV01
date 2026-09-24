@@ -1,12 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Search, ChevronDown, ShoppingBasket, X, Clock, Heart, Trash2 } from 'lucide-react';
+import { Search, ChevronDown, ShoppingBasket, X, Clock, Heart, Trash2, Tag } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import AddressModal from '../../components/modals/AddressModal';
 import { useCart } from '../../context/CartContext';
 import pinIcon from '../../assets/location-pin-red.svg';
-import { BUSINESS_TYPES, BusinessType, VendorStore, getBusinessTypeMeta, getStoresForExplore, toErrorMessage } from '../../services/api';
+import { BUSINESS_TYPES, BusinessType, VendorStore, getBusinessTypeMeta, getStoresForExplore, getStoreById, getPromotion, describeDiscount, toErrorMessage } from '../../services/api';
+import type { Promotion } from '../../services/api';
+import PromoCarousel from '../../components/promotions/PromoCarousel';
+import { usePromotion } from '../../context/PromotionContext';
 import { useDeliveryLocation } from '../../context/DeliveryLocationContext';
 import type { Coordinates } from '../../types/models';
 import groceriesIcon from '../../assets/category-groceries.png';
@@ -55,14 +58,23 @@ interface StoreCardProps {
   rating: number;
   time: string;
   image: string;
+  /** e.g. "50% OFF" when a live promo covers this store */
+  badge?: string;
+  /** Dishes that matched the search, e.g. ["Chicken Shawarma"] */
+  matchedItems?: string[];
   onClick: () => void;
 }
 
-const StoreCard: React.FC<StoreCardProps> = ({ name, rating, time, image, onClick }) => {
+const StoreCard: React.FC<StoreCardProps> = ({ name, rating, time, image, badge, matchedItems, onClick }) => {
   return (
     <div className="flex flex-col gap-[8px] sm:gap-[12px] w-full max-w-[280px] group cursor-pointer" onClick={onClick}>
       <div className="relative w-full h-[140px] sm:h-[160px] md:h-[180px] rounded-[8px] sm:rounded-[10px] md:rounded-[12px] overflow-hidden">
         <img src={image} alt={name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+        {badge && (
+          <span className="absolute left-[8px] top-[8px] sm:left-[12px] sm:top-[12px] inline-flex items-center gap-1 bg-[#C62222] text-white text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full shadow">
+            <Tag size={11} /> {badge}
+          </span>
+        )}
         <button className="absolute top-[8px] right-[8px] sm:top-[12px] sm:right-[12px] w-[28px] h-[28px] sm:w-[32px] sm:h-[32px] bg-white/80 rounded-full flex items-center justify-center hover:bg-white transition-colors">
           <Heart size={14} className="text-[#C62222]" />
         </button>
@@ -79,6 +91,9 @@ const StoreCard: React.FC<StoreCardProps> = ({ name, rating, time, image, onClic
           <Clock size={12} />
           <span className="text-[11px] sm:text-[12px] leading-[16px] sm:leading-[18px]">{time}</span>
         </div>
+        {matchedItems && matchedItems.length > 0 && (
+          <p className="text-[11px] sm:text-[12px] text-[#C62222] truncate">Has: {matchedItems.join(', ')}</p>
+        )}
       </div>
     </div>
   );
@@ -91,21 +106,24 @@ const Explore: React.FC = () => {
   const { user } = useAuth();
   const [showPhoneGate, setShowPhoneGate] = useState(false);
   // ?category=Food&search=KFC — used by the homepage brand tiles and buttons.
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const initialCategory = searchParams.get('category');
+  // ?promo=<id> — browsing the stores a promo covers (after tapping a banner)
+  const promoId = searchParams.get('promo');
+  const { selectedPromotion, selectPromotion } = usePromotion();
+  const [promoFilter, setPromoFilter] = useState<Promotion | null>(null);
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { cartItems, removeFromCart, clearCart, cartTotal } = useCart();
-  const promoContainerRef = useRef<HTMLDivElement | null>(null);
-  // Carousel position. A ref, not state: nothing renders it, so updating it
-  // shouldn't trigger a re-render.
-  const promoIndexRef = useRef(0);
   // One source of truth, shared with the vendor page and checkout.
   const { label: selectedAddress, coords: selectedCoords, setLocation } = useDeliveryLocation();
   const [selectedCategory, setSelectedCategory] = useState<string>(
     initialCategory && BUSINESS_TYPES.includes(initialCategory as BusinessType) ? initialCategory : 'All',
   );
+  // What's typed, and what's actually being searched. Typing searches after a
+  // short pause; Enter or the Search button searches straight away.
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') ?? '');
+  const [activeSearch, setActiveSearch] = useState(searchQuery.trim());
   const [stores, setStores] = useState<VendorStore[]>([]);
   const [storesLoading, setStoresLoading] = useState(true);
   const [storesError, setStoresError] = useState('');
@@ -133,6 +151,58 @@ const Explore: React.FC = () => {
     navigate('/vendor-details', { state: store });
   };
 
+  // Tapping a promo banner: apply it, then take them where they can use it —
+  // straight to the store if it's a one-store promo, otherwise the list of
+  // stores it covers.
+  const handlePromoSelect = async (promo: Promotion) => {
+    selectPromotion(promo);
+    if (promo.scope === 'stores' && promo.storeIds.length === 1) {
+      try {
+        const store = await getStoreById(promo.storeIds[0]);
+        if (store) {
+          navigate('/vendor-details', { state: store });
+          return;
+        }
+      } catch {
+        // fall back to the filtered list
+      }
+    }
+    const next = new URLSearchParams(searchParams);
+    next.set('promo', promo.id);
+    setSearchParams(next);
+    setSelectedCategory(promo.scope === 'category' && promo.businessType ? promo.businessType : 'All');
+    storesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const clearPromoFilter = () => {
+    const next = new URLSearchParams(searchParams);
+    next.delete('promo');
+    setSearchParams(next);
+  };
+
+  // Resolve ?promo=<id> into the promo itself (for the "Showing stores…" bar).
+  useEffect(() => {
+    if (!promoId) {
+      setPromoFilter(null);
+      return;
+    }
+    if (selectedPromotion?.id === promoId) {
+      setPromoFilter(selectedPromotion);
+      return;
+    }
+    let cancelled = false;
+    getPromotion(promoId)
+      .then((p) => {
+        if (cancelled) return;
+        setPromoFilter(p);
+        if (p) selectPromotion(p);
+      })
+      .catch(() => !cancelled && setPromoFilter(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [promoId, selectedPromotion, selectPromotion]);
+
   // Load stores whenever the address or category changes. If an address is
   // selected but returns nothing, fall back to showing stores from everywhere.
   useEffect(() => {
@@ -145,9 +215,10 @@ const Explore: React.FC = () => {
       try {
         // Coordinates, when we have them, let the backend do a real proximity
         // search instead of matching the address text.
-        let results = await getStoresForExplore(selectedAddress, category, selectedCoords);
+        let results = await getStoresForExplore(selectedAddress, category, selectedCoords, promoId, activeSearch);
         if (selectedAddress && results.length === 0) {
-          results = await getStoresForExplore(null, category);
+          // Nothing near them — widen to everywhere rather than show nothing.
+          results = await getStoresForExplore(null, category, null, promoId, activeSearch);
         }
         if (cancelled) return;
         setStores(results);
@@ -164,17 +235,31 @@ const Explore: React.FC = () => {
     return () => {
       cancelled = true;
     };
-  }, [selectedAddress, selectedCoords, selectedCategory, storesReloadKey]);
+  }, [selectedAddress, selectedCoords, selectedCategory, storesReloadKey, promoId, activeSearch]);
 
-  const displayedStores = stores.filter((store) => {
-    if (!searchQuery) return true;
-    const q = searchQuery.toLowerCase();
-    return (
-      store.name.toLowerCase().includes(q) ||
-      store.description.toLowerCase().includes(q) ||
-      store.categories.some(c => c.toLowerCase().includes(q))
-    );
-  });
+  // The server does the searching (store names AND menu dishes).
+  const displayedStores = stores;
+
+  // Search after a pause in typing…
+  useEffect(() => {
+    const q = searchQuery.trim();
+    if (q === activeSearch) return;
+    const t = window.setTimeout(() => setActiveSearch(q), 450);
+    return () => window.clearTimeout(t);
+  }, [searchQuery, activeSearch]);
+
+  // …or immediately on Enter / the Search button, and bring the results into
+  // view — they sit below the promos and categories, which is why searching
+  // used to look like it did nothing.
+  const submitSearch = () => {
+    setActiveSearch(searchQuery.trim());
+    storesSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setActiveSearch('');
+  };
 
   const handleCategoryClick = (name: string) => {
     setSelectedCategory(name);
@@ -183,24 +268,6 @@ const Explore: React.FC = () => {
     }
   };
 
-  useEffect(() => {
-    const container = promoContainerRef.current;
-    if (!container) return;
-    const slides = container.querySelectorAll<HTMLElement>('.promo-slide');
-    if (!slides.length) return;
-
-    // Ensure we start from the first slide when showing the carousel
-    promoIndexRef.current = 0;
-    container.scrollTo({ left: slides[0].offsetLeft, behavior: 'auto' });
-
-    const id = window.setInterval(() => {
-      const next = (promoIndexRef.current + 1) % slides.length;
-      promoIndexRef.current = next;
-      container.scrollTo({ left: slides[next].offsetLeft, behavior: 'smooth' });
-    }, 3000);
-
-    return () => window.clearInterval(id);
-  }, [selectedAddress]);
 
   return (
     <div className="min-h-screen bg-white flex flex-col font-poppins relative overflow-x-hidden">
@@ -214,22 +281,36 @@ const Explore: React.FC = () => {
           {/* Search and Address Row */}
           <div className="flex flex-row items-center justify-between gap-[10px] md:gap-[20px] mb-[40px] md:mb-[60px]">
             {/* Search Bar */}
-            <div className="flex items-center w-[50%] md:w-[70%] max-w-[500px] h-[40px] border border-[#D0D5DD] rounded-[8px] overflow-hidden bg-white/50 focus-within:ring-2 focus-within:ring-[#C62222]/20 transition-all shadow-sm">
+            <form
+              role="search"
+              onSubmit={(e) => {
+                e.preventDefault();
+                submitSearch();
+              }}
+              className="flex items-center w-[50%] md:w-[70%] max-w-[500px] h-[40px] border border-[#D0D5DD] rounded-[8px] overflow-hidden bg-white/50 focus-within:ring-2 focus-within:ring-[#C62222]/20 transition-all shadow-sm"
+            >
               <input
                 type="text"
-                placeholder="Search restaurants, items..."
+                enterKeyHint="search"
+                placeholder="Search restaurants, dishes..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-grow h-full px-[12px] md:px-[16px] text-[13px] md:text-[14px] text-[#101828] bg-transparent outline-none placeholder:text-[#98A2B3] min-w-0"
               />
+              {searchQuery && (
+                <button type="button" onClick={clearSearch} aria-label="Clear search" className="px-2 text-[#98A2B3] hover:text-[#222222]">
+                  <X size={16} />
+                </button>
+              )}
               <button
+                type="submit"
                 className="h-full px-4 md:px-6 bg-[#C62222] flex items-center justify-center gap-2 text-white hover:bg-[#A01B1B] transition-colors shrink-0 cursor-pointer"
                 aria-label="Search"
               >
                 <span className="hidden sm:inline text-[13px] font-medium">Search</span>
                 <Search size={16} />
               </button>
-            </div>
+            </form>
 
             {/* Address Selector */}
             <button
@@ -247,6 +328,9 @@ const Explore: React.FC = () => {
               <ChevronDown className="text-[#344054]" size={16} />
             </button>
           </div>
+
+          {/* Promos — real, clickable, managed from the admin dashboard */}
+          <PromoCarousel onSelect={handlePromoSelect} activeId={promoFilter?.id ?? null} />
 
           {/* Explore Categories */}
           <div className="mb-[40px] md:mb-[60px]">
@@ -303,14 +387,38 @@ const Explore: React.FC = () => {
           <>
             {/* All Stores */}
             {/* All Stores */}
-            <div className="mb-[40px] md:mb-[60px]" ref={storesSectionRef}>
+            <div className="mb-[40px] md:mb-[60px] scroll-mt-[90px]" ref={storesSectionRef}>
+              {promoFilter && (
+                <div className="mb-[20px] flex items-start sm:items-center justify-between gap-3 rounded-[12px] border border-[#F5C2C2] bg-[#FFF5F5] px-4 py-3">
+                  <div className="flex items-start sm:items-center gap-3 min-w-0">
+                    <span className="mt-0.5 sm:mt-0 flex-shrink-0 w-8 h-8 rounded-full bg-[#C62222] text-white flex items-center justify-center">
+                      <Tag size={15} />
+                    </span>
+                    <div className="min-w-0">
+                      <p className="text-[14px] font-semibold text-[#222222] truncate">{promoFilter.title}</p>
+                      <p className="text-[12px] text-[#667085]">
+                        {describeDiscount(promoFilter)} · applied at checkout automatically
+                      </p>
+                    </div>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={clearPromoFilter}
+                    className="flex-shrink-0 text-[13px] font-medium text-[#C62222] hover:underline"
+                  >
+                    Show all stores
+                  </button>
+                </div>
+              )}
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <h2 className="text-[18px] md:text-[20px] font-medium text-[#222222] mb-[16px] sm:mb-[24px] md:mb-[32px]">
-                  {selectedCategory === 'All'
-                    ? 'All Stores'
-                    : getBusinessTypeMeta(selectedCategory as BusinessType).plural}
+                  {activeSearch
+                    ? `Results for “${activeSearch}”`
+                    : selectedCategory === 'All'
+                      ? 'All Stores'
+                      : getBusinessTypeMeta(selectedCategory as BusinessType).plural}
                 </h2>
-                {selectedCategory !== 'All' && (
+                {selectedCategory !== 'All' && !promoFilter && (
                   <button
                     type="button"
                     onClick={() => setSelectedCategory('All')}
@@ -357,6 +465,8 @@ const Explore: React.FC = () => {
                       rating={4.5}
                       time="15-25 mins"
                       image={store.imageUrl}
+                      badge={store.promotions?.[0]?.badge}
+                      matchedItems={store.matchedItems}
                       onClick={() => handleStoreClick(store)}
                     />
                   ))}
@@ -389,10 +499,12 @@ const Explore: React.FC = () => {
                     </div>
                     <div className="flex flex-col items-center gap-[4px] w-full">
                       <h3 className="font-poppins font-medium text-[16px] leading-[24px] text-center text-[#101828]">
-                        No address found
+                        {activeSearch ? 'No matches' : 'No stores here yet'}
                       </h3>
                       <p className="font-poppins font-normal text-[14px] leading-[20px] text-center text-[#667085]">
-                        Your search did not match any address. Please try again.
+                        {activeSearch
+                          ? `No stores or dishes match “${activeSearch}”. Try a different word, or clear the search.`
+                          : 'Try another category or delivery address.'}
                       </p>
                     </div>
                   </div>
@@ -400,28 +512,6 @@ const Explore: React.FC = () => {
               )}
             </div>
 
-            {/* Promos */}
-            <div className="mb-[40px]">
-              <h2 className="text-[18px] md:text-[20px] font-medium text-[#222222] mb-[24px] md:mb-[32px]">Promos</h2>
-              <div className="relative w-full overflow-hidden rounded-[12px] md:rounded-[16px]">
-                <div ref={promoContainerRef} className="flex overflow-x-auto snap-x snap-mandatory scrollbar-hide scroll-smooth gap-4 pb-4">
-                  {[1, 2, 3].map((_, idx) => (
-                    <div key={idx} className="promo-slide snap-center shrink-0 w-full md:w-[80%] lg:w-[60%] h-[180px] sm:h-[200px] md:h-[250px] rounded-[12px] md:rounded-[16px] overflow-hidden relative">
-                      <img
-                        src={`https://picsum.photos/seed/promo${idx}/800/400`}
-                        alt={`Promo ${idx + 1}`}
-                        className="w-full h-full object-cover"
-                      />
-                      <div className="absolute inset-0 bg-black/20 flex items-center justify-center">
-                        <h3 className="text-white text-2xl md:text-4xl font-bold text-center px-4 drop-shadow-lg">
-                          {idx === 0 ? '50% OFF KFC BUCKETS' : idx === 1 ? 'FREE DELIVERY' : 'BUY 1 GET 1 FREE'}
-                        </h3>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
           </>
         </div>
 

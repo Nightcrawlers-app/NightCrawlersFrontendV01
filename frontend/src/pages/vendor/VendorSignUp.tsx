@@ -151,7 +151,7 @@ const VendorSignUp: React.FC = () => {
           />
         </Link>
         <p className="text-sm text-night-gray-700">
-          Already {signUpType === 'partner' ? 'a vendor' : 'a rider'}?{' '}
+          Already {signUpType === 'partner' ? 'a partner' : 'a rider'}?{' '}
           <Link to="/vendor-signin" className="text-[#C62222] font-semibold hover:underline">
             Log In
           </Link>

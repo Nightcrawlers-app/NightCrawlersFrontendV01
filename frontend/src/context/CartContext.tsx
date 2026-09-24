@@ -27,8 +27,15 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
-    const savedCart = localStorage.getItem('cartItems');
-    return savedCart ? JSON.parse(savedCart) : [];
+    try {
+      const savedCart = localStorage.getItem('cartItems');
+      const parsed: CartItem[] = savedCart ? JSON.parse(savedCart) : [];
+      // Carts saved by older builds have items with no id or no store, which
+      // can't be ordered. Drop them rather than fail at checkout.
+      return Array.isArray(parsed) ? parsed.filter((i) => i && i.id && i.storeId) : [];
+    } catch {
+      return [];
+    }
   });
 
   useEffect(() => {

@@ -5,6 +5,7 @@ import { getCurrentAdmin, AdminAccount, getPlatformStats, PlatformStats, getSyst
 import Footer from '../../components/layout/Footer';
 
 import Loader from '../../components/ui/Loader';
+import PromotionsManager from '../../components/admin/PromotionsManager';
 
 const formatCurrency = (amount: number): string => {
     if (amount >= 1000000) {
@@ -31,55 +32,54 @@ const AdminDashboard: React.FC = () => {
 
     // Earnings State
     const [showEarningsModal, setShowEarningsModal] = useState(false);
+    const [showPromotions, setShowPromotions] = useState(false);
     const [allEarnings, setAllEarnings] = useState<EntityEarnings[]>([]);
     const [allStoreEarnings, setAllStoreEarnings] = useState<StoreEarnings[]>([]);
     const [earningsTab, setEarningsTab] = useState<'vendors' | 'stores' | 'riders'>('vendors');
     const [earningsPeriod, setEarningsPeriod] = useState<'today' | 'month' | 'year'>('today');
 
     const [loadError, setLoadError] = useState('');
+    // Sections that failed while the rest of the dashboard loaded fine.
+    const [partialErrors, setPartialErrors] = useState<string[]>([]);
     const [isProcessingAction, setIsProcessingAction] = useState(false);
+    const [actionError, setActionError] = useState('');
+    const [confirmReject, setConfirmReject] = useState(false);
     const [reloadKey, setReloadKey] = useState(0);
 
     // Guards against setting state after unmount — polling keeps requests in flight.
     const cancelledRef = useRef(false);
 
     const fetchData = useCallback(async () => {
-        try {
-            // All independent, so fetch them concurrently rather than one by one.
-            const [
-                platformStats,
-                systemActivity,
-                pendingActions,
-                orderStatistics,
-                ridersOnline,
-                riders,
-                earnings,
-                storeEarnings,
-            ] = await Promise.all([
-                getPlatformStats(),
-                getSystemActivity(),
-                getPendingActions(),
-                getOrderStats(),
-                getOnlineRiders(),
-                getAllRiders(),
-                getAllEarningsForAdmin(),
-                getAllStoreEarningsForAdmin(),
-            ]);
+        // All independent, so fetch them concurrently. allSettled (not all):
+        // one broken panel used to blank the whole dashboard with a
+        // misleading "backend not running" screen.
+        const sections = [
+            ['Platform stats', getPlatformStats(), setStats],
+            ['Activity', getSystemActivity(), setActivity],
+            ['Pending approvals', getPendingActions(), setPending],
+            ['Order stats', getOrderStats(), setOrderStats],
+            ['Online riders', getOnlineRiders(), setOnlineRiders],
+            ['Riders', getAllRiders(), setAllRiders],
+            ['Earnings', getAllEarningsForAdmin(), setAllEarnings],
+            ['Store earnings', getAllStoreEarningsForAdmin(), setAllStoreEarnings],
+        ] as const;
 
-            if (cancelledRef.current) return;
+        const results = await Promise.allSettled(sections.map(([, p]) => p));
+        if (cancelledRef.current) return;
 
-            setStats(platformStats);
-            setActivity(systemActivity);
-            setPending(pendingActions);
-            setOrderStats(orderStatistics);
-            setOnlineRiders(ridersOnline);
-            setAllRiders(riders);
-            setAllEarnings(earnings);
-            setAllStoreEarnings(storeEarnings);
+        const failed: string[] = [];
+        results.forEach((r, i) => {
+            const [name, , setter] = sections[i];
+            if (r.status === 'fulfilled') (setter as (v: unknown) => void)(r.value);
+            else failed.push(`${name}: ${toErrorMessage(r.reason, 'failed')}`);
+        });
+
+        if (results[0].status === 'rejected') {
+            // The page is built around the platform stats, so it can't render without them.
+            setLoadError(toErrorMessage(results[0].reason, 'Could not load dashboard data.'));
+        } else {
             setLoadError('');
-        } catch (error) {
-            if (cancelledRef.current) return;
-            setLoadError(toErrorMessage(error, 'Could not load dashboard data.'));
+            setPartialErrors(failed);
         }
     }, []);
 
@@ -127,8 +127,16 @@ const AdminDashboard: React.FC = () => {
     const handleProcessAction = async (action: 'approve' | 'reject') => {
         if (!selectedAction || isProcessingAction) return;
 
+        // Rejecting DELETES the account on the backend — ask twice.
+        if (action === 'reject' && !confirmReject) {
+            setConfirmReject(true);
+            setActionError('');
+            return;
+        }
+
         const target = selectedAction;
         setIsProcessingAction(true);
+        setActionError('');
         try {
             await verifyUser(target.id, target.type, action);
             // Drop it locally straight away, then refetch to stay in sync.
@@ -136,10 +144,21 @@ const AdminDashboard: React.FC = () => {
             setSelectedAction(null);
             await fetchData();
         } catch (error) {
-            setLoadError(toErrorMessage(error, `Could not ${action} this ${target.type}.`));
+            // Shown inside the popup. It used to go to the page-level error,
+            // which isn't visible once the dashboard has loaded — so clicking
+            // Approve on an applicant with an unverified phone did nothing
+            // visible at all.
+            setActionError(toErrorMessage(error, `Could not ${action} this ${target.type}.`));
         } finally {
             setIsProcessingAction(false);
+            setConfirmReject(false);
         }
+    };
+
+    const openAction = (item: PendingItem | null) => {
+        setSelectedAction(item);
+        setActionError('');
+        setConfirmReject(false);
     };
 
     if (!admin || !stats) {
@@ -150,11 +169,8 @@ const AdminDashboard: React.FC = () => {
                         <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-5">
                             <ShieldAlert className="w-7 h-7 text-[#C62222]" />
                         </div>
-                        <h1 className="text-xl font-bold text-gray-900 mb-2">Can't reach the server</h1>
-                        <p className="text-sm text-gray-500 mb-1">{loadError}</p>
-                        <p className="text-xs text-gray-400 mb-6">
-                            The admin console needs the backend API to be running.
-                        </p>
+                        <h1 className="text-xl font-bold text-gray-900 mb-2">Couldn't load the dashboard</h1>
+                        <p className="text-sm text-gray-500 mb-6">{loadError}</p>
                         <div className="space-y-3">
                             <button
                                 onClick={() => {
@@ -259,6 +275,25 @@ const AdminDashboard: React.FC = () => {
                         <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                         <span className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase tracking-wide">Live</span>
                     </div>
+                </div>
+
+                {partialErrors.length > 0 && (
+                    <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+                        <p className="font-semibold mb-1">Some sections couldn't load:</p>
+                        <ul className="list-disc pl-5 space-y-0.5">
+                            {partialErrors.map((e) => <li key={e}>{e}</li>)}
+                        </ul>
+                    </div>
+                )}
+
+                {/* Promotions entry point */}
+                <div className="flex justify-end mb-4">
+                    <button
+                        onClick={() => setShowPromotions(true)}
+                        className="inline-flex items-center gap-2 bg-[#C62222] text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-[#A01B1B] shadow-sm"
+                    >
+                        <BarChart3 size={16} /> Manage promotions
+                    </button>
                 </div>
 
                 {/* Stats Grid */}
@@ -446,7 +481,7 @@ const AdminDashboard: React.FC = () => {
                                 pending.map((item, i) => (
                                     <div
                                         key={i}
-                                        onClick={() => setSelectedAction(item)}
+                                        onClick={() => openAction(item)}
                                         className="bg-white border border-gray-100 flex items-center p-3 md:p-4 rounded-xl shadow-sm hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer group"
                                     >
                                         <div className={`w-10 h-10 rounded-full ${item.type === 'vendor' ? 'bg-red-50 text-[#C62222]' : 'bg-orange-50 text-orange-600'} flex items-center justify-center flex-shrink-0 mr-3`}>
@@ -480,10 +515,10 @@ const AdminDashboard: React.FC = () => {
             {/* Action Popup Modal */}
             {selectedAction && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center px-4">
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setSelectedAction(null)} />
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => openAction(null)} />
                     <div className="bg-white w-full max-w-sm rounded-2xl shadow-2xl p-6 relative z-50 animate-in fade-in zoom-in-95 duration-200">
                         <button
-                            onClick={() => setSelectedAction(null)}
+                            onClick={() => openAction(null)}
                             className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 p-1"
                         >
                             <X size={20} />
@@ -494,12 +529,28 @@ const AdminDashboard: React.FC = () => {
                             <p className="text-sm text-gray-500">{selectedAction.title}</p>
                         </div>
 
+                        {actionError && (
+                            <div className="mb-4 rounded-xl bg-[#FEECEC] border border-[#F5C2C2] px-3 py-2.5 text-sm text-[#991B1B]">
+                                {actionError}
+                                {/phone/i.test(actionError) && (
+                                    <p className="text-xs mt-1 text-[#991B1B]/80">
+                                        They can verify it from their dashboard's pending screen.
+                                    </p>
+                                )}
+                            </div>
+                        )}
+                        {confirmReject && (
+                            <div className="mb-4 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5 text-sm text-amber-800">
+                                Rejecting <strong>permanently deletes</strong> this account and emails them. Tap Reject again to confirm.
+                            </div>
+                        )}
+
                         <div className="flex gap-3">
                             <button
                                 onClick={() => handleProcessAction('reject')}
                                 className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-red-50 hover:text-[#C62222] transition-colors flex items-center justify-center gap-2"
                             >
-                                <XCircle size={18} /> Reject
+                                <XCircle size={18} /> {confirmReject ? 'Yes, delete' : 'Reject'}
                             </button>
                             <button
                                 onClick={() => handleProcessAction('approve')}
@@ -939,6 +990,7 @@ const AdminDashboard: React.FC = () => {
             )}
 
             <Footer />
+            {showPromotions && <PromotionsManager onClose={() => setShowPromotions(false)} />}
         </div>
     );
 };

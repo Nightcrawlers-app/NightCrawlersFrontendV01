@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import ApprovalChecklist from '../../components/ui/ApprovalChecklist';
 import { useNavigate } from 'react-router-dom';
 import { useGlobalLoader } from '../../context/GlobalLoaderContext';
 import Footer from '../../components/layout/Footer';
@@ -160,10 +161,19 @@ const VendorDashboard: React.FC = () => {
             You'll be able to access your dashboard once approved.
           </p>
 
+          <ApprovalChecklist
+            role="vendor"
+            account={vendor}
+            onChanged={async () => {
+              const fresh = await getCurrentVendor().catch(() => null);
+              if (fresh) setVendor(fresh);
+            }}
+          />
+
           <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6">
             <div className="flex items-center gap-2 text-orange-700 text-sm font-medium">
               <ShieldCheck size={18} />
-              <span>Verification typically takes 24-48 hours</span>
+              <span>Once both steps are done, review typically takes 24-48 hours</span>
             </div>
           </div>
 

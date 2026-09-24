@@ -1,12 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Trash2, Plus, Minus, CreditCard, MapPin, Clock, CheckCircle, Loader2 } from 'lucide-react';
+import { ChevronLeft, Trash2, Plus, Minus, CreditCard, MapPin, Clock, CheckCircle, Loader2, Tag } from 'lucide-react';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import { useCart } from '../../context/CartContext';
 import { useAuth, Transaction } from '../../context/AuthContext';
-import { createOrder, toErrorMessage, formatPaymentMethod } from '../../services/api';
-import type { PaymentMethod } from '../../services/api';
+import {
+    ApiError,
+    createOrder,
+    toErrorMessage,
+    formatPaymentMethod,
+    getLivePromotions,
+    getStoreById,
+    quoteOrder,
+    promotionAppliesToStore,
+    describeDiscount,
+} from '../../services/api';
+import type { PaymentMethod, Promotion, OrderQuote } from '../../services/api';
+import { usePromotion } from '../../context/PromotionContext';
 import { useDeliveryLocation } from '../../context/DeliveryLocationContext';
 import MapPicker from '../../components/map/MapPicker';
 import type { PickedLocation } from '../../components/map/MapPicker';
@@ -87,9 +98,80 @@ const OrderSummary: React.FC = () => {
         setDeliveryAddress(picked.label);
     };
 
-    const deliveryFee = 800; // Mock delivery fee
-    const serviceFee = Math.round(cartTotal * 0.05); // 5% service fee
-    const finalTotal = cartTotal + deliveryFee + serviceFee;
+
+    // ── Promotions ───────────────────────────────────────────────────────────
+    // Promos that cover this store; the one the customer tapped (from a banner)
+    // is used if it applies here, otherwise the top one is applied for them.
+    const { selectedPromotion, selectPromotion } = usePromotion();
+    const cartStoreId = cartItems[0]?.storeId;
+    const [storePromos, setStorePromos] = useState<Promotion[]>([]);
+    const [orderQuote, setOrderQuote] = useState<OrderQuote | null>(null);
+    const [quoting, setQuoting] = useState(false);
+
+    useEffect(() => {
+        if (!cartStoreId) {
+            setStorePromos([]);
+            return;
+        }
+        let cancelled = false;
+        Promise.all([getLivePromotions(), getStoreById(String(cartStoreId))])
+            .then(([promos, store]) => {
+                if (cancelled || !store) return;
+                setStorePromos(promos.filter((p) => promotionAppliesToStore(p, store)));
+            })
+            .catch(() => !cancelled && setStorePromos([]));
+        return () => {
+            cancelled = true;
+        };
+    }, [cartStoreId]);
+
+    // True after the customer taps "Remove" — then we stop auto-applying.
+    const [promoDeclined, setPromoDeclined] = useState(false);
+    const activePromo = promoDeclined
+        ? null
+        : storePromos.find((p) => p.id === selectedPromotion?.id) ?? storePromos[0] ?? null;
+
+    // Every figure on this page comes from the server (menu prices, delivery
+    // fee, service fee, promo) — the same calculation used to place the order.
+    const cartKey = cartItems.map((i) => `${i.id}x${i.quantity}`).join(',');
+    useEffect(() => {
+        if (!cartStoreId || cartItems.length === 0) {
+            setOrderQuote(null);
+            return;
+        }
+        const controller = new AbortController();
+        setQuoting(true);
+        const timer = window.setTimeout(() => {
+            quoteOrder(
+                {
+                    storeId: String(cartStoreId),
+                    items: cartItems.map((i) => ({ menuItemId: String(i.id), quantity: i.quantity })),
+                    promotionId: activePromo?.id ?? null,
+                },
+                controller.signal,
+            )
+                .then((q) => {
+                    setOrderQuote(q);
+                    setSubmitError('');
+                })
+                .catch((err) => {
+                    if (controller.signal.aborted) return;
+                    setOrderQuote(null);
+                    setSubmitError(toErrorMessage(err, "Couldn't work out your total. Please try again."));
+                })
+                .finally(() => !controller.signal.aborted && setQuoting(false));
+        }, 250);
+        return () => {
+            window.clearTimeout(timer);
+            controller.abort();
+        };
+    }, [cartKey, cartStoreId, activePromo?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+
+    const quote = orderQuote?.promotion ?? null; // the promo part of the quote
+    const deliveryFee = orderQuote?.deliveryFee ?? 0;
+    const serviceFee = orderQuote?.serviceFee ?? 0;
+    const discount = orderQuote?.discount ?? 0;
+    const finalTotal = orderQuote?.total ?? cartTotal;
 
     const incrementItem = (id: string | number) => {
         const item = cartItems.find(i => i.id === id);
@@ -145,13 +227,14 @@ const OrderSummary: React.FC = () => {
                 // navigate to it rather than guessing from the address text.
                 customerLatitude: chosenCoords?.latitude ?? null,
                 customerLongitude: chosenCoords?.longitude ?? null,
+                // Only ids and quantities — the server uses the menu's real
+                // prices and its own delivery fee.
                 items: cartItems.map(item => ({
-                    name: item.name,
+                    menuItemId: String(item.id),
                     quantity: item.quantity,
-                    price: item.price
                 })),
-                deliveryFee,
                 paymentMethod: PAYMENT_METHOD,
+                promotionId: quote?.eligible && activePromo ? activePromo.id : null,
             });
 
             // Mirror the order into the profile's history so it shows immediately.
@@ -168,9 +251,10 @@ const OrderSummary: React.FC = () => {
                         price: item.price,
                         image: item.image || 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=100&h=100&fit=crop',
                     })),
-                    subtotal: cartTotal,
-                    deliveryFee,
-                    total: finalTotal,
+                    // What the server actually charged, not the cart's copy
+                    subtotal: order.totalAmount,
+                    deliveryFee: order.deliveryFee,
+                    total: order.totalPaid ?? order.totalAmount + order.deliveryFee + (order.serviceFee ?? 0) - (order.discountAmount ?? 0),
                     vendorName: storeName,
                     vendorImage: cartItems[0]?.vendorImage,
                     paymentMethod: PAYMENT_METHOD,
@@ -182,8 +266,15 @@ const OrderSummary: React.FC = () => {
             setOrderId(order.id);
             setOrderPlaced(true);
             clearCart();
+            selectPromotion(null); // used up for this order
         } catch (error) {
             // Cart is deliberately left intact so the customer can retry.
+            // If the promo stopped being valid (ended, wrong store), drop it
+            // so the next tap places the order at full price, visibly.
+            if (error instanceof ApiError && (error.body as { promotionInvalid?: boolean })?.promotionInvalid) {
+                selectPromotion(null);
+                setStorePromos((list) => list.filter((p) => p.id !== activePromo?.id));
+            }
             setSubmitError(toErrorMessage(error, 'Could not place your order. Please try again.'));
         } finally {
             setIsSubmitting(false);
@@ -444,17 +535,59 @@ const OrderSummary: React.FC = () => {
                             <div className="space-y-4 mb-6 border-b border-[#EAECF0] pb-6">
                                 <div className="flex justify-between text-[#667085] text-sm">
                                     <span>Subtotal</span>
-                                    <span className="font-medium text-[#222222]">₦ {cartTotal.toLocaleString()}</span>
+                                    <span className="font-medium text-[#222222]">₦ {(orderQuote?.subtotal ?? cartTotal).toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between text-[#667085] text-sm">
                                     <span>Delivery Fee</span>
                                     <span className="font-medium text-[#222222]">₦ {deliveryFee.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between text-[#667085] text-sm">
-                                    <span>Service Fee (5%)</span>
+                                    <span>Service Fee ({orderQuote?.serviceFeePercent ?? 5}%)</span>
                                     <span className="font-medium text-[#222222]">₦ {serviceFee.toLocaleString()}</span>
                                 </div>
+                                {discount > 0 && activePromo && (
+                                    <div className="flex justify-between text-green-700 text-sm">
+                                        <span className="flex items-center gap-1.5 min-w-0">
+                                            <Tag size={13} className="flex-shrink-0" />
+                                            <span className="truncate">{activePromo.badge || activePromo.title}</span>
+                                        </span>
+                                        <span className="font-semibold">− ₦ {discount.toLocaleString()}</span>
+                                    </div>
+                                )}
                             </div>
+
+                            {/* Promos available at this store */}
+                            {storePromos.length > 0 && (
+                                <div className="mb-6 space-y-2">
+                                    <p className="text-[11px] font-semibold uppercase tracking-wider text-[#98A2B3]">Promos</p>
+                                    {storePromos.map((p) => {
+                                        const applied = activePromo?.id === p.id;
+                                        return (
+                                            <button
+                                                key={p.id}
+                                                type="button"
+                                                onClick={() => {
+                                                    setPromoDeclined(applied);
+                                                    selectPromotion(applied ? null : p);
+                                                }}
+                                                className={`w-full text-left p-3 rounded-lg border text-xs transition-all flex items-start gap-2.5 ${applied ? 'border-[#C62222] bg-[#FFF5F5]' : 'border-gray-200 hover:border-[#C62222]/40'}`}
+                                            >
+                                                <Tag size={14} className={`mt-0.5 flex-shrink-0 ${applied ? 'text-[#C62222]' : 'text-gray-400'}`} />
+                                                <span className="flex-1 min-w-0">
+                                                    <span className="block font-semibold text-[#222222]">{p.title}</span>
+                                                    <span className="block text-[#667085]">{describeDiscount(p)}</span>
+                                                    {applied && quote && !quote.eligible && quote.reason && (
+                                                        <span className="block text-amber-700 mt-1">{quote.reason}</span>
+                                                    )}
+                                                </span>
+                                                <span className={`font-semibold ${applied ? 'text-[#C62222]' : 'text-gray-500'}`}>
+                                                    {applied ? 'Remove' : 'Apply'}
+                                                </span>
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
 
                             <div className="flex justify-between items-center mb-4">
                                 <span className="text-[#222222] font-bold text-lg">Total</span>
@@ -518,7 +651,7 @@ const OrderSummary: React.FC = () => {
 
                             <button
                                 onClick={handlePlaceOrder}
-                                disabled={isSubmitting || !user || !user.phone || user.addresses.length === 0}
+                                disabled={isSubmitting || quoting || !orderQuote || !user || !user.phone || user.addresses.length === 0}
                                 className="w-full h-12 bg-[#222222] text-white font-semibold rounded-lg hover:bg-black transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 mb-4 group disabled:opacity-70 disabled:cursor-not-allowed"
                             >
                                 {isSubmitting ? (
