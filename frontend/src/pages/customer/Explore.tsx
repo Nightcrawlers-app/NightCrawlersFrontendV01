@@ -1,12 +1,12 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { Search, ChevronDown, ShoppingBasket, X, Clock, Heart, Trash2 } from 'lucide-react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import AddressModal from '../../components/modals/AddressModal';
 import { useCart } from '../../context/CartContext';
 import pinIcon from '../../assets/location-pin-red.svg';
-import { BusinessType, VendorStore, getStoresForExplore, toErrorMessage } from '../../services/api';
+import { BUSINESS_TYPES, BusinessType, VendorStore, getBusinessTypeMeta, getStoresForExplore, toErrorMessage } from '../../services/api';
 import { useDeliveryLocation } from '../../context/DeliveryLocationContext';
 import type { Coordinates } from '../../types/models';
 import groceriesIcon from '../../assets/category-groceries.png';
@@ -15,7 +15,8 @@ import clubsIcon from '../../assets/category-clubs.png';
 import foodIcon from '../../assets/category-food.png';
 import drinksIcon from '../../assets/category-drinks.png';
 import PhoneVerificationModal from '../../components/ui/PhoneVerificationModal';
-import { useAuth } from '../../context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
+
 // import emptyStateImage from '../../assets/empty-state.png';
 // import promoBanner from '../../assets/signin-image.png'; // Using placeholder for now, ideally would be specific promo image
 
@@ -85,8 +86,13 @@ const StoreCard: React.FC<StoreCardProps> = ({ name, rating, time, image, onClic
 
 const Explore: React.FC = () => {
   const navigate = useNavigate();
+  // Hooks must live inside the component. These two used to sit at module
+  // level, which crashes the page with "Invalid hook call".
   const { user } = useAuth();
   const [showPhoneGate, setShowPhoneGate] = useState(false);
+  // ?category=Food&search=KFC — used by the homepage brand tiles and buttons.
+  const [searchParams] = useSearchParams();
+  const initialCategory = searchParams.get('category');
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const { cartItems, removeFromCart, clearCart, cartTotal } = useCart();
@@ -96,8 +102,10 @@ const Explore: React.FC = () => {
   const promoIndexRef = useRef(0);
   // One source of truth, shared with the vendor page and checkout.
   const { label: selectedAddress, coords: selectedCoords, setLocation } = useDeliveryLocation();
-  const [selectedCategory, setSelectedCategory] = useState<string>('All');
-  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState<string>(
+    initialCategory && BUSINESS_TYPES.includes(initialCategory as BusinessType) ? initialCategory : 'All',
+  );
+  const [searchQuery, setSearchQuery] = useState(searchParams.get('search') ?? '');
   const [stores, setStores] = useState<VendorStore[]>([]);
   const [storesLoading, setStoresLoading] = useState(true);
   const [storesError, setStoresError] = useState('');
@@ -298,8 +306,19 @@ const Explore: React.FC = () => {
             <div className="mb-[40px] md:mb-[60px]" ref={storesSectionRef}>
               <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                 <h2 className="text-[18px] md:text-[20px] font-medium text-[#222222] mb-[16px] sm:mb-[24px] md:mb-[32px]">
-                  {selectedCategory === 'All' ? 'All Stores' : `${selectedCategory} Stores`}
+                  {selectedCategory === 'All'
+                    ? 'All Stores'
+                    : getBusinessTypeMeta(selectedCategory as BusinessType).plural}
                 </h2>
+                {selectedCategory !== 'All' && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedCategory('All')}
+                    className="self-start sm:self-auto mb-[16px] sm:mb-[24px] md:mb-[32px] text-[13px] font-medium text-[#C62222] hover:underline"
+                  >
+                    Show all stores
+                  </button>
+                )}
 
 
               </div>

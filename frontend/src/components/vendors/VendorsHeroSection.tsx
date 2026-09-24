@@ -49,7 +49,7 @@ const VendorsHeroSection: React.FC = () => {
               className="flex items-center justify-center px-[10px] py-[10px] gap-[10px] w-full sm:w-[191px] h-[40px] sm:h-[41px] bg-[#C62222] rounded-[4px] hover:bg-red-700 transition-all duration-200"
             >
               <span className="font-poppins font-medium text-[14px] leading-[21px] text-[#FCFCFC]">
-                Sign up as a Vendor
+                Sign up as a Partner
               </span>
             </button>
 

@@ -12,7 +12,7 @@
  * page component.
  */
 
-import { apiFetch, apiFetchOrNull } from '../lib/apiClient';
+import { apiFetch, apiFetchOrNull, setAuthToken, ApiError } from '../lib/apiClient';
 import type {
     BusinessType,
     BusinessTypeMeta,
@@ -83,7 +83,12 @@ export { BUSINESS_TYPES } from '../types/models';
 export { PAYMENT_METHOD_LABELS, formatPaymentMethod } from '../types/models';
 
 // Re-export error helpers so pages can render failures without importing the client
-export { ApiError, toErrorMessage } from '../lib/apiClient';
+export { ApiError, toErrorMessage, setAuthToken } from '../lib/apiClient';
+
+/** Mongo documents come back with `_id`; the frontend types use `id`. */
+function withId<T extends { id?: string }>(raw: T & { _id?: string }): T {
+    return { ...raw, id: raw.id ?? raw._id } as T;
+}
 
 /** Shape returned by `GET /api/admin/orders/stats`. */
 export type OrderStats = {
@@ -168,23 +173,39 @@ export const resolveBusinessType = (input: string): BusinessType => {
 // ─── Vendor Actions ──────────────────────────────────────────────────────────
 
 /** POST /api/vendors — Create a new vendor account */
-export const createVendorAccount = (input: CreateVendorInput): Promise<{ token: string; vendor: VendorAccount }> =>
-    apiFetch<{ token: string; vendor: VendorAccount }>('/api/vendors', { method: 'POST', body: input });
+export const createVendorAccount = async (input: CreateVendorInput): Promise<{ token: string; vendor: VendorAccount }> => {
+    const res = await apiFetch<{ token: string; vendor: VendorAccount }>('/api/vendors', { method: 'POST', body: input });
+    setAuthToken(res.token);
+    return { ...res, vendor: withId(res.vendor) };
+};
 
 /** POST /api/vendors/login — Sign in a vendor. Resolves to null on bad credentials. */
-export const signInVendor = (email: string, password: string): Promise<{ token: string; vendor: VendorAccount } | null> =>
-    apiFetchOrNull<{ token: string; vendor: VendorAccount }>('/api/vendors/login', {
+export const signInVendor = async (email: string, password: string): Promise<{ token: string; vendor: VendorAccount } | null> => {
+    const res = await apiFetchOrNull<{ token: string; vendor: VendorAccount }>('/api/vendors/login', {
         method: 'POST',
         body: { email, password },
     });
+    if (!res) return null;
+    setAuthToken(res.token);
+    return { ...res, vendor: withId(res.vendor) };
+};
 
 /** GET /api/vendors/me — Get the currently authenticated vendor */
-export const getCurrentVendor = (): Promise<VendorAccount | null> =>
-    apiFetchOrNull<VendorAccount>('/api/vendors/me');
+export const getCurrentVendor = async (): Promise<VendorAccount | null> => {
+    const raw = await apiFetchOrNull<VendorAccount>('/api/vendors/me');
+    return raw ? withId(raw) : null;
+};
 
-/** POST /api/vendors/logout — Clear the current vendor session */
+/** GET /api/vendors/business-types — the exact values the backend accepts. */
+export const getBusinessTypes = (): Promise<BusinessType[]> =>
+    apiFetch<BusinessType[]>('/api/vendors/business-types');
+
+/**
+ * Sign the vendor out. Sessions are stateless JWTs, so there is no server
+ * endpoint — dropping the token is the logout.
+ */
 export const clearCurrentVendor = async (): Promise<void> => {
-    await apiFetch('/api/vendors/logout', { method: 'POST' });
+    setAuthToken(null);
 };
 
 // ─── Store Actions ───────────────────────────────────────────────────────────
@@ -227,6 +248,10 @@ export const getStoresForExplore = (
         },
     });
 
+/** GET /api/stores?search=... — find stores by name/description/category text. */
+export const searchStores = (search: string, category?: BusinessType): Promise<VendorStore[]> =>
+    apiFetch<VendorStore[]>('/api/stores', { params: { search, category } });
+
 // ─── Menu Item Actions ───────────────────────────────────────────────────────
 
 /** POST /api/menu-items — Create a new menu item */
@@ -248,23 +273,32 @@ export const deleteMenuItem = (menuItemId: string): Promise<void> =>
 // ─── Rider Actions ───────────────────────────────────────────────────────────
 
 /** POST /api/riders — Create a new rider account */
-export const createRiderAccount = (input: CreateRiderInput): Promise<{ token: string; rider: RiderAccount }> =>
-    apiFetch<{ token: string; rider: RiderAccount }>('/api/riders', { method: 'POST', body: input });
+export const createRiderAccount = async (input: CreateRiderInput): Promise<{ token: string; rider: RiderAccount }> => {
+    const res = await apiFetch<{ token: string; rider: RiderAccount }>('/api/riders', { method: 'POST', body: input });
+    setAuthToken(res.token);
+    return { ...res, rider: withId(res.rider) };
+};
 
 /** POST /api/riders/login — Sign in a rider. Resolves to null on bad credentials. */
-export const signInRider = (email: string, password: string): Promise<{ token: string; rider: RiderAccount } | null> =>
-    apiFetchOrNull<{ token: string; rider: RiderAccount }>('/api/riders/login', {
+export const signInRider = async (email: string, password: string): Promise<{ token: string; rider: RiderAccount } | null> => {
+    const res = await apiFetchOrNull<{ token: string; rider: RiderAccount }>('/api/riders/login', {
         method: 'POST',
         body: { email, password },
     });
+    if (!res) return null;
+    setAuthToken(res.token);
+    return { ...res, rider: withId(res.rider) };
+};
 
 /** GET /api/riders/me — Get the currently authenticated rider */
-export const getCurrentRider = (): Promise<RiderAccount | null> =>
-    apiFetchOrNull<RiderAccount>('/api/riders/me');
+export const getCurrentRider = async (): Promise<RiderAccount | null> => {
+    const raw = await apiFetchOrNull<RiderAccount>('/api/riders/me');
+    return raw ? withId(raw) : null;
+};
 
-/** POST /api/riders/logout — Log out the current rider */
+/** Log out the current rider (stateless JWT — just drop the token). */
 export const logoutRider = async (): Promise<void> => {
-    await apiFetch('/api/riders/logout', { method: 'POST' });
+    setAuthToken(null);
 };
 
 /** PATCH /api/riders/:id/status — Set rider online/offline status */
@@ -300,10 +334,30 @@ export const getRiderById = (riderId: string): Promise<RiderAccount | null> =>
 /** Raw shape the backend actually returns for a user record ("_id", not "id"). */
 type RawCustomer = Omit<CustomerProfile, 'id'> & { _id: string };
 
-/** Convert the backend's `_id` field into the frontend's `id` field. */
+type RawAddress = CustomerProfile['addresses'][number] & { _id?: string };
+
+/** Convert the backend's `_id` fields (user AND each address) into `id`. */
 function mapCustomer(raw: RawCustomer): CustomerProfile {
     const { _id, ...rest } = raw;
-    return { id: _id, ...rest };
+    return {
+        ...rest,
+        id: _id,
+        addresses: (rest.addresses ?? []).map((a: RawAddress) => ({ ...a, id: a.id ?? a._id ?? '' })),
+    };
+}
+
+/**
+ * Thrown by signInCustomer when the backend sees a login from a new network
+ * and has emailed a 6-digit code. The sign-in page catches this and asks for
+ * the code (then calls verifyCustomerLogin).
+ */
+export class LoginCodeRequiredError extends Error {
+    email: string;
+    constructor(message: string, email: string) {
+        super(message);
+        this.name = 'LoginCodeRequiredError';
+        this.email = email;
+    }
 }
 
 /** Response from POST /api/auth/signup — no token yet, account isn't verified. */
@@ -333,6 +387,7 @@ export const verifyCustomerSignup = async (
         '/api/auth/verify',
         { method: 'POST', body: { email, code } },
     );
+    setAuthToken(token);
     return mapCustomer(user);
 };
 
@@ -344,12 +399,35 @@ export const signInCustomer = async (
     email: string,
     password: string,
 ): Promise<CustomerProfile | null> => {
-    const result = await apiFetchOrNull<{ token: string; user: RawCustomer }>(
-        '/api/auth/login',
-        { method: 'POST', body: { email, password } },
-    );
-    if (!result) return null;
+    type LoginResponse =
+        | { token: string; user: RawCustomer }
+        | { needsLocationVerification: true; message: string; email: string };
+
+    let result: LoginResponse | null;
+    try {
+        result = await apiFetch<LoginResponse>('/api/auth/login', { method: 'POST', body: { email, password } });
+    } catch (err) {
+        // 401 = wrong email/password. (403 = unverified email: let that
+        // message through so the user knows what to do.)
+        if (err instanceof ApiError && err.status === 401) return null;
+        throw err;
+    }
+
+    if ('needsLocationVerification' in result) {
+        throw new LoginCodeRequiredError(result.message, result.email);
+    }
+    setAuthToken(result.token);
     return mapCustomer(result.user);
+};
+
+/** POST /api/auth/verify-login — finish a new-location login with the emailed code. */
+export const verifyCustomerLogin = async (email: string, code: string): Promise<CustomerProfile> => {
+    const { token, user } = await apiFetch<{ token: string; user: RawCustomer }>(
+        '/api/auth/verify-login',
+        { method: 'POST', body: { email, code } },
+    );
+    setAuthToken(token);
+    return mapCustomer(user);
 };
 
 /** GET /api/auth/me — Get the currently authenticated customer. */
@@ -361,12 +439,11 @@ export const getCurrentCustomer = async (): Promise<CustomerProfile | null> => {
 /**
  * "Log out" the current customer.
  *
- * There is no server-side logout endpoint for customers on the live backend —
- * with Bearer tokens there's no server session to invalidate, so this just
- * drops the locally stored token.
+ * There is no server-side logout endpoint — with Bearer tokens there's no
+ * server session to invalidate, so this just drops the stored token.
  */
 export const logoutCustomer = async (): Promise<void> => {
-    await apiFetch('/api/auth/logout', { method: 'POST' });
+    setAuthToken(null);
 };
 
 /** PATCH /api/users/me — Update the current customer's profile */
@@ -463,6 +540,27 @@ export const setDefaultCustomerAddress = async (addressId: string): Promise<Cust
         }),
     );
 
+// ─── Geocoding ───────────────────────────────────────────────────────────────
+// Proxied through our backend (OpenStreetMap), which caches and rate-limits.
+
+export type PlaceResult = {
+    label: string | null;
+    fullAddress: string | null;
+    city: string;
+    latitude: number;
+    longitude: number;
+};
+
+/** GET /api/geo/reverse — coordinates → readable address (label may be null). */
+export const reverseGeocode = (coords: Coordinates): Promise<PlaceResult> =>
+    apiFetch<PlaceResult>('/api/geo/reverse', {
+        params: { lat: coords.latitude, lng: coords.longitude },
+    });
+
+/** GET /api/geo/search — address autocomplete (Nigeria). */
+export const searchPlaces = (query: string, signal?: AbortSignal): Promise<PlaceResult[]> =>
+    apiFetch<PlaceResult[]>('/api/geo/search', { params: { q: query }, signal });
+
 // ─── Marketing site ──────────────────────────────────────────────────────────
 
 /** POST /api/contact — Send a message from the contact form */
@@ -476,19 +574,24 @@ export const subscribeToNewsletter = (email: string): Promise<void> =>
 // ─── Admin Actions ───────────────────────────────────────────────────────────
 
 /** POST /api/admins/login — Sign in an admin. Resolves to null on bad credentials. */
-export const signInAdmin = (email: string, password: string): Promise<AdminAccount | null> =>
-    apiFetchOrNull<AdminAccount>('/api/admins/login', {
+export const signInAdmin = async (email: string, password: string): Promise<AdminAccount | null> => {
+    // Backend returns { token, admin }, not the admin directly.
+    const res = await apiFetchOrNull<{ token: string; admin: AdminAccount & { _id?: string } }>('/api/admins/login', {
         method: 'POST',
         body: { email, password },
     });
+    if (!res) return null;
+    setAuthToken(res.token);
+    return withId(res.admin);
+};
 
 /** GET /api/admins/me — Get the currently authenticated admin */
 export const getCurrentAdmin = (): Promise<AdminAccount | null> =>
     apiFetchOrNull<AdminAccount>('/api/admins/me');
 
-/** POST /api/admins/logout — Clear the current admin session */
+/** Clear the current admin session (stateless JWT — just drop the token). */
 export const logoutAdmin = async (): Promise<void> => {
-    await apiFetch('/api/admins/logout', { method: 'POST' });
+    setAuthToken(null);
 };
 
 // ─── Admin Stats & Activity ──────────────────────────────────────────────────

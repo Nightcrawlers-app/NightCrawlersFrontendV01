@@ -7,6 +7,7 @@ import signupLogo from '../../assets/signup-logo.png';
 import helpCircle from '../../assets/help-circle.svg';
 import mailIcon from '../../assets/mail.svg';
 import { useAuth } from '../../context/AuthContext';
+import { toErrorMessage } from '../../services/api';
 
 const SignIn: React.FC = () => {
   const [formData, setFormData] = useState<SignInForm>({
@@ -16,7 +17,10 @@ const SignIn: React.FC = () => {
   const [rememberMe, setRememberMe] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
-  const { login } = useAuth();
+  const { login, verifyLogin } = useAuth();
+  // Set when the backend asks for the emailed new-location code.
+  const [codeStep, setCodeStep] = useState<{ email: string; message: string } | null>(null);
+  const [loginCode, setLoginCode] = useState('');
   const navigate = useNavigate();
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -31,14 +35,25 @@ const SignIn: React.FC = () => {
     setError('');
 
     try {
-      const success = await login(formData.email, formData.password);
-      if (success) {
-        navigate('/user-profile');
-      } else {
-        setError('Invalid credentials. Please try again.');
+      if (codeStep) {
+        const result = await verifyLogin(codeStep.email, loginCode.trim());
+        if (result.success) navigate('/user-profile');
+        else setError(result.error || "That code didn't work. Please try again.");
+        return;
       }
-    } catch {
-      setError('Something went wrong. Please try again.');
+
+      const result = await login(formData.email, formData.password);
+      if (result === true) {
+        navigate('/user-profile');
+      } else if (result === false) {
+        setError('Invalid credentials. Please try again.');
+      } else {
+        // Signing in from a new network: the backend emailed a 6-digit code.
+        setCodeStep({ email: result.email, message: result.message });
+        setLoginCode('');
+      }
+    } catch (err) {
+      setError(toErrorMessage(err, 'Something went wrong. Please try again.'));
     } finally {
       setIsSubmitting(false);
     }
@@ -82,6 +97,29 @@ const SignIn: React.FC = () => {
 
               {/* Form Section */}
               <form onSubmit={handleSubmit} className="space-y-2.5 sm:space-y-3">
+                {codeStep ? (
+                  <div className="space-y-2">
+                    <p className="text-xs text-[#667085] text-center">{codeStep.message}</p>
+                    <label className="block text-xs font-semibold text-[#344054]">Verification code*</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      autoComplete="one-time-code"
+                      value={loginCode}
+                      onChange={(e) => { setLoginCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
+                      placeholder="123456"
+                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-center text-base tracking-widest font-mono focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222]"
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={() => { setCodeStep(null); setError(''); }}
+                      className="text-xs text-[#667085] hover:text-[#C62222]"
+                    >
+                      ← Use a different account
+                    </button>
+                  </div>
+                ) : (<>
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-[#344054]">Email*</label>
                   <Input
@@ -126,11 +164,12 @@ const SignIn: React.FC = () => {
                     Forgot password
                   </Link>
                 </div>
+                </>)}
 
                 {/* Submit Button */}
                 <button
                   type="submit"
-                  disabled={isSubmitting}
+                  disabled={isSubmitting || (!!codeStep && loginCode.length !== 6)}
                   className="w-full bg-[#C62222] text-white py-2 px-4 rounded-md hover:bg-[#A01B1B] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
@@ -141,7 +180,7 @@ const SignIn: React.FC = () => {
                       </svg>
                       Signing in...
                     </>
-                  ) : 'Sign In'}
+                  ) : codeStep ? 'Verify & Sign In' : 'Sign In'}
                 </button>
               </form>
 
@@ -158,9 +197,9 @@ const SignIn: React.FC = () => {
           </div>
           <div className="w-full flex items-center justify-between text-xs text-[#667085] px-1">
             <span>© Night Crawlers 2026, inc</span>
-            <a href="mailto:support@nightcrawlers.app" className="flex items-center gap-2 hover:text-[#C62222]">
+            <a href="mailto:help@nightcrawlers.com" className="flex items-center gap-2 hover:text-[#C62222]">
               <img src={mailIcon} alt="" className="w-3.5 h-3.5" />
-              support@nightcrawlers.app
+              help@nightcrawlers.com
             </a>
           </div>
         </div>

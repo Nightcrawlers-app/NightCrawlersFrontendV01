@@ -53,7 +53,7 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
                       return 'nav-link-home';
                     case 'Contact Us':
                       return 'nav-link-contact';
-                    case 'Vendors':
+                    case 'Partners':
                       return 'nav-link-vendors';
                     case 'FAQs':
                       return 'nav-link-faq';

@@ -3,6 +3,7 @@ import { getSelectedAddress, setSelectedAddress } from '../lib/selectedAddress';
 import type { SelectedAddress } from '../lib/selectedAddress';
 import type { Coordinates } from '../types/models';
 import { useAuth } from './AuthContext';
+import { CURRENT_LOCATION_LABEL } from '../lib/geolocation';
 
 /**
  * Where the customer wants their order delivered.
@@ -59,9 +60,11 @@ export const DeliveryLocationProvider: React.FC<{ children: ReactNode }> = ({ ch
 
     const savedDefault = user?.addresses?.find((a) => a.isDefault) ?? user?.addresses?.[0];
 
-    // "Current location" is a label, not somewhere a rider can deliver to, so
-    // fall back to a real saved address for the actual delivery target.
-    const isRealAddress = selection?.label && selection.coords === null;
+    // "Current location" (a GPS fix we couldn't turn into a street address)
+    // isn't something a rider can find, so fall back to a saved address then.
+    // Any other label — typed, picked from search, or reverse-geocoded — is a
+    // real address, with or without coordinates.
+    const isRealAddress = !!selection?.label && selection.label !== CURRENT_LOCATION_LABEL;
     const deliveryAddress = isRealAddress
         ? selection.label
         : savedDefault?.address ?? selection?.label ?? null;

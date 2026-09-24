@@ -64,7 +64,11 @@ function App() {
             <Route path="/contact" element={<Contact />} />
             <Route path="/faq" element={<FAQ />} />
             <Route path="/vendors" element={<Vendors />} />
-            <Route path="/vendor-signup" element={<VendorSignUp />} />
+            {/* One shared signup form, two addresses. The URL picks the tab. */}
+            <Route path="/partner-signup" element={<VendorSignUp />} />
+            <Route path="/rider-signup" element={<VendorSignUp />} />
+            {/* Old links (ads, bookmarks, WhatsApp) keep working */}
+            <Route path="/vendor-signup" element={<Navigate to="/partner-signup" replace />} />
             <Route path="/vendor-kyc" element={<VendorKycOnboarding />} />
             <Route path="/rider-kyc" element={<RiderKycOnboarding />} />
             <Route path="/vendor-signin" element={<VendorSignIn />} />

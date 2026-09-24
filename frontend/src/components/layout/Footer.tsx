@@ -50,7 +50,7 @@ const Footer: React.FC = () => {
       <div className="w-full bg-[#C62222] mt-[61px] rounded-b-[4px]">
         <div className="flex flex-row items-center justify-between w-full max-w-[1467px] mx-auto px-4 sm:px-[41px] py-[10px] overflow-hidden">
           <p className="text-white text-[14px] sm:text-[16px] md:text-[18px] leading-[24px] sm:leading-[30px] tracking-normal font-poppins m-0 w-auto">
-            2026 Night Crawlers Inc.
+            © 2026 Night Crawlers Limited.
           </p>
           <div className="flex items-center gap-3 sm:gap-4 md:gap-6">
             <img src={instagramIcon} alt="Instagram" className="w-[25px] h-[25px] sm:w-[28px] sm:h-[28px] md:w-[30px] md:h-[30px]" />

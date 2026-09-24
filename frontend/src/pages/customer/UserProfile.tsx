@@ -10,9 +10,11 @@ import {
     Bell, LogOut, ChevronRight, Clock, CheckCircle2, XCircle,
     Truck, Package, Plus, Heart, Star, TrendingUp, Calendar,
     Shield, ChevronDown, Eye, RotateCcw, X, Camera, Trash2, Check,
-    CheckCircle
 } from 'lucide-react';
-import { formatPaymentMethod } from '../../services/api';
+import { formatPaymentMethod, toErrorMessage } from '../../services/api';
+import { compressImage } from '../../lib/imageUtils';
+import MapPicker from '../../components/map/MapPicker';
+import type { PickedLocation } from '../../components/map/MapPicker';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
     'delivered': { label: 'Delivered', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', icon: <CheckCircle2 size={14} /> },
@@ -38,11 +40,15 @@ const UserProfile: React.FC = () => {
     const [showLogoutConfirm, setShowLogoutConfirm] = useState(false);
     const fileInputRef = useRef<HTMLInputElement>(null);
     const [showPhoneModal, setShowPhoneModal] = useState(false);
+    const [avatarUploading, setAvatarUploading] = useState(false);
 
     // Address modal state
     const [showAddressModal, setShowAddressModal] = useState(false);
     const [editingAddress, setEditingAddress] = useState<UserAddress | null>(null);
-    const [addressForm, setAddressForm] = useState({ label: '', address: '', city: '', isDefault: false });
+    const EMPTY_ADDRESS = { label: '', address: '', city: '', isDefault: false, latitude: null as number | null, longitude: null as number | null };
+    const [addressForm, setAddressForm] = useState(EMPTY_ADDRESS);
+    const [showAddressMap, setShowAddressMap] = useState(false);
+    const [savingAddress, setSavingAddress] = useState(false);
 
     // Password modal state
     const [showPasswordModal, setShowPasswordModal] = useState(false);
@@ -84,59 +90,80 @@ const UserProfile: React.FC = () => {
 
     const initials = getInitials(user.firstName, user.lastName);
 
-    const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
+        // Reset the input so the same file can be selected again
+        e.target.value = '';
         if (!file) return;
 
-        // Validate file type
         if (!file.type.startsWith('image/')) {
             setToast({ message: 'Please select an image file.', type: 'error' });
             return;
         }
-
-        // Validate file size (max 5MB)
-        if (file.size > 5 * 1024 * 1024) {
-            setToast({ message: 'Image must be under 5MB.', type: 'error' });
+        if (file.size > 15 * 1024 * 1024) {
+            setToast({ message: 'Image must be under 15MB.', type: 'error' });
             return;
         }
 
-        const reader = new FileReader();
-        reader.onload = (event) => {
-            const dataUrl = event.target?.result as string;
-            updateProfile({ avatar: dataUrl });
-        };
-        reader.readAsDataURL(file);
-
-        // Reset the input so the same file can be selected again
-        e.target.value = '';
+        setAvatarUploading(true);
+        try {
+            // Phone photos are often 3–8 MB. Shrink to a 512px JPEG (~30–80 KB)
+            // so the upload is fast and the profile record stays small.
+            const dataUrl = await compressImage(file, { maxSize: 512, quality: 0.85 });
+            const saveError = await updateProfile({ avatar: dataUrl });
+            setToast(saveError
+                ? { message: saveError, type: 'error' }
+                : { message: 'Profile photo updated!', type: 'success' });
+        } catch (err) {
+            setToast({ message: toErrorMessage(err, "Couldn't read that image. Try a different photo."), type: 'error' });
+        } finally {
+            setAvatarUploading(false);
+        }
     };
 
-    const handleRemoveAvatar = () => {
-        updateProfile({ avatar: null });
+    const handleRemoveAvatar = async () => {
+        const saveError = await updateProfile({ avatar: null });
+        setToast(saveError
+            ? { message: saveError, type: 'error' }
+            : { message: 'Profile photo removed.', type: 'success' });
     };
 
     // No page reload needed any more — the context updates from the server's
     // response, so React re-renders with the saved data on its own.
-        const handleSaveProfile = async () => {
-            await updateProfile(editForm);
-            setIsEditing(false);
-            setToast({ message: 'Profile updated successfully!', type: 'success' });
-            // If they just added a phone number, prompt to verify it
-            if (editForm.phone && !user?.phoneVerified) {
-                setShowPhoneModal(true);
-            }
+    const handleSaveProfile = async () => {
+        const phoneChanged = editForm.phone !== user.phone;
+        const saveError = await updateProfile(editForm);
+        if (saveError) {
+            setToast({ message: saveError, type: 'error' });
+            return;
+        }
+        setIsEditing(false);
+        setToast({ message: 'Profile updated successfully!', type: 'success' });
+        // A new or changed phone number needs verifying
+        if (editForm.phone && (phoneChanged || !user.phoneVerified)) {
+            setShowPhoneModal(true);
+        }
     };
 
     // ---- Address Handlers ----
     const openAddAddress = () => {
         setEditingAddress(null);
-        setAddressForm({ label: '', address: '', city: '', isDefault: false });
+        setAddressForm(EMPTY_ADDRESS);
         setShowAddressModal(true);
+        // New address: start on the map — that's how people find their spot.
+        setShowAddressMap(true);
     };
 
     const openEditAddress = (addr: UserAddress) => {
         setEditingAddress(addr);
-        setAddressForm({ label: addr.label, address: addr.address, city: addr.city, isDefault: addr.isDefault });
+        setAddressForm({
+            label: addr.label,
+            address: addr.address,
+            city: addr.city,
+            isDefault: addr.isDefault,
+            latitude: addr.latitude ?? null,
+            longitude: addr.longitude ?? null,
+        });
         setShowAddressModal(true);
     };
 
@@ -145,14 +172,28 @@ const UserProfile: React.FC = () => {
             setToast({ message: 'Please fill in all address fields', type: 'error' });
             return;
         }
-        if (editingAddress) {
-            await updateAddress(editingAddress.id, addressForm);
-            setToast({ message: 'Address updated!', type: 'success' });
-        } else {
-            await addAddress(addressForm);
-            setToast({ message: 'Address added!', type: 'success' });
+        setSavingAddress(true);
+        const saveError = editingAddress
+            ? await updateAddress(editingAddress.id, addressForm)
+            : await addAddress(addressForm);
+        setSavingAddress(false);
+        if (saveError) {
+            setToast({ message: saveError, type: 'error' });
+            return;
         }
+        setToast({ message: editingAddress ? 'Address updated!' : 'Address added!', type: 'success' });
         setShowAddressModal(false);
+    };
+
+    const handleAddressPicked = (picked: PickedLocation) => {
+        setAddressForm(p => ({
+            ...p,
+            address: picked.label,
+            city: picked.city || p.city,
+            latitude: picked.coords.latitude,
+            longitude: picked.coords.longitude,
+        }));
+        setShowAddressMap(false);
     };
 
     const handleDeleteAddress = async (id: string) => {
@@ -372,7 +413,7 @@ const UserProfile: React.FC = () => {
                                                     Remove
                                                 </button>
                                             )}
-                                            <p className="text-[10px] text-gray-400">JPG, PNG or GIF. Max 5MB.</p>
+                                            <p className="text-[10px] text-gray-400">{avatarUploading ? 'Uploading…' : 'JPG, PNG, WEBP or GIF.'}</p>
                                         </div>
                                     </div>
                                 </div>
@@ -444,7 +485,7 @@ const UserProfile: React.FC = () => {
                                                 <div className="p-3 bg-gray-50/80 rounded-lg text-sm flex items-center gap-2 border border-gray-100">
                                                     <Phone size={15} className="text-gray-400" />
                                                     {user.phone ? (
-                                                        <div className="flex items-center justify-between w-full">
+                                                        <div className="flex flex-1 items-center justify-between gap-2">
                                                             <span className="text-gray-900">{user.phone}</span>
                                                             {user.phoneVerified ? (
                                                                 <span className="flex items-center gap-1 text-[10px] font-semibold text-green-600 bg-green-50 px-2 py-0.5 rounded-full">
@@ -911,11 +952,29 @@ const UserProfile: React.FC = () => {
                                     className="w-full p-3 bg-white border-2 border-gray-200 rounded-lg text-gray-900 text-sm focus:outline-none focus:border-[#C62222] transition-colors"
                                 />
                             </div>
+                            <button
+                                type="button"
+                                onClick={() => setShowAddressMap(true)}
+                                className={`w-full flex items-center gap-3 p-3 rounded-lg border-2 text-left transition-colors ${addressForm.latitude != null
+                                    ? 'border-green-200 bg-green-50/60 hover:border-green-300'
+                                    : 'border-dashed border-[#C62222]/40 bg-[#FFF5F5] hover:border-[#C62222]'}`}
+                            >
+                                <MapPin size={18} className={addressForm.latitude != null ? 'text-green-600' : 'text-[#C62222]'} />
+                                <span className="flex-1 min-w-0">
+                                    <span className="block text-sm font-semibold text-gray-900">
+                                        {addressForm.latitude != null ? 'Pinned on the map' : 'Pick location on the map'}
+                                    </span>
+                                    <span className="block text-xs text-gray-500">
+                                        {addressForm.latitude != null ? 'Tap to move the pin' : 'So riders find the exact spot'}
+                                    </span>
+                                </span>
+                                <ChevronRight size={16} className="text-gray-400" />
+                            </button>
                             <div>
                                 <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1 block">Street Address</label>
                                 <input
                                     type="text"
-                                    placeholder="Full street address"
+                                    placeholder="House number, street, estate"
                                     value={addressForm.address}
                                     onChange={e => setAddressForm(p => ({ ...p, address: e.target.value }))}
                                     className="w-full p-3 bg-white border-2 border-gray-200 rounded-lg text-gray-900 text-sm focus:outline-none focus:border-[#C62222] transition-colors"
@@ -950,14 +1009,28 @@ const UserProfile: React.FC = () => {
                             </button>
                             <button
                                 onClick={handleSaveAddress}
-                                className="flex-1 py-2.5 bg-[#C62222] text-white rounded-lg text-sm font-semibold hover:bg-[#A01B1B] transition-colors"
+                                disabled={savingAddress}
+                                className="flex-1 py-2.5 bg-[#C62222] text-white rounded-lg text-sm font-semibold hover:bg-[#A01B1B] transition-colors disabled:opacity-60"
                             >
-                                {editingAddress ? 'Save Changes' : 'Add Address'}
+                                {savingAddress ? 'Saving…' : editingAddress ? 'Save Changes' : 'Add Address'}
                             </button>
                         </div>
                     </div>
                 </div>
             )}
+
+            <MapPicker
+                open={showAddressMap}
+                onClose={() => setShowAddressMap(false)}
+                onConfirm={handleAddressPicked}
+                title={editingAddress ? 'Move the pin' : 'Where should we deliver?'}
+                confirmText="Use this location"
+                initialCoords={addressForm.latitude != null && addressForm.longitude != null
+                    ? { latitude: addressForm.latitude, longitude: addressForm.longitude }
+                    : null}
+                initialQuery={addressForm.latitude == null ? addressForm.address : undefined}
+                autoLocate={addressForm.latitude == null && !addressForm.address}
+            />
 
             {/* Password Change Modal */}
             {showPasswordModal && (

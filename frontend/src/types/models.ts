@@ -84,6 +84,9 @@ export type CreateVendorInput = {
     email: string;
     location: string;
     password: string;
+    /** Map pin for `location`, when the user confirmed it on the map. */
+    latitude?: number | null;
+    longitude?: number | null;
 };
 
 export type CreateStoreInput = {
@@ -155,6 +158,9 @@ export type CreateRiderInput = {
     email: string;
     location: string;
     password: string;
+    /** Map pin for `location`, when the user confirmed it on the map. */
+    latitude?: number | null;
+    longitude?: number | null;
 };
 
 // ─── Payments ────────────────────────────────────────────────────────────────

@@ -1,8 +1,13 @@
 import React, { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
+import { ChevronDown, MapPin, CheckCircle2 } from 'lucide-react';
+import MapPicker from '../../components/map/MapPicker';
+import type { PickedLocation } from '../../components/map/MapPicker';
+import type { Coordinates } from '../../types/models';
 import logo from '../../assets/logo.png';
 import vendorSignUpImage from '../../assets/signin-image.png';
-import { BUSINESS_TYPES, createVendorAccount, createRiderAccount, toErrorMessage } from '../../services/api';
+import { BUSINESS_TYPES, createVendorAccount, createRiderAccount, getBusinessTypeMeta, toErrorMessage } from '../../services/api';
+import type { BusinessType } from '../../services/api';
 
 type SignUpType = 'partner' | 'rider';
 
@@ -22,7 +27,13 @@ const VEHICLE_TYPES = ['Bicycle', 'Bike', 'Car', 'Van'];
 
 const VendorSignUp: React.FC = () => {
   const navigate = useNavigate();
-  const [signUpType, setSignUpType] = useState<SignUpType>('partner');
+  const { pathname } = useLocation();
+  // The URL decides the tab: /rider-signup opens on Rider, anything else
+  // (/partner-signup, old /vendor-signup links) on Partner. Switching tabs
+  // updates the URL too, so it can be copied and shared.
+  const signUpType: SignUpType = pathname.startsWith('/rider-signup') ? 'rider' : 'partner';
+  const setSignUpType = (type: SignUpType) =>
+    navigate(type === 'rider' ? '/rider-signup' : '/partner-signup', { replace: true });
   const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
@@ -35,10 +46,20 @@ const VendorSignUp: React.FC = () => {
     agreeToPolicy: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
+  // Map-confirmed position for the typed location. Cleared if they edit the text.
+  const [pin, setPin] = useState<Coordinates | null>(null);
+  const [showMap, setShowMap] = useState(false);
+
+  const handleLocationPicked = (picked: PickedLocation) => {
+    setFormData(prev => ({ ...prev, location: picked.label }));
+    setPin(picked.coords);
+    setShowMap(false);
+  };
   const [errorMessage, setErrorMessage] = useState('');
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+    const { name, value, type } = e.target;
+    const checked = (e.target as HTMLInputElement).checked;
     setFormData(prev => ({
       ...prev,
       [name]: type === 'checkbox' ? checked : value,
@@ -49,8 +70,8 @@ const VendorSignUp: React.FC = () => {
     e.preventDefault();
     setErrorMessage('');
 
-    if (signUpType === 'partner' && !formData.businessType.trim()) {
-      setErrorMessage('Please enter a business type.');
+    if (signUpType === 'partner' && !BUSINESS_TYPES.includes(formData.businessType as BusinessType)) {
+      setErrorMessage('Please choose a business type.');
       return;
     }
 
@@ -81,6 +102,8 @@ const VendorSignUp: React.FC = () => {
           email: formData.email,
           location: formData.location,
           password: formData.password,
+          latitude: pin?.latitude ?? null,
+          longitude: pin?.longitude ?? null,
         });
         navigate('/vendor-kyc', {
           state: {
@@ -98,6 +121,8 @@ const VendorSignUp: React.FC = () => {
           email: formData.email,
           location: formData.location,
           password: formData.password,
+          latitude: pin?.latitude ?? null,
+          longitude: pin?.longitude ?? null,
         });
         navigate('/rider-kyc', {
           state: {
@@ -126,7 +151,7 @@ const VendorSignUp: React.FC = () => {
           />
         </Link>
         <p className="text-sm text-night-gray-700">
-          Already {signUpType === 'partner' ? 'a partner' : 'a rider'}?{' '}
+          Already {signUpType === 'partner' ? 'a vendor' : 'a rider'}?{' '}
           <Link to="/vendor-signin" className="text-[#C62222] font-semibold hover:underline">
             Log In
           </Link>
@@ -196,41 +221,45 @@ const VendorSignUp: React.FC = () => {
 
               {signUpType === 'partner' ? (
                 <div className="space-y-1">
-                  <label className="block text-xs font-medium text-night-gray-700">Business Type</label>
-                  <input
-                    type="text"
-                    name="businessType"
-                    value={formData.businessType}
-                    onChange={handleInputChange}
-                    placeholder="Business type"
-                    list="businessTypeOptions"
-                    className="w-full h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] transition"
-                    required
-                  />
-                  <datalist id="businessTypeOptions">
-                    {BUSINESS_TYPES.map((type) => (
-                      <option key={type} value={type} />
-                    ))}
-                  </datalist>
+                  <label htmlFor="businessType" className="block text-xs font-medium text-night-gray-700">Business Type</label>
+                  <div className="relative">
+                    <select
+                      id="businessType"
+                      name="businessType"
+                      value={formData.businessType}
+                      onChange={handleInputChange}
+                      className={`w-full h-11 px-3 pr-9 border border-[#d8d8d8] rounded-sm text-sm bg-white ${formData.businessType ? 'text-gray-900' : 'text-gray-400'} appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] transition`}
+                      required
+                    >
+                      <option value="" disabled>Select business type</option>
+                      {BUSINESS_TYPES.map((type) => (
+                        <option key={type} value={type} className="text-gray-900">
+                          {type} — {getBusinessTypeMeta(type).singular}
+                        </option>
+                      ))}
+                    </select>
+                    <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  </div>
                 </div>
               ) : (
                 <div className="space-y-1">
-                  <label className="block text-xs font-medium text-night-gray-700">Vehicle Type</label>
-                  <input
-                    type="text"
-                    name="vehicleType"
-                    value={formData.vehicleType}
-                    onChange={handleInputChange}
-                    placeholder="Select vehicle type"
-                    list="vehicleTypeOptions"
-                    className="w-full h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] transition"
-                    required
-                  />
-                  <datalist id="vehicleTypeOptions">
-                    {VEHICLE_TYPES.map((type) => (
-                      <option key={type} value={type} />
-                    ))}
-                  </datalist>
+                  <label htmlFor="vehicleType" className="block text-xs font-medium text-night-gray-700">Vehicle Type</label>
+                  <div className="relative">
+                    <select
+                      id="vehicleType"
+                      name="vehicleType"
+                      value={formData.vehicleType}
+                      onChange={handleInputChange}
+                      className={`w-full h-11 px-3 pr-9 border border-[#d8d8d8] rounded-sm text-sm bg-white ${formData.vehicleType ? 'text-gray-900' : 'text-gray-400'} appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] transition`}
+                      required
+                    >
+                      <option value="" disabled>Select vehicle type</option>
+                      {VEHICLE_TYPES.map((type) => (
+                        <option key={type} value={type} className="text-gray-900">{type}</option>
+                      ))}
+                    </select>
+                    <ChevronDown size={16} className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400" />
+                  </div>
                 </div>
               )}
 
@@ -273,17 +302,49 @@ const VendorSignUp: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <label className="block text-xs font-medium text-night-gray-700">Location</label>
-                <input
-                  type="text"
-                  name="location"
-                  value={formData.location}
-                  onChange={handleInputChange}
-                  placeholder="Location"
-                  className="w-full h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] transition"
-                  required
-                />
+                <label className="block text-xs font-medium text-night-gray-700">
+                  {signUpType === 'partner' ? 'Business Location' : 'Where you usually ride from'}
+                </label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    name="location"
+                    value={formData.location}
+                    onChange={(e) => { handleInputChange(e); setPin(null); }}
+                    placeholder={signUpType === 'partner' ? 'e.g. 12 Aminu Kano Crescent, Wuse 2' : 'e.g. Garki, Abuja'}
+                    className="flex-1 min-w-0 h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] transition"
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowMap(true)}
+                    className="h-11 px-3 inline-flex items-center gap-1.5 border border-[#C62222] text-[#C62222] rounded-sm text-xs font-semibold hover:bg-[#FFF5F5] transition whitespace-nowrap"
+                  >
+                    <MapPin size={15} />
+                    {formData.location.trim() && !pin ? 'Confirm on map' : pin ? 'Move pin' : 'Pick on map'}
+                  </button>
+                </div>
+                {pin ? (
+                  <p className="flex items-center gap-1 text-[11px] text-green-700">
+                    <CheckCircle2 size={12} /> Location confirmed on the map
+                  </p>
+                ) : (
+                  <p className="text-[11px] text-night-gray-600">
+                    Type it or pick it on the map — confirming on the map helps customers and riders find you.
+                  </p>
+                )}
               </div>
+
+              <MapPicker
+                open={showMap}
+                onClose={() => setShowMap(false)}
+                onConfirm={handleLocationPicked}
+                title={signUpType === 'partner' ? 'Where is your business?' : 'Where do you ride from?'}
+                confirmText="Confirm location"
+                initialCoords={pin}
+                initialQuery={pin ? undefined : formData.location}
+                autoLocate={!pin && !formData.location.trim()}
+              />
 
               <label className="flex items-center gap-2 text-xs text-night-gray-600 select-none">
                 <input

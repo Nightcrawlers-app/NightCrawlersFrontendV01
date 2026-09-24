@@ -1,15 +1,37 @@
 /**
  * Night Crawlers — HTTP client
  *
- * Authentication: httpOnly cookies set by the backend on login/signup.
- * `credentials: 'include'` sends these cookies automatically on every request —
- * the frontend never touches a raw token. This protects against XSS.
+ * Authentication: the backend returns a JWT from every login/signup endpoint
+ * and reads it ONLY from the `Authorization: Bearer <token>` header — it does
+ * not set or read cookies. So we keep the token in localStorage and attach it
+ * to every request.
  *
- * CORS: the backend must set `Access-Control-Allow-Origin` to this exact origin
- * and `Access-Control-Allow-Credentials: true`. Wildcard origins block cookies.
+ * (This file previously assumed cookie auth. The backend never implemented
+ * cookies, so the token was thrown away after login and every protected call —
+ * profile photo, phone verification, addresses, orders — failed with 401.)
  */
 
 const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
+
+const TOKEN_KEY = 'nc_token';
+
+/** Save (or clear, with null) the session token returned by a login endpoint. */
+export function setAuthToken(token: string | null | undefined): void {
+    try {
+        if (token) localStorage.setItem(TOKEN_KEY, token);
+        else localStorage.removeItem(TOKEN_KEY);
+    } catch {
+        // Storage blocked (private mode) — the session just won't survive a refresh.
+    }
+}
+
+export function getAuthToken(): string | null {
+    try {
+        return localStorage.getItem(TOKEN_KEY);
+    } catch {
+        return null;
+    }
+}
 
 export class ApiError extends Error {
     status: number;
@@ -52,6 +74,14 @@ function buildUrl(path: string, params?: RequestOptions['params']): string {
     return qs ? `${url}?${qs}` : url;
 }
 
+function buildHeaders(hasBody: boolean): Record<string, string> {
+    const headers: Record<string, string> = {};
+    if (hasBody) headers['Content-Type'] = 'application/json';
+    const token = getAuthToken();
+    if (token) headers.Authorization = `Bearer ${token}`;
+    return headers;
+}
+
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
     const { method = 'GET', body, params, signal } = options;
 
@@ -59,8 +89,7 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     try {
         response = await fetch(buildUrl(path, params), {
             method,
-            credentials: 'include', // sends httpOnly cookies automatically
-            headers: body === undefined ? undefined : { 'Content-Type': 'application/json' },
+            headers: buildHeaders(body !== undefined),
             body: body === undefined ? undefined : JSON.stringify(body),
             signal,
         });
@@ -85,6 +114,10 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
         }
     }
 
+    // An expired/invalid token is useless — drop it so the app treats the
+    // user as signed out instead of retrying with it forever.
+    if (response.status === 401) setAuthToken(null);
+
     if (!response.ok) {
         const message =
             (parsed && typeof parsed === 'object' && 'message' in parsed
@@ -92,7 +125,13 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
                 : null) ||
             (typeof parsed === 'string' && parsed) ||
             `Request failed (${response.status})`;
-        throw new ApiError(message, response.status, parsed);
+        // In development, make "route doesn't exist" obvious — it almost always
+        // means the backend you're pointed at is running older code.
+        const devHint =
+            import.meta.env.DEV && response.status === 404 && message === 'Not found'
+                ? ` — ${method} ${path} doesn't exist on ${BASE_URL || 'the dev proxy target'}. Is that backend up to date?`
+                : '';
+        throw new ApiError(message + devHint, response.status, parsed);
     }
 
     return parsed as T;

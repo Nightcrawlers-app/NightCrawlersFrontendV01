@@ -1,14 +1,16 @@
 /**
  * Browser geolocation.
  *
- * Uses the built-in `navigator.geolocation` API, which is free and needs no
- * API key. It gives coordinates but not a readable address; turning a point
- * into "12 Admiralty Way, Lekki" is reverse geocoding and needs a paid service
- * (Google, Mapbox). Until that exists, a position picked this way is labelled
- * "Current location".
+ * Uses the built-in `navigator.geolocation` API for the coordinates, then our
+ * backend's /api/geo/reverse (OpenStreetMap, free) to turn the point into a
+ * readable address like "12 Admiralty Way, Lekki, Lagos". If that lookup
+ * fails, the position is still used, just labelled "Current location".
+ *
+ * Note: browsers only allow geolocation on HTTPS pages (and localhost).
  */
 
 import type { Coordinates } from '../types/models';
+import { reverseGeocode } from '../services/api';
 
 export type GeolocationFailure =
     | 'unsupported'
@@ -66,4 +68,19 @@ export function getCurrentPosition(timeoutMs = 10000): Promise<Coordinates> {
             { enableHighAccuracy: true, timeout: timeoutMs, maximumAge: 60000 },
         );
     });
+}
+
+/**
+ * Get the user's position AND a readable address for it.
+ * Rejects only if the browser can't give a position; a failed address lookup
+ * falls back to the "Current location" label.
+ */
+export async function locateWithAddress(timeoutMs = 10000): Promise<{ label: string; city: string; coords: Coordinates }> {
+    const coords = await getCurrentPosition(timeoutMs);
+    try {
+        const place = await reverseGeocode(coords);
+        return { label: place.label || CURRENT_LOCATION_LABEL, city: place.city || '', coords };
+    } catch {
+        return { label: CURRENT_LOCATION_LABEL, city: '', coords };
+    }
 }

@@ -64,7 +64,7 @@ export const FEATURES: Feature[] = [
 export const NAVIGATION_LINKS = [
   { name: 'Home', href: '/' },
   { name: 'Contact Us', href: '/contact' },
-  { name: 'Vendors', href: '/vendors' },
+  { name: 'Partners', href: '/vendors' },
   { name: 'FAQs', href: '/faq' }
 ];
 

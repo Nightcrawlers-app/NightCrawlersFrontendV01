@@ -8,6 +8,8 @@ import { useAuth, Transaction } from '../../context/AuthContext';
 import { createOrder, toErrorMessage, formatPaymentMethod } from '../../services/api';
 import type { PaymentMethod } from '../../services/api';
 import { useDeliveryLocation } from '../../context/DeliveryLocationContext';
+import MapPicker from '../../components/map/MapPicker';
+import type { PickedLocation } from '../../components/map/MapPicker';
 
 // Nothing is charged online — there's no payment gateway wired up. The customer
 // settles with the rider at the door. When a gateway lands this becomes a real
@@ -17,7 +19,9 @@ const PAYMENT_METHOD: PaymentMethod = 'cash_on_delivery';
 const OrderSummary: React.FC = () => {
     const navigate = useNavigate();
     const { cartItems, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
-    const { user, isAuthenticated, addTransaction } = useAuth();
+    const { user, isAuthenticated, addTransaction, addAddress } = useAuth();
+    const [showMap, setShowMap] = useState(false);
+    const [savingPin, setSavingPin] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderPlaced, setOrderPlaced] = useState(false);
     const [orderId, setOrderId] = useState<string | null>(null);
@@ -26,7 +30,7 @@ const OrderSummary: React.FC = () => {
     // Whatever the customer picked on Explore or the vendor page, falling back
     // to their default saved address. Previously this ignored the choice
     // entirely and could deliver somewhere they never selected.
-    const { deliveryAddress: chosenAddress, coords: chosenCoords } = useDeliveryLocation();
+    const { deliveryAddress: chosenAddress, coords: pickedCoords, setLocation } = useDeliveryLocation();
     const defaultAddr = user?.addresses.find(a => a.isDefault) || user?.addresses[0];
     const [deliveryAddress, setDeliveryAddress] = useState(
         chosenAddress || defaultAddr?.address || ''
@@ -50,6 +54,38 @@ const OrderSummary: React.FC = () => {
         const next = chosenAddress || fallback?.address;
         if (next) setDeliveryAddress(next);
     }, [user, chosenAddress]);
+
+    // The saved address being delivered to (if it's one of theirs) — its own
+    // pin wins, so the rider gets the right point even if the customer switched
+    // addresses on this page.
+    const selectedSaved = user?.addresses.find(a => a.address === deliveryAddress);
+    const chosenCoords =
+        selectedSaved?.latitude != null && selectedSaved?.longitude != null
+            ? { latitude: selectedSaved.latitude, longitude: selectedSaved.longitude }
+            : deliveryAddress === chosenAddress ? pickedCoords : null;
+
+    // Pick a new spot on the map: saved to their profile (so it's reusable and
+    // the order has a real, pinned address) and selected straight away.
+    const handleMapPicked = async (picked: PickedLocation) => {
+        setShowMap(false);
+        if (!user) return;
+        setSavingPin(true);
+        const saveError = await addAddress({
+            label: user.addresses.length === 0 ? 'Home' : 'Pinned location',
+            address: picked.label,
+            city: picked.city || 'Nigeria',
+            latitude: picked.coords.latitude,
+            longitude: picked.coords.longitude,
+            isDefault: user.addresses.length === 0,
+        });
+        setSavingPin(false);
+        if (saveError) {
+            setSubmitError(saveError);
+            return;
+        }
+        setLocation(picked.label, picked.coords);
+        setDeliveryAddress(picked.label);
+    };
 
     const deliveryFee = 800; // Mock delivery fee
     const serviceFee = Math.round(cartTotal * 0.05); // 5% service fee
@@ -103,7 +139,7 @@ const OrderSummary: React.FC = () => {
                 storeName,
                 customerName,
                 customerPhone,
-                customerLocation: 'Lagos',
+                customerLocation: selectedSaved?.city || user?.location || '',
                 customerAddress: deliveryAddress,
                 // Sent when the customer shared a real point, so the rider can
                 // navigate to it rather than guessing from the address text.
@@ -325,12 +361,14 @@ const OrderSummary: React.FC = () => {
                                     ) : user.addresses.length === 0 ? (
                                         /* No addresses saved */
                                         <div className="text-center py-4">
-                                            <p className="text-[#667085] text-sm mb-2">No delivery address saved</p>
+                                            <p className="text-[#667085] text-sm mb-3">Where should we deliver?</p>
                                             <button
-                                                onClick={() => navigate('/user-profile')}
-                                                className="text-[#C62222] text-xs font-semibold hover:underline"
+                                                onClick={() => setShowMap(true)}
+                                                disabled={savingPin}
+                                                className="inline-flex items-center gap-2 px-4 py-2 bg-[#C62222] text-white text-xs font-semibold rounded-lg hover:bg-[#A01B1B] disabled:opacity-60"
                                             >
-                                                Go to Profile to add an address →
+                                                <MapPin size={14} />
+                                                {savingPin ? 'Saving…' : 'Choose on the map'}
                                             </button>
                                         </div>
                                     ) : (
@@ -370,6 +408,14 @@ const OrderSummary: React.FC = () => {
                                                     </div>
                                                 </button>
                                             ))}
+                                            <button
+                                                onClick={() => setShowMap(true)}
+                                                disabled={savingPin}
+                                                className="w-full p-3 rounded-lg border border-dashed border-[#C62222]/40 text-[#C62222] text-xs font-semibold flex items-center justify-center gap-2 hover:bg-[#FFF5F5] disabled:opacity-60"
+                                            >
+                                                <MapPin size={14} />
+                                                {savingPin ? 'Saving…' : 'Deliver somewhere else — pick on the map'}
+                                            </button>
                                         </div>
                                     )}
                                 </div>
@@ -454,12 +500,12 @@ const OrderSummary: React.FC = () => {
                             {user && user.addresses.length === 0 && (
                                 <div className="mb-4 px-3 py-2.5 bg-amber-50 border border-amber-200 rounded-lg">
                                     <p className="text-xs text-amber-700 font-medium mb-1">📍 Delivery address required</p>
-                                    <p className="text-[11px] text-amber-600">Add a delivery address before placing your order.</p>
+                                    <p className="text-[11px] text-amber-600">Pick where to deliver before placing your order.</p>
                                     <button
-                                        onClick={() => navigate('/user-profile')}
+                                        onClick={() => setShowMap(true)}
                                         className="text-[11px] text-[#C62222] font-semibold mt-1 hover:underline"
                                     >
-                                        Go to Profile →
+                                        Choose on the map →
                                     </button>
                                 </div>
                             )}
@@ -498,6 +544,15 @@ const OrderSummary: React.FC = () => {
             </main>
 
             <Footer />
+            <MapPicker
+                open={showMap}
+                onClose={() => setShowMap(false)}
+                onConfirm={handleMapPicked}
+                title="Where should we deliver?"
+                confirmText="Deliver here"
+                initialCoords={chosenCoords}
+                autoLocate={!chosenCoords}
+            />
         </div>
     );
 };

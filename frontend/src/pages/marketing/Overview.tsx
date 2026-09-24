@@ -102,7 +102,7 @@ const Overview: React.FC = () => {
                                 Create an Account
                             </Link>
                             <Link to="/vendor-signup" className="btn-success-outline inline-flex items-center justify-center">
-                                Become a Vendor
+                                Become a Partner
                             </Link>
                         </div>
                     </div>

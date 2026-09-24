@@ -57,7 +57,7 @@ const Features: React.FC = () => {
                                 <p className="text-red-100 text-[14px] sm:text-[16px] max-w-[500px]">Reach thousands of new customers in your area.</p>
                             </div>
                             <Link to="/vendor-signup" className="inline-flex items-center justify-center gap-2 bg-white text-[#C62222] text-[15px] font-bold rounded-[8px] px-8 py-3.5 hover:bg-gray-50 transition-colors shadow-lg flex-shrink-0">
-                                Sign Up as Vendor
+                                Sign Up as Partner
                             </Link>
                         </div>
                     </div>

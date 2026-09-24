@@ -14,6 +14,8 @@ import {
     updateCustomerAddress,
     deleteCustomerAddress,
     setDefaultCustomerAddress,
+    verifyCustomerLogin,
+    LoginCodeRequiredError,
     toErrorMessage,
 } from '../services/api';
 import type {
@@ -41,7 +43,15 @@ interface AuthContextType {
     /** Last error from a profile/address/password action, for the UI to surface. */
     error: string;
     clearError: () => void;
-    login: (email: string, password: string) => Promise<boolean>;
+    /**
+     * Resolves to true (signed in), false (bad credentials), or
+     * { codeRequired, email } when the backend emailed a new-location code —
+     * then call `verifyLogin` with that code.
+     */
+    login: (email: string, password: string) => Promise<boolean | { codeRequired: true; email: string; message: string }>;
+    verifyLogin: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
+    /** Re-fetch the signed-in customer from the server (e.g. after phone verification). */
+    refreshUser: () => Promise<void>;
     /**
      * Step 1 of signup: creates the account and triggers an emailed code.
      * Does NOT log the user in — the backend requires verifying that code
@@ -53,19 +63,19 @@ interface AuthContextType {
     /** Re-sends the verification code, e.g. if the user didn't get the first one. */
     resendSignupCode: (email: string) => Promise<{ success: boolean; error?: string }>;
     logout: () => Promise<void>;
-    updateProfile: (updates: Partial<UserProfile>) => Promise<void>;
+    /** Resolves to null when the server saved the change, or the error message if it didn't. */
+    updateProfile: (updates: Partial<UserProfile>) => Promise<string | null>;
     addTransaction: (transaction: Transaction) => void;
     // Address management
-    addAddress: (address: Omit<UserAddress, 'id'>) => Promise<void>;
-    updateAddress: (id: string, updates: Partial<Omit<UserAddress, 'id'>>) => Promise<void>;
+    /** Both resolve to null on success, or the error message. */
+    addAddress: (address: Omit<UserAddress, 'id'>) => Promise<string | null>;
+    updateAddress: (id: string, updates: Partial<Omit<UserAddress, 'id'>>) => Promise<string | null>;
     deleteAddress: (id: string) => Promise<void>;
     setDefaultAddress: (id: string) => Promise<void>;
     // Password management
     changePassword: (currentPassword: string, newPassword: string) => Promise<{ success: boolean; error?: string }>;
     // Account management
     deleteAccount: () => Promise<void>;
-    /** Re-fetches the current user from the server and updates state. Used after phone verification. */
-    refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -123,7 +133,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         };
     }, [loadTransactions]);
 
-    const login = useCallback(async (email: string, password: string): Promise<boolean> => {
+    const login = useCallback(async (
+        email: string,
+        password: string,
+    ): Promise<boolean | { codeRequired: true; email: string; message: string }> => {
         setIsLoading(true);
         setError('');
         try {
@@ -134,12 +147,43 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             await loadTransactions();
             return true;
         } catch (err) {
+            if (err instanceof LoginCodeRequiredError) {
+                return { codeRequired: true, email: err.email, message: err.message };
+            }
             setError(toErrorMessage(err, 'Could not sign in. Please try again.'));
-            return false;
+            throw err;
         } finally {
             setIsLoading(false);
         }
     }, [loadTransactions]);
+
+    const verifyLogin = useCallback(async (
+        email: string,
+        code: string,
+    ): Promise<{ success: boolean; error?: string }> => {
+        setIsLoading(true);
+        setError('');
+        try {
+            setUser(await verifyCustomerLogin(email, code));
+            await loadTransactions();
+            return { success: true };
+        } catch (err) {
+            const message = toErrorMessage(err, "That code didn't work. Please try again.");
+            setError(message);
+            return { success: false, error: message };
+        } finally {
+            setIsLoading(false);
+        }
+    }, [loadTransactions]);
+
+    const refreshUser = useCallback(async () => {
+        try {
+            const current = await getCurrentCustomer();
+            if (current) setUser(current);
+        } catch {
+            // Keep what we have; a failed refresh shouldn't sign anyone out.
+        }
+    }, []);
 
     const signup = useCallback(async (
         data: { username: string; email: string; password: string },
@@ -205,7 +249,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     }, []);
 
-    const updateProfile = useCallback(async (updates: Partial<UserProfile>) => {
+    const updateProfile = useCallback(async (updates: Partial<UserProfile>): Promise<string | null> => {
         setError('');
         const previous = user;
         // Optimistic — show the change straight away, roll back if it fails.
@@ -213,9 +257,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         try {
             const saved = await updateCustomerProfile(updates);
             setUser(saved);
+            return null;
         } catch (err) {
             setUser(previous);
-            setError(toErrorMessage(err, 'Could not save your changes.'));
+            const message = toErrorMessage(err, 'Could not save your changes.');
+            setError(message);
+            return message;
         }
     }, [user]);
 
@@ -227,21 +274,30 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     // Each endpoint returns the full updated profile, so the response is the
     // source of truth — no local re-derivation of which address is default.
 
-    const addAddress = useCallback(async (address: Omit<UserAddress, 'id'>) => {
+    const addAddress = useCallback(async (address: Omit<UserAddress, 'id'>): Promise<string | null> => {
         setError('');
         try {
             setUser(await addCustomerAddress(address));
+            return null;
         } catch (err) {
-            setError(toErrorMessage(err, 'Could not add that address.'));
+            const message = toErrorMessage(err, 'Could not add that address.');
+            setError(message);
+            return message;
         }
     }, []);
 
-    const updateAddress = useCallback(async (id: string, updates: Partial<Omit<UserAddress, 'id'>>) => {
+    const updateAddress = useCallback(async (
+        id: string,
+        updates: Partial<Omit<UserAddress, 'id'>>,
+    ): Promise<string | null> => {
         setError('');
         try {
             setUser(await updateCustomerAddress(id, updates));
+            return null;
         } catch (err) {
-            setError(toErrorMessage(err, 'Could not update that address.'));
+            const message = toErrorMessage(err, 'Could not update that address.');
+            setError(message);
+            return message;
         }
     }, []);
 
@@ -285,17 +341,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }
     }, [user]);
 
-    // ---- REFRESH USER ----
-
-    const refreshUser = useCallback(async () => {
-        try {
-            const currentUser = await getCurrentCustomer();
-            setUser(currentUser);
-        } catch {
-            // ignore — user stays as-is if refresh fails
-        }
-    }, []);
-
     // ---- ACCOUNT MANAGEMENT ----
 
     const deleteAccount = useCallback(async () => {
@@ -320,6 +365,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 error,
                 clearError,
                 login,
+                verifyLogin,
+                refreshUser,
                 signup,
                 verifySignup,
                 resendSignupCode,
@@ -332,7 +379,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 setDefaultAddress,
                 changePassword,
                 deleteAccount,
-                refreshUser,
             }}
         >
             {children}

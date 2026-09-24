@@ -107,3 +107,41 @@ export const resolveImageUrl = async (url: string) => {
   }
   return '';
 };
+
+/**
+ * Shrink an image file in the browser and return it as a JPEG data URL.
+ * Keeps the aspect ratio; the longest side becomes at most `maxSize` px.
+ * Used for profile photos so a 6 MB phone picture uploads as ~50 KB.
+ */
+export const compressImage = async (
+  file: File,
+  { maxSize = 512, quality = 0.85 }: { maxSize?: number; quality?: number } = {},
+): Promise<string> => {
+  const url = URL.createObjectURL(file);
+  try {
+    const img = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const el = new Image();
+      el.onload = () => resolve(el);
+      el.onerror = () => reject(new Error("Couldn't read that image. Try a JPG or PNG."));
+      el.src = url;
+    });
+
+    const scale = Math.min(1, maxSize / Math.max(img.naturalWidth, img.naturalHeight));
+    const width = Math.max(1, Math.round(img.naturalWidth * scale));
+    const height = Math.max(1, Math.round(img.naturalHeight * scale));
+
+    const canvas = document.createElement('canvas');
+    canvas.width = width;
+    canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) throw new Error('Image processing is not supported in this browser.');
+
+    // White background so transparent PNGs don't turn black as JPEG.
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, width, height);
+    ctx.drawImage(img, 0, 0, width, height);
+    return canvas.toDataURL('image/jpeg', quality);
+  } finally {
+    URL.revokeObjectURL(url);
+  }
+};
