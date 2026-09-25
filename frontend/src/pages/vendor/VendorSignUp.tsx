@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PasswordInput, { PasswordMatchHint } from '../../components/ui/PasswordInput';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, MapPin, CheckCircle2 } from 'lucide-react';
 import MapPicker from '../../components/map/MapPicker';
@@ -20,6 +21,7 @@ interface FormData {
   email: string;
   location: string;
   password: string;
+  confirmPassword: string;
   agreeToPolicy: boolean;
 }
 
@@ -43,6 +45,7 @@ const VendorSignUp: React.FC = () => {
     email: '',
     location: '',
     password: '',
+    confirmPassword: '',
     agreeToPolicy: false,
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -85,6 +88,10 @@ const VendorSignUp: React.FC = () => {
       return;
     }
 
+    if (formData.password !== formData.confirmPassword) {
+      setErrorMessage("Passwords don't match.");
+      return;
+    }
     if (!formData.password.trim()) {
       setErrorMessage('Please enter a password.');
       return;
@@ -289,16 +296,30 @@ const VendorSignUp: React.FC = () => {
                 </div>
                 <div className="space-y-1">
                   <label className="block text-xs font-medium text-night-gray-700">Password</label>
-                  <input
-                    type="password"
+                  <PasswordInput
                     name="password"
                     value={formData.password}
                     onChange={handleInputChange}
                     placeholder="Create a password"
+                    autoComplete="new-password"
                     className="w-full h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] transition"
                     required
                   />
                 </div>
+              </div>
+
+              <div className="space-y-1">
+                <label className="block text-xs font-medium text-night-gray-700">Confirm Password</label>
+                <PasswordInput
+                  name="confirmPassword"
+                  value={formData.confirmPassword}
+                  onChange={handleInputChange}
+                  placeholder="Type your password again"
+                  autoComplete="new-password"
+                  className="w-full h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] transition"
+                  required
+                />
+                <PasswordMatchHint password={formData.password} confirm={formData.confirmPassword} />
               </div>
 
               <div className="space-y-1">

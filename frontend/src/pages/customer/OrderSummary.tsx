@@ -13,11 +13,14 @@ import {
     getLivePromotions,
     getStoreById,
     quoteOrder,
+    initializePayment,
     promotionAppliesToStore,
     describeDiscount,
 } from '../../services/api';
 import type { PaymentMethod, Promotion, OrderQuote } from '../../services/api';
 import { usePromotion } from '../../context/PromotionContext';
+import { useAppConfig } from '../../lib/appConfig';
+import PhoneVerificationModal from '../../components/ui/PhoneVerificationModal';
 import { useDeliveryLocation } from '../../context/DeliveryLocationContext';
 import MapPicker from '../../components/map/MapPicker';
 import type { PickedLocation } from '../../components/map/MapPicker';
@@ -25,13 +28,18 @@ import type { PickedLocation } from '../../components/map/MapPicker';
 // Nothing is charged online — there's no payment gateway wired up. The customer
 // settles with the rider at the door. When a gateway lands this becomes a real
 // choice on this screen; see the Payments section of BACKEND_API_GUIDE.md.
-const PAYMENT_METHOD: PaymentMethod = 'cash_on_delivery';
+// (Online payment via Paystack is offered when the server has it switched on.)
 
 const OrderSummary: React.FC = () => {
     const navigate = useNavigate();
     const { cartItems, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
     const { user, isAuthenticated, addTransaction, addAddress } = useAuth();
     const [showMap, setShowMap] = useState(false);
+    const config = useAppConfig();
+    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
+    const [redirectingToPay, setRedirectingToPay] = useState(false);
+    // The server asks for a verified phone before ordering (when that's switched on).
+    const [showPhoneModal, setShowPhoneModal] = useState(false);
     const [savingPin, setSavingPin] = useState(false);
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [orderPlaced, setOrderPlaced] = useState(false);
@@ -147,6 +155,10 @@ const OrderSummary: React.FC = () => {
                     storeId: String(cartStoreId),
                     items: cartItems.map((i) => ({ menuItemId: String(i.id), quantity: i.quantity })),
                     promotionId: activePromo?.id ?? null,
+                    // Where it's going — the delivery fee depends on the distance
+                    customerLatitude: chosenCoords?.latitude ?? null,
+                    customerLongitude: chosenCoords?.longitude ?? null,
+                    customerAddress: deliveryAddress || undefined,
                 },
                 controller.signal,
             )
@@ -165,7 +177,7 @@ const OrderSummary: React.FC = () => {
             window.clearTimeout(timer);
             controller.abort();
         };
-    }, [cartKey, cartStoreId, activePromo?.id]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [cartKey, cartStoreId, activePromo?.id, chosenCoords?.latitude, chosenCoords?.longitude, deliveryAddress]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const quote = orderQuote?.promotion ?? null; // the promo part of the quote
     const deliveryFee = orderQuote?.deliveryFee ?? 0;
@@ -233,7 +245,7 @@ const OrderSummary: React.FC = () => {
                     menuItemId: String(item.id),
                     quantity: item.quantity,
                 })),
-                paymentMethod: PAYMENT_METHOD,
+                paymentMethod,
                 promotionId: quote?.eligible && activePromo ? activePromo.id : null,
             });
 
@@ -257,17 +269,38 @@ const OrderSummary: React.FC = () => {
                     total: order.totalPaid ?? order.totalAmount + order.deliveryFee + (order.serviceFee ?? 0) - (order.discountAmount ?? 0),
                     vendorName: storeName,
                     vendorImage: cartItems[0]?.vendorImage,
-                    paymentMethod: PAYMENT_METHOD,
+                    paymentMethod,
                     deliveryAddress,
                 };
                 addTransaction(txn);
             }
 
-            setOrderId(order.id);
-            setOrderPlaced(true);
             clearCart();
             selectPromotion(null); // used up for this order
+
+            if (paymentMethod === 'online') {
+                // Off to Paystack's secure checkout; it sends them back to
+                // /payment/callback, which confirms the payment with our server.
+                setRedirectingToPay(true);
+                try {
+                    const { authorizationUrl } = await initializePayment(order.id);
+                    window.location.href = authorizationUrl;
+                    return;
+                } catch (payErr) {
+                    setRedirectingToPay(false);
+                    // The order exists; they can retry payment from the callback page.
+                    navigate(`/payment/callback?order=${order.id}&error=${encodeURIComponent(toErrorMessage(payErr, 'Could not start payment.'))}`);
+                    return;
+                }
+            }
+
+            setOrderId(order.id);
+            setOrderPlaced(true);
         } catch (error) {
+            if (error instanceof ApiError && (error.body as { needsPhoneVerification?: boolean })?.needsPhoneVerification) {
+                setShowPhoneModal(true);
+                return;
+            }
             // Cart is deliberately left intact so the customer can retry.
             // If the promo stopped being valid (ended, wrong store), drop it
             // so the next tap places the order at full price, visibly.
@@ -538,7 +571,7 @@ const OrderSummary: React.FC = () => {
                                     <span className="font-medium text-[#222222]">₦ {(orderQuote?.subtotal ?? cartTotal).toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between text-[#667085] text-sm">
-                                    <span>Delivery Fee</span>
+                                    <span>Delivery Fee{orderQuote?.distanceKm != null ? ` (${orderQuote.distanceKm} km)` : ''}</span>
                                     <span className="font-medium text-[#222222]">₦ {deliveryFee.toLocaleString()}</span>
                                 </div>
                                 <div className="flex justify-between text-[#667085] text-sm">
@@ -594,11 +627,28 @@ const OrderSummary: React.FC = () => {
                                 <span className="text-[#C62222] font-bold text-xl">₦ {finalTotal.toLocaleString()}</span>
                             </div>
 
-                            <div className="flex items-center gap-2 mb-6 px-3 py-2.5 bg-gray-50 border border-[#EAECF0] rounded-lg">
-                                <CreditCard size={14} className="text-gray-400 flex-shrink-0" />
-                                <p className="text-xs text-[#667085]">
-                                    Pay <span className="font-medium text-[#222222]">{formatPaymentMethod(PAYMENT_METHOD)}</span> — you settle with the rider when your order arrives.
-                                </p>
+                            {/* Payment method */}
+                            <div className="mb-6 space-y-2">
+                                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#98A2B3]">Payment</p>
+                                {([
+                                    { value: 'cash_on_delivery', title: formatPaymentMethod('cash_on_delivery'), detail: 'Pay the rider when your order arrives.' },
+                                    ...(config.onlinePayments
+                                        ? [{ value: 'online', title: 'Pay now online', detail: `Card, bank transfer or USSD via Paystack.${config.paystackTestMode ? ' (Test mode — no real charge)' : ''}` }]
+                                        : []),
+                                ] as { value: PaymentMethod; title: string; detail: string }[]).map((opt) => (
+                                    <button
+                                        key={opt.value}
+                                        type="button"
+                                        onClick={() => setPaymentMethod(opt.value)}
+                                        className={`w-full text-left p-3 rounded-lg border text-xs transition-all flex items-start gap-2.5 ${paymentMethod === opt.value ? 'border-[#C62222] bg-[#FFF5F5]' : 'border-gray-200 hover:border-[#C62222]/40'}`}
+                                    >
+                                        <CreditCard size={14} className={`mt-0.5 flex-shrink-0 ${paymentMethod === opt.value ? 'text-[#C62222]' : 'text-gray-400'}`} />
+                                        <span>
+                                            <span className="block font-semibold text-[#222222]">{opt.title}</span>
+                                            <span className="block text-[#667085]">{opt.detail}</span>
+                                        </span>
+                                    </button>
+                                ))}
                             </div>
 
                             {/* Not logged in warning */}
@@ -651,17 +701,17 @@ const OrderSummary: React.FC = () => {
 
                             <button
                                 onClick={handlePlaceOrder}
-                                disabled={isSubmitting || quoting || !orderQuote || !user || !user.phone || user.addresses.length === 0}
+                                disabled={isSubmitting || redirectingToPay || quoting || !orderQuote || !user || !user.phone || user.addresses.length === 0}
                                 className="w-full h-12 bg-[#222222] text-white font-semibold rounded-lg hover:bg-black transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 mb-4 group disabled:opacity-70 disabled:cursor-not-allowed"
                             >
-                                {isSubmitting ? (
+                                {isSubmitting || redirectingToPay ? (
                                     <>
                                         <Loader2 size={18} className="animate-spin" />
-                                        Processing...
+                                        {redirectingToPay ? 'Opening secure payment…' : 'Processing...'}
                                     </>
                                 ) : (
                                     <>
-                                        Place Order
+                                        {paymentMethod === 'online' ? `Pay ₦${finalTotal.toLocaleString()}` : 'Place Order'}
                                         <ChevronLeft size={16} className="rotate-180 group-hover:translate-x-1 transition-transform" />
                                     </>
                                 )}
@@ -677,6 +727,15 @@ const OrderSummary: React.FC = () => {
             </main>
 
             <Footer />
+            {showPhoneModal && (
+                <PhoneVerificationModal
+                    onClose={() => setShowPhoneModal(false)}
+                    onVerified={() => {
+                        setShowPhoneModal(false);
+                        handlePlaceOrder(); // pick up where they left off
+                    }}
+                />
+            )}
             <MapPicker
                 open={showMap}
                 onClose={() => setShowMap(false)}

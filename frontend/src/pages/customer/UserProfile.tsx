@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import PasswordInput, { PasswordMatchHint } from '../../components/ui/PasswordInput';
 import { Link, useNavigate } from 'react-router-dom';
 import Footer from '../../components/layout/Footer';
 import Header from '../../components/layout/Header';
@@ -1050,8 +1051,7 @@ const UserProfile: React.FC = () => {
                         <div className="space-y-4">
                             <div>
                                 <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1 block">Current Password</label>
-                                <input
-                                    type="password"
+                                <PasswordInput
                                     value={passwordForm.current}
                                     onChange={e => setPasswordForm(p => ({ ...p, current: e.target.value }))}
                                     className="w-full p-3 bg-white border-2 border-gray-200 rounded-lg text-gray-900 text-sm focus:outline-none focus:border-[#C62222] transition-colors"
@@ -1059,8 +1059,7 @@ const UserProfile: React.FC = () => {
                             </div>
                             <div>
                                 <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1 block">New Password</label>
-                                <input
-                                    type="password"
+                                <PasswordInput
                                     value={passwordForm.newPass}
                                     onChange={e => setPasswordForm(p => ({ ...p, newPass: e.target.value }))}
                                     className="w-full p-3 bg-white border-2 border-gray-200 rounded-lg text-gray-900 text-sm focus:outline-none focus:border-[#C62222] transition-colors"
@@ -1068,12 +1067,12 @@ const UserProfile: React.FC = () => {
                             </div>
                             <div>
                                 <label className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1 block">Confirm New Password</label>
-                                <input
-                                    type="password"
+                                <PasswordInput
                                     value={passwordForm.confirm}
                                     onChange={e => setPasswordForm(p => ({ ...p, confirm: e.target.value }))}
                                     className="w-full p-3 bg-white border-2 border-gray-200 rounded-lg text-gray-900 text-sm focus:outline-none focus:border-[#C62222] transition-colors"
                                 />
+                                <div className="mt-1"><PasswordMatchHint password={passwordForm.newPass} confirm={passwordForm.confirm} /></div>
                             </div>
                         </div>
                         <div className="flex items-center gap-3 mt-6">

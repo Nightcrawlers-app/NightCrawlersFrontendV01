@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PasswordInput, { PasswordMatchHint } from '../../components/ui/PasswordInput';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import signinImage from '../../assets/signin-image.png';
 import signupLogo from '../../assets/signup-logo.png';
@@ -103,8 +104,7 @@ const ResetPassword: React.FC = () => {
                   <div className="space-y-1">
                     <label className="block text-xs font-semibold text-[#344054]">New Password*</label>
                     <div className="relative">
-                      <input
-                        type="password"
+                      <PasswordInput
                         value={newPassword}
                         onChange={(e) => { setNewPassword(e.target.value); setError(''); }}
                         placeholder="Min. 8 characters"
@@ -117,14 +117,14 @@ const ResetPassword: React.FC = () => {
 
                   <div className="space-y-1">
                     <label className="block text-xs font-semibold text-[#344054]">Confirm Password*</label>
-                    <input
-                      type="password"
+                    <PasswordInput
                       value={confirmPassword}
                       onChange={(e) => { setConfirmPassword(e.target.value); setError(''); }}
                       placeholder="Repeat your new password"
                       className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222]"
                       required
                     />
+                    <PasswordMatchHint password={newPassword} confirm={confirmPassword} />
                   </div>
 
                   {error && <p className="text-xs text-[#C62222]">{error}</p>}
@@ -152,9 +152,9 @@ const ResetPassword: React.FC = () => {
 
           <div className="w-full flex items-center justify-between text-xs text-[#667085] px-1">
             <span>© Night Crawlers 2026, inc</span>
-            <a href="mailto:support@nightcrawlers.app" className="flex items-center gap-2 hover:text-[#C62222]">
+            <a href="mailto:help@nightcrawlers.app" className="flex items-center gap-2 hover:text-[#C62222]">
               <img src={mailIcon} alt="" className="w-3.5 h-3.5" />
-              support@nightcrawlers.app
+              help@nightcrawlers.app
             </a>
           </div>
         </div>

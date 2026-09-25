@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PasswordInput from '../../components/ui/PasswordInput';
 import { useNavigate, Link } from 'react-router-dom';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
@@ -83,8 +84,7 @@ const AdminLogin: React.FC = () => {
 
                         <div className="space-y-1">
                             <label className="text-xs font-semibold text-gray-500 ml-1">Password</label>
-                            <Input
-                                type="password"
+                            <PasswordInput
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required

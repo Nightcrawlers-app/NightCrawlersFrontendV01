@@ -10,6 +10,7 @@ import { BUSINESS_TYPES, BusinessType, VendorStore, getBusinessTypeMeta, getStor
 import type { Promotion } from '../../services/api';
 import PromoCarousel from '../../components/promotions/PromoCarousel';
 import { usePromotion } from '../../context/PromotionContext';
+import { useAppConfig } from '../../lib/appConfig';
 import { useDeliveryLocation } from '../../context/DeliveryLocationContext';
 import type { Coordinates } from '../../types/models';
 import groceriesIcon from '../../assets/category-groceries.png';
@@ -104,6 +105,7 @@ const Explore: React.FC = () => {
   // Hooks must live inside the component. These two used to sit at module
   // level, which crashes the page with "Invalid hook call".
   const { user } = useAuth();
+  const appConfig = useAppConfig();
   const [showPhoneGate, setShowPhoneGate] = useState(false);
   // ?category=Food&search=KFC — used by the homepage brand tiles and buttons.
   const [searchParams, setSearchParams] = useSearchParams();
@@ -573,7 +575,7 @@ const Explore: React.FC = () => {
                   <div className="flex items-center gap-[12px]">
                     <button
                     onClick={() => {
-                      if (user && !user.phoneVerified) {
+                      if (user && !user.phoneVerified && appConfig.requirePhoneVerification) {
                         setShowPhoneGate(true);
                         return;
                       }

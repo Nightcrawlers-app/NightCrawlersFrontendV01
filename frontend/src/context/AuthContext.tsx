@@ -327,8 +327,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     ): Promise<{ success: boolean; error?: string }> => {
         if (!user) return { success: false, error: 'Not authenticated' };
 
-        if (newPassword.length < 6) {
-            return { success: false, error: 'New password must be at least 6 characters' };
+        if (newPassword.length < 8) {
+            return { success: false, error: 'New password must be at least 8 characters' };
         }
 
         try {

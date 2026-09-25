@@ -44,6 +44,7 @@ const AdminDashboard: React.FC = () => {
     const [isProcessingAction, setIsProcessingAction] = useState(false);
     const [actionError, setActionError] = useState('');
     const [confirmReject, setConfirmReject] = useState(false);
+    const [rejectReason, setRejectReason] = useState('');
     const [reloadKey, setReloadKey] = useState(0);
 
     // Guards against setting state after unmount — polling keeps requests in flight.
@@ -138,7 +139,7 @@ const AdminDashboard: React.FC = () => {
         setIsProcessingAction(true);
         setActionError('');
         try {
-            await verifyUser(target.id, target.type, action);
+            await verifyUser(target.id, target.type, action, action === 'reject' ? rejectReason.trim() : undefined);
             // Drop it locally straight away, then refetch to stay in sync.
             setPending(prev => prev.filter(p => p.id !== target.id));
             setSelectedAction(null);
@@ -159,6 +160,7 @@ const AdminDashboard: React.FC = () => {
         setSelectedAction(item);
         setActionError('');
         setConfirmReject(false);
+        setRejectReason('');
     };
 
     if (!admin || !stats) {
@@ -540,8 +542,19 @@ const AdminDashboard: React.FC = () => {
                             </div>
                         )}
                         {confirmReject && (
-                            <div className="mb-4 rounded-xl bg-amber-50 border border-amber-200 px-3 py-2.5 text-sm text-amber-800">
-                                Rejecting <strong>permanently deletes</strong> this account and emails them. Tap Reject again to confirm.
+                            <div className="mb-4 space-y-2">
+                                <label className="block text-xs font-semibold text-gray-600">
+                                    Reason (they'll see this and get it by email)
+                                </label>
+                                <textarea
+                                    value={rejectReason}
+                                    onChange={(e) => setRejectReason(e.target.value)}
+                                    maxLength={500}
+                                    rows={3}
+                                    placeholder="e.g. The CAC number doesn't match the business name."
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#C62222]"
+                                />
+                                <p className="text-xs text-gray-500">They keep their account and can reapply after fixing it. Tap Reject again to confirm.</p>
                             </div>
                         )}
 
@@ -550,7 +563,7 @@ const AdminDashboard: React.FC = () => {
                                 onClick={() => handleProcessAction('reject')}
                                 className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-red-50 hover:text-[#C62222] transition-colors flex items-center justify-center gap-2"
                             >
-                                <XCircle size={18} /> {confirmReject ? 'Yes, delete' : 'Reject'}
+                                <XCircle size={18} /> {confirmReject ? 'Confirm reject' : 'Reject'}
                             </button>
                             <button
                                 onClick={() => handleProcessAction('approve')}

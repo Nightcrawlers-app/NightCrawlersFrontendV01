@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PasswordInput from '../../components/ui/PasswordInput';
 import { useNavigate, Link } from 'react-router-dom';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
@@ -116,9 +117,8 @@ const VendorSignIn: React.FC = () => {
               </div>
 
               <div className="space-y-1">
-                <Input
+                <PasswordInput
                   label="Password"
-                  type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required

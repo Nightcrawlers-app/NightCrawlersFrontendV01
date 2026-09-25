@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { CheckCircle2, Circle, ChevronRight, Phone, FileCheck } from 'lucide-react';
+import { CheckCircle2, Circle, ChevronRight, Phone, FileCheck, XCircle, Loader2 } from 'lucide-react';
 import PhoneVerificationModal from './PhoneVerificationModal';
+import { useAppConfig } from '../../lib/appConfig';
+import { reapplyApplication, toErrorMessage } from '../../services/api';
 import type { KycStatus } from '../../types/models';
 
 interface ApprovalChecklistProps {
@@ -13,6 +15,8 @@ interface ApprovalChecklistProps {
     phoneNumber?: string;
     phoneVerified?: boolean;
     kycStatus?: KycStatus;
+    rejectedAt?: string | null;
+    rejectionReason?: string | null;
   };
   /** Called after a step completes, so the page can re-fetch the account. */
   onChanged: () => void;
@@ -33,6 +37,9 @@ const KYC_LABEL: Record<KycStatus, string> = {
 const ApprovalChecklist: React.FC<ApprovalChecklistProps> = ({ role, account, onChanged }) => {
   const navigate = useNavigate();
   const [showPhone, setShowPhone] = useState(false);
+  const [reapplying, setReapplying] = useState(false);
+  const [reapplyError, setReapplyError] = useState('');
+  const { requirePhoneVerification } = useAppConfig();
   const phoneDone = !!account.phoneVerified;
   const kycDone = account.kycStatus === 'passed';
 
@@ -58,10 +65,47 @@ const ApprovalChecklist: React.FC<ApprovalChecklistProps> = ({ role, account, on
     },
   ];
 
-  const remaining = rows.filter((r) => !r.done).length;
+  // While the phone requirement is switched off on the server, it's optional.
+  const required = rows.filter((r) => r.key !== 'phone' || requirePhoneVerification);
+  const remaining = required.filter((r) => !r.done).length;
+
+  const reapply = async () => {
+    setReapplying(true);
+    setReapplyError('');
+    try {
+      await reapplyApplication(role);
+      onChanged();
+    } catch (err) {
+      setReapplyError(toErrorMessage(err, "Couldn't resubmit your application."));
+    } finally {
+      setReapplying(false);
+    }
+  };
 
   return (
     <div className="text-left mb-6">
+      {account.rejectedAt && (
+        <div className="mb-4 rounded-xl border border-[#F5C2C2] bg-[#FFF5F5] p-4">
+          <p className="flex items-center gap-2 text-sm font-semibold text-[#991B1B]">
+            <XCircle size={16} /> Your application wasn't approved
+          </p>
+          {account.rejectionReason && (
+            <p className="mt-1 text-sm text-gray-700">
+              <span className="font-medium">Reason:</span> {account.rejectionReason}
+            </p>
+          )}
+          <p className="mt-1 text-xs text-gray-500">Fix anything needed below, then send it for review again.</p>
+          {reapplyError && <p className="mt-2 text-xs text-[#C62222]">{reapplyError}</p>}
+          <button
+            type="button"
+            onClick={reapply}
+            disabled={reapplying}
+            className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-[#C62222] text-white text-sm font-semibold rounded-lg hover:bg-[#A01B1B] disabled:opacity-60"
+          >
+            {reapplying && <Loader2 size={14} className="animate-spin" />} Reapply
+          </button>
+        </div>
+      )}
       <p className="text-xs font-semibold uppercase tracking-wider text-gray-400 mb-2">
         {remaining ? `${remaining} step${remaining > 1 ? 's' : ''} before we can approve you` : 'All done — waiting for review'}
       </p>
@@ -80,7 +124,12 @@ const ApprovalChecklist: React.FC<ApprovalChecklistProps> = ({ role, account, on
                 <Circle size={20} className="text-gray-300 flex-shrink-0" />
               )}
               <span className="flex-1 min-w-0">
-                <span className="block text-sm font-semibold text-gray-900">{r.title}</span>
+                <span className="block text-sm font-semibold text-gray-900">
+                  {r.title}
+                  {r.key === 'phone' && !requirePhoneVerification && !r.done && (
+                    <span className="ml-1.5 text-[10px] font-medium text-gray-400">(optional for now)</span>
+                  )}
+                </span>
                 <span className="block text-xs text-gray-500 truncate">{r.detail}</span>
               </span>
               {!r.done && <ChevronRight size={16} className="text-gray-400" />}

@@ -57,6 +57,9 @@ export type VendorAccount = {
     verified: boolean;
     phoneVerified?: boolean;
     kycStatus?: KycStatus;
+    /** Set when an admin rejected the application; cleared on reapply. */
+    rejectedAt?: string | null;
+    rejectionReason?: string | null;
 };
 
 export type KycStatus = 'pending' | 'in_progress' | 'passed' | 'failed';
@@ -158,6 +161,8 @@ export type RiderAccount = {
     verified: boolean;
     phoneVerified?: boolean;
     kycStatus?: KycStatus;
+    rejectedAt?: string | null;
+    rejectionReason?: string | null;
 };
 
 export type CreateRiderInput = {
@@ -183,12 +188,19 @@ export type CreateRiderInput = {
  * terminal, so this records an intent rather than a completed transaction.
  * See the Payments section of BACKEND_API_GUIDE.md before adding a gateway.
  */
-export type PaymentMethod = 'cash_on_delivery' | 'card_on_delivery';
+/**
+ * cash_on_delivery / card_on_delivery: paid to the rider at the door.
+ * online: paid on Paystack's checkout before the vendor starts the order.
+ */
+export type PaymentMethod = 'cash_on_delivery' | 'card_on_delivery' | 'online';
+
+export type PaymentStatus = 'not_required' | 'pending' | 'paid' | 'failed';
 
 /** Display text for each payment method. The stored value stays machine-readable. */
 export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
     cash_on_delivery: 'Cash on Delivery',
     card_on_delivery: 'Card on Delivery',
+    online: 'Paid online',
 };
 
 /** Human-readable label for a payment method, safe on unrecognised values. */
@@ -218,8 +230,9 @@ export type Order = {
     serviceFee?: number;
     /** Everything the customer pays (food + delivery + service − discount). */
     totalPaid?: number | null;
-    /** How the customer intends to pay. Nothing is charged online — see PaymentMethod. */
+    /** How the customer pays — see PaymentMethod. */
     paymentMethod: PaymentMethod;
+    paymentStatus?: PaymentStatus;
     promotionId?: string | null;
     promotionTitle?: string | null;
     discountAmount?: number;
@@ -436,9 +449,21 @@ export type PromotionQuote = {
 export type OrderQuote = {
     subtotal: number;
     deliveryFee: number;
+    /** Estimated road km store → customer; null when a flat fee was used. */
+    distanceKm: number | null;
     serviceFee: number;
     serviceFeePercent: number;
     discount: number;
     total: number;
     promotion: (PromotionQuote & { id: string; title: string | null }) | null;
+};
+
+/** GET /api/config — public settings and feature switches from the server. */
+export type AppConfig = {
+    requirePhoneVerification: boolean;
+    onlinePayments: boolean;
+    paystackTestMode: boolean;
+    /** Delivery pricing: base fee, plus perKm for every km after includedKm. */
+    delivery: { baseFee: number; perKm: number; includedKm: number; minFee: number; maxFee: number; maxKm: number };
+    serviceFeePercent: number;
 };

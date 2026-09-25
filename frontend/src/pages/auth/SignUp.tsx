@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
+import PasswordInput, { PasswordMatchHint } from '../../components/ui/PasswordInput';
 import { Link, useNavigate } from 'react-router-dom';
 import { SignUpForm } from '../../types';
 import Input from '../../components/ui/Input';
 import signupImage from '../../assets/signup-image.png';
 import signupLogo from '../../assets/signup-logo.png';
-import helpCircle from '../../assets/help-circle.svg';
 import mailIcon from '../../assets/mail.svg';
 import { useAuth } from '../../context/AuthContext';
 
@@ -125,33 +125,32 @@ const SignUp: React.FC = () => {
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-[#344054]">Password*</label>
                   <div className="relative">
-                    <Input
-                      type="password"
+                    <PasswordInput
+                      inputStyle
                       name="password"
                       placeholder="Create a password"
                       value={formData.password}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] pr-8"
+                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222]"
                       required
                     />
-                    <img src={helpCircle} alt="help" className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-60" />
                   </div>
                 </div>
 
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-[#344054]">Confirm Password*</label>
                   <div className="relative">
-                    <Input
-                      type="password"
+                    <PasswordInput
+                      inputStyle
                       name="confirmPassword"
                       placeholder="Confirm password"
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] pr-8"
+                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222]"
                       required
                     />
-                    <img src={helpCircle} alt="help" className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-60" />
                   </div>
+                  <PasswordMatchHint password={formData.password} confirm={formData.confirmPassword} />
                   <p className="text-[10px] text-[#98A2B3]">Must be at least 8 characters.</p>
                 </div>
 
@@ -186,9 +185,9 @@ const SignUp: React.FC = () => {
           </div>
           <div className="w-full flex items-center justify-between text-xs text-[#667085] px-1">
             <span>© Night Crawlers 2026, inc</span>
-            <a href="mailto:support@nightcrawlers.app" className="flex items-center gap-2 hover:text-[#C62222]">
+            <a href="mailto:help@nightcrawlers.com" className="flex items-center gap-2 hover:text-[#C62222]">
               <img src={mailIcon} alt="" className="w-3.5 h-3.5" />
-              support@nightcrawlers.app
+              help@nightcrawlers.com
             </a>
           </div>
         </div>

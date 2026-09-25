@@ -47,6 +47,8 @@ import type {
     PromotionInput,
     PromotionQuote,
     OrderQuote,
+    AppConfig,
+    PaymentStatus,
 } from '../types/models';
 
 // Re-export types so existing imports keep working
@@ -84,6 +86,8 @@ export type {
     PromotionInput,
     PromotionQuote,
     OrderQuote,
+    AppConfig,
+    PaymentStatus,
 };
 
 // Re-export the constants
@@ -523,8 +527,34 @@ export const deleteCustomerAccount = (): Promise<void> =>
  * yet"). Left pointed at the guide's path; will need re-checking once it
  * exists — it currently 404s.
  */
-export const getCustomerTransactions = (): Promise<Transaction[]> =>
-    apiFetch<Transaction[]>('/api/customers/me/transactions');
+export const getCustomerTransactions = async (): Promise<Transaction[]> => {
+    // The old path (/api/customers/me/transactions) never existed, so order
+    // history was always empty. The real one returns orders; shape them for the profile.
+    const orders = await apiFetch<(Order & { _id?: string; items: { name: string; quantity: number; price: number }[] })[]>(
+        '/api/orders/customer/me',
+    );
+    const statusFor = (s: string): Transaction['status'] =>
+        s === 'delivered' ? 'delivered'
+            : s === 'cancelled' ? 'cancelled'
+                : ['accepted', 'picked_up', 'in_transit'].includes(s) ? 'in-transit'
+                    : 'preparing';
+    return orders.map((o) => {
+        const id = o.id ?? o._id ?? '';
+        return {
+            id,
+            orderId: `#NC-${id.slice(-6).toUpperCase()}`,
+            date: o.createdAt,
+            status: statusFor(o.status),
+            items: o.items.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price, image: '' })),
+            subtotal: o.totalAmount,
+            deliveryFee: o.deliveryFee,
+            total: o.totalPaid ?? o.totalAmount + o.deliveryFee,
+            vendorName: o.storeName,
+            paymentMethod: o.paymentMethod ?? 'cash_on_delivery',
+            deliveryAddress: o.customerAddress,
+        };
+    });
+};
 
 // ─── Customer Addresses ──────────────────────────────────────────────────────
 
@@ -606,6 +636,21 @@ export const describeDiscount = (p: Pick<Promotion, 'discountType' | 'discountVa
     return p.minOrderAmount ? `${main} on orders over ₦${p.minOrderAmount.toLocaleString()}` : main;
 };
 
+// ─── App config & online payments ───────────────────────────────────────────
+
+/** GET /api/config — fees and feature switches set on the server. */
+export const getAppConfig = (): Promise<AppConfig> => apiFetch<AppConfig>('/api/config');
+
+/** POST /api/payments/paystack/initialize — returns the Paystack checkout URL. */
+export const initializePayment = (orderId: string): Promise<{ authorizationUrl: string; reference: string }> =>
+    apiFetch('/api/payments/paystack/initialize', { method: 'POST', body: { orderId } });
+
+/** GET /api/payments/paystack/verify — did the payment go through? */
+export const verifyPayment = (
+    reference: string,
+): Promise<{ orderId: string; paymentStatus: PaymentStatus; totalPaid: number; storeName: string }> =>
+    apiFetch('/api/payments/paystack/verify', { params: { reference } });
+
 // ─── Geocoding ───────────────────────────────────────────────────────────────
 // Proxied through our backend (OpenStreetMap), which caches and rate-limits.
 
@@ -679,7 +724,13 @@ export const verifyUser = (
     id: string,
     type: 'vendor' | 'rider',
     action: 'approve' | 'reject',
-): Promise<void> => apiFetch<void>('/api/admin/verify', { method: 'POST', body: { id, type, action } });
+    /** Shown to the applicant and emailed to them when rejecting. */
+    reason?: string,
+): Promise<void> => apiFetch<void>('/api/admin/verify', { method: 'POST', body: { id, type, action, reason } });
+
+/** POST /api/{vendors|riders}/me/reapply — back into the approval queue after a rejection. */
+export const reapplyApplication = (role: 'vendor' | 'rider'): Promise<unknown> =>
+    apiFetch(`/api/${role === 'vendor' ? 'vendors' : 'riders'}/me/reapply`, { method: 'POST' });
 
 // ─── Admin Lists ─────────────────────────────────────────────────────────────
 
@@ -714,6 +765,9 @@ export const quoteOrder = (input: {
     storeId: string;
     items: { menuItemId: string; quantity: number }[];
     promotionId?: string | null;
+    customerLatitude?: number | null;
+    customerLongitude?: number | null;
+    customerAddress?: string;
 }, signal?: AbortSignal): Promise<OrderQuote> =>
     apiFetch<OrderQuote>('/api/orders/quote', { method: 'POST', body: input, signal });
 
@@ -742,8 +796,9 @@ export const getPendingOrdersForRider = (
     });
 
 /** GET /api/riders/:id/orders — Get all orders assigned to a rider */
-export const getOrdersForRider = (riderId: string): Promise<Order[]> =>
-    apiFetch<Order[]>(`/api/riders/${riderId}/orders`);
+export const getOrdersForRider = async (riderId: string): Promise<Order[]> =>
+    // Was /api/riders/:id/orders, which doesn't exist on the backend.
+    (await apiFetch<(Order & { _id?: string })[]>(`/api/orders/rider/${riderId}`)).map(withId);
 
 /** POST /api/orders/:id/accept — Accept an order as a rider */
 export const acceptOrder = (orderId: string, riderId: string): Promise<Order | null> =>
@@ -770,8 +825,9 @@ export const getOrderStats = (): Promise<OrderStats> =>
 // ─── Vendor Orders ───────────────────────────────────────────────────────────
 
 /** GET /api/vendors/:id/orders — Get all orders for a vendor's stores */
-export const getOrdersForVendor = (vendorId: string): Promise<Order[]> =>
-    apiFetch<Order[]>(`/api/vendors/${vendorId}/orders`);
+export const getOrdersForVendor = async (vendorId: string): Promise<Order[]> =>
+    // Was /api/vendors/:id/orders, which doesn't exist on the backend.
+    (await apiFetch<(Order & { _id?: string })[]>(`/api/orders/vendor/${vendorId}`)).map(withId);
 
 // ─── Earnings ────────────────────────────────────────────────────────────────
 

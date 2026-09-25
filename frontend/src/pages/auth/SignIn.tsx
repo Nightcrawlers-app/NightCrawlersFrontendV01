@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PasswordInput from '../../components/ui/PasswordInput';
 import { Link, useNavigate } from 'react-router-dom';
 import { SignInForm } from '../../types';
 import Input from '../../components/ui/Input';
@@ -136,8 +137,7 @@ const SignIn: React.FC = () => {
                 <div className="space-y-1">
                   <label className="block text-xs font-semibold text-[#344054]">Password*</label>
                   <div className="relative">
-                    <Input
-                      type="password"
+                    <PasswordInput
                       name="password"
                       placeholder="Create a password"
                       value={formData.password}
