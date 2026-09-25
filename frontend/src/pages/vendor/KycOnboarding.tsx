@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Circle, Clock, ChevronRight, Upload } from 'lucide-react';
 import { apiFetch } from '../../lib/apiClient';
 import { toErrorMessage } from '../../services/api';
-import SmileIDVerification from '../../components/kyc/smileIDVerification';
+import SmileIDVerification from '../../components/kyc/SmileIDVerification';
 
 type Role = 'vendor' | 'rider';
 
