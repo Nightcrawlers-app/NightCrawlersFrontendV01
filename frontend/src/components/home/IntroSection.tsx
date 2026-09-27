@@ -21,7 +21,7 @@ const IntroSection: React.FC = () => {
           <div className="flex items-center gap-6 sm:gap-10 pt-2">
             {stats.map((stat) => (
               <div key={stat.label} className="flex flex-col">
-                <span className="text-[#C62222] text-[22px] sm:text-[28px] font-bold leading-none">{stat.value}</span>
+                <span className="text-[#E00B0B] text-[22px] sm:text-[28px] font-bold leading-none">{stat.value}</span>
                 <span className="text-[#667085] text-[12px] sm:text-[13px] mt-1">{stat.label}</span>
               </div>
             ))}

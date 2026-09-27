@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import PageNav from '../../components/ui/PageNav';
 import { Link, useNavigate } from 'react-router-dom';
 import signinImage from '../../assets/signin-image.webp';
-import signupLogo from '../../assets/signup-logo.png';
+import signupLogo from '../../assets/logo.svg';
 import mailIcon from '../../assets/mail.svg';
 import { forgotPassword, toErrorMessage } from '../../services/api';
 
@@ -70,23 +70,23 @@ const ForgotPassword: React.FC = () => {
                       value={email}
                       onChange={(e) => { setEmail(e.target.value); setError(''); }}
                       placeholder="you@example.com"
-                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222]"
+                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B]"
                       required
                     />
                   </div>
 
-                  {error && <p className="text-xs text-[#C62222]">{error}</p>}
+                  {error && <p className="text-xs text-[#E00B0B]">{error}</p>}
 
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="w-full bg-[#C62222] text-white py-2 px-4 rounded-md hover:bg-[#A01B1B] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium"
+                    className="w-full bg-[#E00B0B] text-white py-2 px-4 rounded-md hover:bg-[#B80909] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium"
                   >
                     {isSubmitting ? 'Sending…' : 'Send Reset Code'}
                   </button>
 
                   <div className="text-center">
-                    <Link to="/signin" className="text-xs text-[#667085] hover:text-[#C62222]">
+                    <Link to="/signin" className="text-xs text-[#667085] hover:text-[#E00B0B]">
                       ← Back to Sign In
                     </Link>
                   </div>
@@ -97,7 +97,7 @@ const ForgotPassword: React.FC = () => {
 
           <div className="w-full flex items-center justify-between text-xs text-[#667085] px-1">
             <span>© Nightcrawlers 2026, inc</span>
-            <a href="mailto:help@nightcrawlers.app" className="flex items-center gap-2 hover:text-[#C62222]">
+            <a href="mailto:help@nightcrawlers.app" className="flex items-center gap-2 hover:text-[#E00B0B]">
               <img src={mailIcon} alt="" className="w-3.5 h-3.5" />
               help@nightcrawlers.app
             </a>

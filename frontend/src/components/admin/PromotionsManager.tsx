@@ -113,7 +113,7 @@ const statusOf = (p: Promotion) => {
 };
 
 const input =
-    'w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 bg-white focus:outline-none focus:border-[#C62222] transition-colors';
+    'w-full px-3 py-2 border border-gray-200 rounded-lg text-sm text-gray-900 bg-white focus:outline-none focus:border-[#E00B0B] transition-colors';
 const labelCls = 'block text-[11px] font-semibold text-gray-500 uppercase tracking-wider mb-1';
 
 /**
@@ -220,7 +220,7 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
             <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-[760px] max-h-[90vh] flex flex-col overflow-hidden font-poppins">
                 <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
                     <div className="flex items-center gap-2">
-                        <Tag size={18} className="text-[#C62222]" />
+                        <Tag size={18} className="text-[#E00B0B]" />
                         <h2 className="text-lg font-bold text-gray-900">
                             {editing ? (editing === 'new' ? 'New promotion' : 'Edit promotion') : 'Promotions'}
                         </h2>
@@ -239,7 +239,7 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
                                 <p className="text-sm text-gray-500">Live promos appear as banners on Explore and are applied at checkout.</p>
                                 <button
                                     onClick={openNew}
-                                    className="inline-flex items-center gap-1.5 bg-[#C62222] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#A01B1B] flex-shrink-0"
+                                    className="inline-flex items-center gap-1.5 bg-[#E00B0B] text-white text-sm font-semibold px-4 py-2 rounded-lg hover:bg-[#B80909] flex-shrink-0"
                                 >
                                     <Plus size={16} /> New promo
                                 </button>
@@ -247,7 +247,7 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
 
                             {loading ? (
                                 <div className="py-12 flex justify-center">
-                                    <Loader2 className="animate-spin text-[#C62222]" />
+                                    <Loader2 className="animate-spin text-[#E00B0B]" />
                                 </div>
                             ) : promos.length === 0 ? (
                                 <div className="py-12 text-center text-sm text-gray-500">
@@ -259,7 +259,7 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
                                         const status = statusOf(p);
                                         return (
                                             <li key={p.id} className="flex gap-3 items-center border border-gray-100 rounded-xl p-3">
-                                                <div className="w-20 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#C62222] to-[#3B0A0A]">
+                                                <div className="w-20 h-12 rounded-lg overflow-hidden flex-shrink-0 bg-gradient-to-br from-[#E00B0B] to-[#3B0A0A]">
                                                     {p.imageUrl && <img src={p.imageUrl} alt="" className="w-full h-full object-cover" />}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
@@ -285,7 +285,7 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
                                                 <button onClick={() => openEdit(p)} className="p-2 text-gray-500 hover:text-gray-900" aria-label="Edit">
                                                     <Pencil size={16} />
                                                 </button>
-                                                <button onClick={() => remove(p)} className="p-2 text-gray-400 hover:text-[#C62222]" aria-label="Delete">
+                                                <button onClick={() => remove(p)} className="p-2 text-gray-400 hover:text-[#E00B0B]" aria-label="Delete">
                                                     <Trash2 size={16} />
                                                 </button>
                                             </li>
@@ -299,10 +299,10 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
                     {editing && (
                         <div className="space-y-5">
                             {/* Banner image */}
-                            <label className="relative block w-full h-40 rounded-xl overflow-hidden cursor-pointer border-2 border-dashed border-gray-200 hover:border-[#C62222] bg-gradient-to-br from-[#C62222] to-[#3B0A0A]">
+                            <label className="relative block w-full h-40 rounded-xl overflow-hidden cursor-pointer border-2 border-dashed border-gray-200 hover:border-[#E00B0B] bg-gradient-to-br from-[#E00B0B] to-[#3B0A0A]">
                                 {form.imageUrl && <img src={form.imageUrl} alt="" className="absolute inset-0 w-full h-full object-cover" />}
                                 <div className="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent p-4 flex flex-col justify-end text-white">
-                                    {form.badge && <span className="self-start bg-white text-[#C62222] text-[11px] font-bold uppercase px-2 py-0.5 rounded-full mb-1">{form.badge}</span>}
+                                    {form.badge && <span className="self-start bg-white text-[#E00B0B] text-[11px] font-bold uppercase px-2 py-0.5 rounded-full mb-1">{form.badge}</span>}
                                     <span className="text-lg font-bold">{form.title || 'Promo title'}</span>
                                     <span className="text-xs text-white/80 flex items-center gap-1 mt-1">
                                         <ImagePlus size={13} /> {form.imageUrl ? 'Change banner image' : 'Add a banner image (optional, wide photo works best)'}
@@ -368,7 +368,7 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
                                             key={s}
                                             type="button"
                                             onClick={() => set('scope', s)}
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${form.scope === s ? 'border-[#C62222] bg-[#FFF5F5] text-[#C62222]' : 'border-gray-200 text-gray-600'}`}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold border ${form.scope === s ? 'border-[#E00B0B] bg-[#FFF5F5] text-[#E00B0B]' : 'border-gray-200 text-gray-600'}`}
                                         >
                                             {s === 'all' ? 'All stores' : s === 'category' ? 'A category' : 'Specific stores'}
                                         </button>
@@ -396,7 +396,7 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
                                                             onChange={(e) =>
                                                                 set('storeIds', e.target.checked ? [...form.storeIds, s.id] : form.storeIds.filter((id) => id !== s.id))
                                                             }
-                                                            className="accent-[#C62222]"
+                                                            className="accent-[#E00B0B]"
                                                         />
                                                         <span className="flex-1 truncate">{s.name}</span>
                                                         <span className="text-[11px] text-gray-400">{s.businessType}</span>
@@ -442,7 +442,7 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
                             </div>
 
                             <label className="flex items-center gap-2 text-sm text-gray-700">
-                                <input type="checkbox" checked={form.isActive} onChange={(e) => set('isActive', e.target.checked)} className="accent-[#C62222] w-4 h-4" />
+                                <input type="checkbox" checked={form.isActive} onChange={(e) => set('isActive', e.target.checked)} className="accent-[#E00B0B] w-4 h-4" />
                                 Active (uncheck to save as a draft)
                             </label>
 
@@ -459,7 +459,7 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
                         <button
                             onClick={save}
                             disabled={saving}
-                            className="flex-1 py-2.5 bg-[#C62222] text-white rounded-lg text-sm font-semibold hover:bg-[#A01B1B] disabled:opacity-60"
+                            className="flex-1 py-2.5 bg-[#E00B0B] text-white rounded-lg text-sm font-semibold hover:bg-[#B80909] disabled:opacity-60"
                         >
                             {saving ? 'Saving…' : editing === 'new' ? 'Create promo' : 'Save changes'}
                         </button>

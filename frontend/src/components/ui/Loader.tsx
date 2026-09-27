@@ -13,7 +13,7 @@ const Loader: React.FC<LoaderProps> = ({ fullScreen = false }) => {
         <div className={containerClasses}>
             <div className="relative flex items-center justify-center mb-4">
                 {/* Outer Ring */}
-                <div className="w-12 h-12 border-4 border-gray-100 border-t-[#C62222] rounded-full animate-spin"></div>
+                <div className="w-12 h-12 border-4 border-gray-100 border-t-[#E00B0B] rounded-full animate-spin"></div>
             </div>
 
             {/* Text Branding - Clean */}

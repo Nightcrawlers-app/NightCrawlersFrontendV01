@@ -124,7 +124,7 @@ const VendorOrders: React.FC = () => {
         return (
             <div className="min-h-screen bg-[#F9FAFB] flex items-center justify-center font-poppins">
                 <div className="flex flex-col items-center gap-3">
-                    <div className="w-8 h-8 border-2 border-[#C62222] border-t-transparent rounded-full animate-spin" />
+                    <div className="w-8 h-8 border-2 border-[#E00B0B] border-t-transparent rounded-full animate-spin" />
                     <p className="text-sm text-gray-500">Loading your orders…</p>
                 </div>
             </div>
@@ -221,7 +221,7 @@ const VendorOrders: React.FC = () => {
             <div className="max-w-4xl mx-auto px-4 py-8">
                 <button
                     onClick={() => navigate('/vendor-dashboard')}
-                    className="flex items-center gap-2 text-gray-600 hover:text-[#C62222] transition-colors mb-6 font-medium"
+                    className="flex items-center gap-2 text-gray-600 hover:text-[#E00B0B] transition-colors mb-6 font-medium"
                 >
                     <ArrowLeft size={20} />
                     Back to Dashboard
@@ -232,7 +232,7 @@ const VendorOrders: React.FC = () => {
                         <h1 className="text-2xl font-bold text-gray-900">Incoming Orders</h1>
                         <p className="text-gray-500 text-sm mt-1">Manage processing and view past orders</p>
                     </div>
-                    <div className="bg-red-100 text-[#C62222] p-3 rounded-xl flex items-center gap-2">
+                    <div className="bg-red-100 text-[#E00B0B] p-3 rounded-xl flex items-center gap-2">
                         <Package size={20} />
                         <span className="font-bold">{activeOrders.length}</span>
                         <span className="text-sm font-semibold">Active</span>
@@ -249,7 +249,7 @@ const VendorOrders: React.FC = () => {
                 <div className="space-y-8">
                     <section>
                         <h2 className="text-lg font-bold text-gray-900 mb-4 flex items-center gap-2">
-                            <Clock size={18} className="text-[#C62222]" /> Needs Attention
+                            <Clock size={18} className="text-[#E00B0B]" /> Needs Attention
                         </h2>
                         {activeOrders.length === 0 ? (
                             <div className="bg-white border border-gray-100 rounded-xl p-8 text-center shadow-sm">

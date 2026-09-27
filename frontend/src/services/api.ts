@@ -50,6 +50,7 @@ import type {
     AppConfig,
     PaymentStatus,
     OrderTracking,
+    RiderTrip,
 } from '../types/models';
 
 // Re-export types so existing imports keep working
@@ -90,6 +91,7 @@ export type {
     AppConfig,
     PaymentStatus,
     OrderTracking,
+    RiderTrip,
 };
 
 // Re-export the constants
@@ -329,8 +331,20 @@ export const setRiderOnlineStatus = (riderId: string, isOnline: boolean): Promis
  * Sent while a rider is online so dispatch can match them to nearby orders and
  * the admin fleet view can show where they are.
  */
-export const updateRiderLocation = (riderId: string, coords: Coordinates): Promise<void> =>
-    apiFetch<void>(`/api/riders/${riderId}/location`, { method: 'PATCH', body: coords });
+/**
+ * PATCH /api/riders/:id/location — report the rider's GPS position. Returns
+ * live progress (distance/time left on the road route, arrived?) for each
+ * order the rider is carrying.
+ */
+export const updateRiderLocation = (
+    riderId: string,
+    coords: Coordinates,
+    accuracy?: number,
+): Promise<{ trips: RiderTrip[] }> =>
+    apiFetch<{ trips: RiderTrip[] }>(`/api/riders/${riderId}/location`, {
+        method: 'PATCH',
+        body: { ...coords, accuracy },
+    });
 
 /** GET /api/riders/online — Get all online riders */
 export const getOnlineRiders = (): Promise<RiderAccount[]> =>
@@ -815,8 +829,16 @@ export const acceptOrder = (orderId: string, riderId: string): Promise<Order | n
     apiFetchOrNull<Order>(`/api/orders/${orderId}/accept`, { method: 'POST', body: { riderId } });
 
 /** PATCH /api/orders/:id/status — Update an order's status */
-export const updateOrderStatus = (orderId: string, status: OrderStatus): Promise<Order | null> =>
-    apiFetchOrNull<Order>(`/api/orders/${orderId}/status`, { method: 'PATCH', body: { status } });
+/**
+ * PATCH /api/orders/:id/status. Riders marking an order delivered should send
+ * their current position — the server only accepts it at the delivery address.
+ */
+export const updateOrderStatus = (
+    orderId: string,
+    status: OrderStatus,
+    position?: Coordinates & { accuracy?: number },
+): Promise<Order | null> =>
+    apiFetchOrNull<Order>(`/api/orders/${orderId}/status`, { method: 'PATCH', body: { status, ...position } });
 
 /** GET /api/orders/:id — Get an order by ID */
 export const getOrderById = (orderId: string): Promise<Order | null> =>

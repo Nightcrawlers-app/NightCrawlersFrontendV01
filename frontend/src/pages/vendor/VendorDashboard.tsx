@@ -144,7 +144,7 @@ const VendorDashboard: React.FC = () => {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center font-poppins">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[#C62222] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-[#E00B0B] border-t-transparent rounded-full animate-spin" />
           <p className="text-sm text-[#667085]">Loading your dashboard…</p>
         </div>
       </div>
@@ -160,7 +160,7 @@ const VendorDashboard: React.FC = () => {
           </p>
           <button
             onClick={() => navigate('/vendor-signin')}
-            className="px-5 py-2.5 bg-[#C62222] text-white text-sm font-medium rounded-lg hover:bg-[#A01B1B] transition-colors"
+            className="px-5 py-2.5 bg-[#E00B0B] text-white text-sm font-medium rounded-lg hover:bg-[#B80909] transition-colors"
           >
             Back to sign in
           </button>
@@ -219,7 +219,7 @@ const VendorDashboard: React.FC = () => {
                   setIsCheckingStatus(false);
                 }
               }}
-              className="w-full py-3 bg-[#C62222] text-white font-semibold rounded-xl hover:bg-[#a01b1b] transition-colors"
+              className="w-full py-3 bg-[#E00B0B] text-white font-semibold rounded-xl hover:bg-[#B80909] transition-colors"
             >
               {isCheckingStatus ? 'Checking…' : 'Check Status'}
             </button>
@@ -240,7 +240,7 @@ const VendorDashboard: React.FC = () => {
           </div>
 
           <p className="text-xs text-gray-400 mt-6">
-            Need help? Contact support@nightcrawlers.ng
+            Need help? Contact support@nightcrawlers.app
           </p>
         </div>
       </div>
@@ -392,11 +392,11 @@ const VendorDashboard: React.FC = () => {
         <div className="pt-10 pb-10">
           <div className="flex items-start justify-between">
             <div className="flex items-start gap-6">
-              <div className="w-9 h-9 flex items-center justify-center text-[#C62222]">
+              <div className="w-9 h-9 flex items-center justify-center text-[#E00B0B]">
                 <Store className="w-6 h-6" />
               </div>
               <div>
-                <h1 className="text-2xl font-semibold text-[#C62222] leading-tight">Vendor Dashboard</h1>
+                <h1 className="text-2xl font-semibold text-[#E00B0B] leading-tight">Vendor Dashboard</h1>
                 <p className="text-sm text-[#4B5563]">
                   Account type: {typeMeta.singular}
                 </p>
@@ -411,7 +411,7 @@ const VendorDashboard: React.FC = () => {
                   navigate('/vendor-signin');
                 }
               }}
-              className="flex items-center gap-2 px-4 py-2.5 bg-red-50 hover:bg-[#C62222] text-[#C62222] hover:text-white rounded-xl text-sm font-semibold transition-colors border border-red-100"
+              className="flex items-center gap-2 px-4 py-2.5 bg-red-50 hover:bg-[#E00B0B] text-[#E00B0B] hover:text-white rounded-xl text-sm font-semibold transition-colors border border-red-100"
             >
               <LogOut size={18} />
               <span className="hidden sm:inline">Sign Out</span>
@@ -425,7 +425,7 @@ const VendorDashboard: React.FC = () => {
             <h2 className="text-lg font-semibold text-[#1F2937]">Today's Overview</h2>
             <button
               onClick={() => navigate('/vendor-dashboard/orders')}
-              className="flex items-center gap-2 px-4 py-2 bg-[#C62222] text-white rounded-xl text-sm font-semibold hover:bg-[#a01b1b] transition-colors relative shadow-md shadow-red-200"
+              className="flex items-center gap-2 px-4 py-2 bg-[#E00B0B] text-white rounded-xl text-sm font-semibold hover:bg-[#B80909] transition-colors relative shadow-md shadow-red-200"
             >
               <Bell size={18} />
               Manage Orders
@@ -438,7 +438,7 @@ const VendorDashboard: React.FC = () => {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {/* Earnings Card */}
-            <div className="bg-gradient-to-br from-[#C62222] to-[#991b1b] text-white p-5 rounded-2xl shadow-lg shadow-red-200/40 relative overflow-hidden">
+            <div className="bg-gradient-to-br from-[#E00B0B] to-[#991b1b] text-white p-5 rounded-2xl shadow-lg shadow-red-200/40 relative overflow-hidden">
               <div className="absolute top-0 right-0 w-24 h-24 bg-white/5 rounded-full -mr-8 -mt-8 blur-xl"></div>
               <div className="flex items-center gap-3 mb-3">
                 <div className="p-2.5 bg-white/20 rounded-xl backdrop-blur-sm">
@@ -462,7 +462,7 @@ const VendorDashboard: React.FC = () => {
             {/* Orders Card */}
             <div className="bg-white border border-gray-100 p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center gap-3 mb-3">
-                <div className="p-2.5 bg-red-50 rounded-xl text-[#C62222]">
+                <div className="p-2.5 bg-red-50 rounded-xl text-[#E00B0B]">
                   <Package size={20} />
                 </div>
                 <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Today's Orders</span>
@@ -474,7 +474,7 @@ const VendorDashboard: React.FC = () => {
             {/* Completed Card */}
             <div className="bg-white border border-gray-100 p-5 rounded-2xl shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center gap-3 mb-3">
-                <div className="p-2.5 bg-red-50 rounded-xl text-[#C62222]">
+                <div className="p-2.5 bg-red-50 rounded-xl text-[#E00B0B]">
                   <TrendingUp size={20} />
                 </div>
                 <span className="text-xs font-bold uppercase tracking-wider text-gray-400">Completed</span>
@@ -497,7 +497,7 @@ const VendorDashboard: React.FC = () => {
                     className="flex items-center justify-between p-4 bg-white border border-gray-100 rounded-xl hover:border-gray-200 hover:shadow-sm transition-all"
                   >
                     <div className="flex items-center gap-3 min-w-0">
-                      <div className="w-9 h-9 bg-red-50 rounded-lg flex items-center justify-center text-[#C62222] flex-shrink-0">
+                      <div className="w-9 h-9 bg-red-50 rounded-lg flex items-center justify-center text-[#E00B0B] flex-shrink-0">
                         <Store size={16} />
                       </div>
                       <div className="min-w-0">
@@ -548,7 +548,7 @@ const VendorDashboard: React.FC = () => {
                   <div className="p-4">
                     <div className="flex items-center justify-between mb-2">
                       <h3 className="text-sm font-semibold text-[#111827]">{store.name}</h3>
-                      <span className="px-2 py-1 text-[10px] rounded-full bg-[#FEE4E2] text-[#C62222]">
+                      <span className="px-2 py-1 text-[10px] rounded-full bg-[#FEE4E2] text-[#E00B0B]">
                         {store.businessType}
                       </span>
                     </div>
@@ -583,7 +583,7 @@ const VendorDashboard: React.FC = () => {
                 name="name"
                 value={form.name}
                 onChange={handleChange}
-                className="w-full h-11 px-3 bg-[#F7F7F7] border border-[#E5E7EB] rounded-sm text-sm text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#C62222]"
+                className="w-full h-11 px-3 bg-[#F7F7F7] border border-[#E5E7EB] rounded-sm text-sm text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#E00B0B]"
                 placeholder={`${typeMeta.singular} name`}
                 required
               />
@@ -591,12 +591,12 @@ const VendorDashboard: React.FC = () => {
 
             <div>
               <label className="block text-xs font-medium text-[#374151] mb-1">{typeMeta.categoryLabel}</label>
-              <div className="w-full min-h-[48px] px-3 py-2 bg-[#F7F7F7] border border-[#E5E7EB] rounded-sm focus-within:ring-2 focus-within:ring-[#C62222]">
+              <div className="w-full min-h-[48px] px-3 py-2 bg-[#F7F7F7] border border-[#E5E7EB] rounded-sm focus-within:ring-2 focus-within:ring-[#E00B0B]">
                 <div className="flex flex-wrap gap-2 items-center">
                   {categoryTags.map((tag) => (
                     <span
                       key={tag}
-                      className="inline-flex items-center gap-1 px-2 py-1 bg-[#C62222] text-white text-xs font-medium rounded-sm"
+                      className="inline-flex items-center gap-1 px-2 py-1 bg-[#E00B0B] text-white text-xs font-medium rounded-sm"
                     >
                       {tag}
                       <button
@@ -631,7 +631,7 @@ const VendorDashboard: React.FC = () => {
                 }}
                 mapTitle="Where is this branch?"
                 placeholder="e.g. 12 Aminu Kano Crescent, Wuse 2"
-                inputClassName="w-full h-11 px-3 bg-[#F7F7F7] border border-[#E5E7EB] rounded-sm text-sm text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#C62222]"
+                inputClassName="w-full h-11 px-3 bg-[#F7F7F7] border border-[#E5E7EB] rounded-sm text-sm text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#E00B0B]"
                 required
               />
             </div>
@@ -642,7 +642,7 @@ const VendorDashboard: React.FC = () => {
                 name="description"
                 value={form.description}
                 onChange={handleChange}
-                className="w-full min-h-[80px] px-3 py-2 bg-[#F7F7F7] border border-[#E5E7EB] rounded-sm text-sm text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#C62222]"
+                className="w-full min-h-[80px] px-3 py-2 bg-[#F7F7F7] border border-[#E5E7EB] rounded-sm text-sm text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#E00B0B]"
                 placeholder={`Short description about the ${typeMeta.singular.toLowerCase()}`}
               />
             </div>
@@ -653,7 +653,7 @@ const VendorDashboard: React.FC = () => {
                 name="imageUrl"
                 value={form.imageUrl}
                 onChange={handleChange}
-                className="w-full h-11 px-3 bg-[#F7F7F7] border border-[#E5E7EB] rounded-sm text-sm text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#C62222]"
+                className="w-full h-11 px-3 bg-[#F7F7F7] border border-[#E5E7EB] rounded-sm text-sm text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#E00B0B]"
                 placeholder="https://example.com/cover.jpg"
               />
             </div>
@@ -671,13 +671,13 @@ const VendorDashboard: React.FC = () => {
             <button
               type="submit"
               disabled={isSaving}
-              className="inline-flex items-center justify-center gap-2 w-full h-11 px-4 bg-[#C62222] text-white text-sm font-medium rounded-sm hover:bg-[#A01B1B] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C62222] disabled:opacity-70"
+              className="inline-flex items-center justify-center gap-2 w-full h-11 px-4 bg-[#E00B0B] text-white text-sm font-medium rounded-sm hover:bg-[#B80909] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E00B0B] disabled:opacity-70"
             >
               <Upload className="w-4 h-4" />
               {isSaving ? 'Saving...' : `Add ${typeMeta.singular}`}
             </button>
             {errorMessage && (
-              <p className="text-xs text-[#C62222]" role="alert">
+              <p className="text-xs text-[#E00B0B]" role="alert">
                 {errorMessage}
               </p>
             )}

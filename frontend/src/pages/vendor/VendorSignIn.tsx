@@ -4,7 +4,7 @@ import PasswordInput from '../../components/ui/PasswordInput';
 import { useNavigate, Link } from 'react-router-dom';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
-import partnerLogo from '../../assets/logo.png';
+import partnerLogo from '../../assets/logo.svg';
 import { signInVendor, signInRider, toErrorMessage } from '../../services/api';
 
 type LoginType = 'partner' | 'rider';
@@ -77,7 +77,7 @@ const VendorSignIn: React.FC = () => {
                     : 'text-gray-500 hover:text-gray-900'
                     }`}
                 >
-                  Partner
+                  Vendor
                 </button>
                 <button
                   type="button"
@@ -94,7 +94,7 @@ const VendorSignIn: React.FC = () => {
 
             <div className="text-center mb-6">
               <h2 className="text-xl font-bold text-gray-900">
-                {loginType === 'partner' ? 'Partner Login' : 'Rider Login'}
+                {loginType === 'partner' ? 'Vendor Login' : 'Rider Login'}
               </h2>
               <p className="text-sm text-gray-500 mt-1">
                 Sign in to manage your {loginType === 'partner' ? 'restaurant/store' : 'deliveries'}
@@ -102,7 +102,7 @@ const VendorSignIn: React.FC = () => {
             </div>
 
             {errorMessage && (
-              <p className="text-xs text-[#C62222] mb-4 text-center" role="alert">
+              <p className="text-xs text-[#E00B0B] mb-4 text-center" role="alert">
                 {errorMessage}
               </p>
             )}
@@ -131,7 +131,7 @@ const VendorSignIn: React.FC = () => {
 
               <div className="flex items-center justify-between text-xs sm:text-sm text-night-gray-600">
                 <label className="flex items-center gap-2 whitespace-nowrap">
-                  <input type="checkbox" className="w-3.5 h-3.5 border border-[#d8d8d8] rounded-sm focus:ring-[#C62222]" />
+                  <input type="checkbox" className="w-3.5 h-3.5 border border-[#d8d8d8] rounded-sm focus:ring-[#E00B0B]" />
                   <span>Remember for 30 days</span>
                 </label>
                 <Link to="/forgot-password" className="text-night-red-600 hover:underline whitespace-nowrap">Forgot password?</Link>
@@ -147,7 +147,7 @@ const VendorSignIn: React.FC = () => {
             <p className="text-center text-sm text-night-gray-600 mt-7">
               Not a {loginType}?{' '}
               <Link to="/vendor-signup" className="text-night-red-600 font-semibold hover:underline">
-                Sign up as a {loginType === 'partner' ? 'Partner' : 'Rider'}
+                Sign up as a {loginType === 'partner' ? 'Vendor' : 'Rider'}
               </Link>
             </p>
           </div>

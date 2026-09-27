@@ -84,7 +84,7 @@ const PromoCarousel: React.FC<PromoCarouselProps> = ({ onSelect, activeId }) => 
                             type="button"
                             onClick={() => onSelect(promo)}
                             aria-label={`${promo.title}. ${describeDiscount(promo)}`}
-                            className={`group snap-center shrink-0 w-full md:w-[80%] lg:w-[60%] h-[180px] sm:h-[200px] md:h-[240px] rounded-[12px] md:rounded-[16px] overflow-hidden relative text-left focus:outline-none focus-visible:ring-4 focus-visible:ring-[#C62222]/40 ${activeId === promo.id ? 'ring-4 ring-[#C62222]' : ''}`}
+                            className={`group snap-center shrink-0 w-full md:w-[80%] lg:w-[60%] h-[180px] sm:h-[200px] md:h-[240px] rounded-[12px] md:rounded-[16px] overflow-hidden relative text-left focus:outline-none focus-visible:ring-4 focus-visible:ring-[#E00B0B]/40 ${activeId === promo.id ? 'ring-4 ring-[#E00B0B]' : ''}`}
                         >
                             {promo.imageUrl ? (
                                 <img
@@ -93,14 +93,14 @@ const PromoCarousel: React.FC<PromoCarouselProps> = ({ onSelect, activeId }) => 
                                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
                                 />
                             ) : (
-                                <div className="absolute inset-0 bg-gradient-to-br from-[#C62222] via-[#A01B1B] to-[#3B0A0A]" />
+                                <div className="absolute inset-0 bg-gradient-to-br from-[#E00B0B] via-[#B80909] to-[#3B0A0A]" />
                             )}
                             {/* Legibility scrim */}
                             <div className="absolute inset-0 bg-gradient-to-r from-black/70 via-black/35 to-transparent" />
 
                             <div className="relative h-full flex flex-col justify-between p-5 md:p-7 max-w-[80%]">
                                 {promo.badge && (
-                                    <span className="self-start inline-flex items-center gap-1.5 bg-white text-[#C62222] text-[12px] md:text-[13px] font-bold uppercase tracking-wide px-3 py-1 rounded-full shadow">
+                                    <span className="self-start inline-flex items-center gap-1.5 bg-white text-[#E00B0B] text-[12px] md:text-[13px] font-bold uppercase tracking-wide px-3 py-1 rounded-full shadow">
                                         <Tag size={13} /> {promo.badge}
                                     </span>
                                 )}
@@ -111,7 +111,7 @@ const PromoCarousel: React.FC<PromoCarouselProps> = ({ onSelect, activeId }) => 
                                     <p className="text-white/85 text-[12px] sm:text-[14px] mt-1">
                                         {promo.subtitle || describeDiscount(promo)}
                                     </p>
-                                    <span className="inline-flex items-center gap-1 mt-3 bg-[#C62222] group-hover:bg-white group-hover:text-[#C62222] text-white text-[13px] font-semibold px-4 py-2 rounded-[8px] transition-colors">
+                                    <span className="inline-flex items-center gap-1 mt-3 bg-[#E00B0B] group-hover:bg-white group-hover:text-[#E00B0B] text-white text-[13px] font-semibold px-4 py-2 rounded-[8px] transition-colors">
                                         {activeId === promo.id ? 'Applied — showing stores' : 'Order now'}
                                         <ChevronRight size={15} />
                                     </span>
@@ -146,7 +146,7 @@ const PromoCarousel: React.FC<PromoCarouselProps> = ({ onSelect, activeId }) => 
                                     type="button"
                                     onClick={() => goTo(i)}
                                     aria-label={`Show promo ${i + 1}`}
-                                    className={`h-1.5 rounded-full transition-all ${i === index ? 'w-6 bg-[#C62222]' : 'w-1.5 bg-gray-300'}`}
+                                    className={`h-1.5 rounded-full transition-all ${i === index ? 'w-6 bg-[#E00B0B]' : 'w-1.5 bg-gray-300'}`}
                                 />
                             ))}
                         </div>

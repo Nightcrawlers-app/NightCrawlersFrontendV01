@@ -23,7 +23,7 @@ const Overview: React.FC = () => {
                             Restaurants, groceries, pharmacies, and beauty — all in one app.
                         </p>
                         <div className="flex flex-col sm:flex-row gap-3 mt-2">
-                            <Link to="/explore" className="inline-flex items-center justify-center gap-2 bg-[#C62222] text-white text-[15px] font-semibold rounded-[6px] px-6 py-3 hover:bg-[#A01B1B] transition-colors shadow-sm">
+                            <Link to="/explore" className="inline-flex items-center justify-center gap-2 bg-[#E00B0B] text-white text-[15px] font-semibold rounded-[6px] px-6 py-3 hover:bg-[#B80909] transition-colors shadow-sm">
                                 Start Ordering
                             </Link>
                             <Link to="/vendors" className="inline-flex items-center justify-center gap-2 border border-[#EAECF0] text-[#222222] text-[15px] font-semibold rounded-[6px] px-6 py-3 hover:bg-gray-50 transition-colors">
@@ -34,7 +34,7 @@ const Overview: React.FC = () => {
 
                     <div className="mb-[48px] sm:mb-[64px]">
                         <div className="text-center mb-[40px] sm:mb-[50px]">
-                            <p className="text-[#C62222] text-[14px] sm:text-[16px] font-semibold mb-2">How It Works</p>
+                            <p className="text-[#E00B0B] text-[14px] sm:text-[16px] font-semibold mb-2">How It Works</p>
                             <h2 className="text-[#222222] text-[24px] sm:text-[32px] md:text-[36px] font-semibold leading-tight tracking-[-0.02em]">Simple. Fast. Reliable.</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
@@ -43,9 +43,9 @@ const Overview: React.FC = () => {
                                 { step: '02', icon: <Store size={28} />, title: 'Vendor Prepares', desc: 'Your order starts cooking right away.' },
                                 { step: '03', icon: <Truck size={28} />, title: 'Fast Delivery', desc: 'A verified rider brings it straight to you.' },
                             ].map((item) => (
-                                <div key={item.step} className="relative bg-white border border-[#EAECF0] rounded-[12px] p-6 sm:p-8 hover:shadow-md hover:border-[#C62222]/20 transition-all group">
-                                    <span className="absolute top-4 right-4 text-[48px] font-bold text-gray-100 group-hover:text-[#C62222]/10 transition-colors leading-none">{item.step}</span>
-                                    <div className="w-12 h-12 rounded-xl bg-[#FFF0F0] text-[#C62222] flex items-center justify-center mb-5">
+                                <div key={item.step} className="relative bg-white border border-[#EAECF0] rounded-[12px] p-6 sm:p-8 hover:shadow-md hover:border-[#E00B0B]/20 transition-all group">
+                                    <span className="absolute top-4 right-4 text-[48px] font-bold text-gray-100 group-hover:text-[#E00B0B]/10 transition-colors leading-none">{item.step}</span>
+                                    <div className="w-12 h-12 rounded-xl bg-[#FFF0F0] text-[#E00B0B] flex items-center justify-center mb-5">
                                         {item.icon}
                                     </div>
                                     <h3 className="text-[#222222] text-[18px] sm:text-[20px] font-semibold mb-2">{item.title}</h3>
@@ -57,12 +57,12 @@ const Overview: React.FC = () => {
 
                     <div className="mb-[48px] sm:mb-[64px]">
                         <div className="text-center mb-[40px] sm:mb-[50px]">
-                            <p className="text-[#C62222] text-[14px] sm:text-[16px] font-semibold mb-2">Categories</p>
+                            <p className="text-[#E00B0B] text-[14px] sm:text-[16px] font-semibold mb-2">Categories</p>
                             <h2 className="text-[#222222] text-[24px] sm:text-[32px] md:text-[36px] font-semibold leading-tight tracking-[-0.02em]">More Than Just Food</h2>
                         </div>
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 md:gap-6">
                             {[
-                                { icon: <Package size={24} />, label: 'Restaurants', desc: 'Local favorites', bg: 'bg-[#FFF0F0]', text: 'text-[#C62222]', border: 'hover:border-[#C62222]/20' },
+                                { icon: <Package size={24} />, label: 'Restaurants', desc: 'Local favorites', bg: 'bg-[#FFF0F0]', text: 'text-[#E00B0B]', border: 'hover:border-[#E00B0B]/20' },
                                 { icon: <ShoppingBag size={24} />, label: 'Groceries', desc: 'Fresh staples', bg: 'bg-night-green-50', text: 'text-night-green-700', border: 'hover:border-night-green-600/20' },
                                 { icon: <Shield size={24} />, label: 'Pharmacies', desc: 'Meds & wellness', bg: 'bg-gray-100', text: 'text-[#222222]', border: 'hover:border-[#222222]/20' },
                                 { icon: <Zap size={24} />, label: 'Beauty & More', desc: 'Self-care', bg: 'bg-night-green-50', text: 'text-night-green-700', border: 'hover:border-night-green-600/20' },
@@ -98,11 +98,11 @@ const Overview: React.FC = () => {
                         <h2 className="text-[#222222] text-[24px] sm:text-[32px] font-semibold leading-tight">Ready to get started?</h2>
                         <p className="text-[#667085] text-[15px] sm:text-[17px] max-w-[500px]">Join thousands of customers enjoying fast, fresh deliveries every day.</p>
                         <div className="flex flex-col sm:flex-row items-center gap-3">
-                            <Link to="/signup" className="inline-flex items-center justify-center gap-2 bg-[#C62222] text-white text-[15px] font-semibold rounded-[6px] px-8 py-3 hover:bg-[#A01B1B] transition-colors shadow-sm">
+                            <Link to="/signup" className="inline-flex items-center justify-center gap-2 bg-[#E00B0B] text-white text-[15px] font-semibold rounded-[6px] px-8 py-3 hover:bg-[#B80909] transition-colors shadow-sm">
                                 Create an Account
                             </Link>
                             <Link to="/vendor-signup" className="btn-success-outline inline-flex items-center justify-center">
-                                Become a Partner
+                                Become a Vendor
                             </Link>
                         </div>
                     </div>

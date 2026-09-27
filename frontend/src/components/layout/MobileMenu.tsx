@@ -32,9 +32,9 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onCartClick })
             {isAuthenticated && user ? (
               <Link to="/user-profile" onClick={onClose} className="flex items-center gap-3">
                 {user.avatar ? (
-                  <img src={user.avatar} alt="Profile" className="w-10 h-10 rounded-full object-cover border-2 border-[#C62222]" />
+                  <img src={user.avatar} alt="Profile" className="w-10 h-10 rounded-full object-cover border-2 border-[#E00B0B]" />
                 ) : (
-                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#C62222] to-[#8B1616] flex items-center justify-center border-2 border-red-300">
+                  <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[#E00B0B] to-[#8B1616] flex items-center justify-center border-2 border-red-300">
                     <span className="text-white font-bold text-sm">{getInitials(user.firstName, user.lastName)}</span>
                   </div>
                 )}
@@ -44,7 +44,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onCartClick })
                 </div>
               </Link>
             ) : (
-              <span className="text-[#C62222] text-[24px] font-bold font-poppins">Menu</span>
+              <span className="text-[#E00B0B] text-[24px] font-bold font-poppins">Menu</span>
             )}
             <button
               onClick={onClose}
@@ -80,8 +80,8 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onCartClick })
                   to="/user-profile"
                   onClick={onClose}
                   className={`flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors ${location.pathname === '/user-profile'
-                      ? 'text-[#C62222] bg-red-50 border-r-4 border-[#C62222]'
-                      : 'text-gray-700 hover:text-[#C62222] hover:bg-gray-50'
+                      ? 'text-[#E00B0B] bg-red-50 border-r-4 border-[#E00B0B]'
+                      : 'text-gray-700 hover:text-[#E00B0B] hover:bg-gray-50'
                     }`}
                 >
                   <User size={18} />
@@ -90,7 +90,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onCartClick })
                 <Link
                   to="/order-summary"
                   onClick={onClose}
-                  className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:text-[#C62222] hover:bg-gray-50 transition-colors"
+                  className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:text-[#E00B0B] hover:bg-gray-50 transition-colors"
                 >
                   <CreditCard size={18} />
                   Orders
@@ -121,7 +121,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onCartClick })
                     logout();
                     onClose();
                   }}
-                  className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-red-200 text-[#C62222] bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 px-4 py-3 border border-red-200 text-[#E00B0B] bg-red-50 rounded-lg hover:bg-red-100 transition-colors"
                 >
                   <LogOut className="w-5 h-5" />
                   <span>Sign Out</span>

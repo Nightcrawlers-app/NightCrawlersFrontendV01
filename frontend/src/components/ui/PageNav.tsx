@@ -43,7 +43,7 @@ const PageNav: React.FC<PageNavProps> = ({ fallback = '/', variant = 'floating',
       <button
         type="button"
         onClick={goBack}
-        className="inline-flex items-center gap-1 pl-2.5 pr-3 py-1.5 rounded-l-full hover:bg-gray-50 hover:text-[#C62222] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C62222]/40"
+        className="inline-flex items-center gap-1 pl-2.5 pr-3 py-1.5 rounded-l-full hover:bg-gray-50 hover:text-[#E00B0B] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E00B0B]/40"
       >
         <ChevronLeft size={16} /> Back
       </button>
@@ -51,7 +51,7 @@ const PageNav: React.FC<PageNavProps> = ({ fallback = '/', variant = 'floating',
       {showBack && <span className="h-4 w-px bg-gray-200" aria-hidden="true" />}
       <Link
         to="/"
-        className={`inline-flex items-center gap-1.5 pl-3 pr-3.5 py-1.5 ${showBack ? 'rounded-r-full' : 'rounded-full'} hover:bg-gray-50 hover:text-[#C62222] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C62222]/40`}
+        className={`inline-flex items-center gap-1.5 pl-3 pr-3.5 py-1.5 ${showBack ? 'rounded-r-full' : 'rounded-full'} hover:bg-gray-50 hover:text-[#E00B0B] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E00B0B]/40`}
       >
         <Home size={14} /> Home
       </Link>

@@ -146,14 +146,14 @@ const VendorAddMenuItem: React.FC = () => {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <div className="flex items-center gap-3 mb-4">
               <div className="w-10 h-10 bg-[#FEECEC] rounded-md flex items-center justify-center">
-                <Store className="w-5 h-5 text-[#C62222]" />
+                <Store className="w-5 h-5 text-[#E00B0B]" />
               </div>
-              <h1 className="text-3xl font-bold text-[#C62222]">Vendor Dashboard</h1>
+              <h1 className="text-3xl font-bold text-[#E00B0B]">Vendor Dashboard</h1>
             </div>
             <Link
               to={`/vendor-dashboard/restaurant/${store.id}`}
               state={store}
-              className="inline-flex items-center gap-2 text-[#667085] hover:text-[#C62222] text-sm"
+              className="inline-flex items-center gap-2 text-[#667085] hover:text-[#E00B0B] text-sm"
             >
               <ChevronLeft className="w-4 h-4" />
               Back to {typeMeta.singular}
@@ -199,19 +199,19 @@ const VendorAddMenuItem: React.FC = () => {
                   name="name"
                   value={form.name}
                   onChange={handleChange}
-                  className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-transparent"
+                  className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-transparent"
                   placeholder={`e.g. ${store.businessType === 'Pharmacy' ? 'Paracetamol' : store.businessType === 'Groceries' ? 'Fresh Tomatoes' : 'Fried Rice'}`}
                 />
               </div>
 
               <div>
                 <label className="block text-gray-700 text-sm font-medium mb-1">{typeMeta.categoryLabel}</label>
-                <div className="w-full min-h-[48px] px-4 py-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md focus-within:ring-2 focus-within:ring-[#C62222] focus-within:border-transparent">
+                <div className="w-full min-h-[48px] px-4 py-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md focus-within:ring-2 focus-within:ring-[#E00B0B] focus-within:border-transparent">
                   <div className="flex flex-wrap gap-3 items-center">
                     {categories.map((category) => (
                       <span
                         key={category}
-                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#C62222] text-white text-sm font-medium rounded-sm shadow-sm"
+                        className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-[#E00B0B] text-white text-sm font-medium rounded-sm shadow-sm"
                       >
                         {category}
                         <button
@@ -242,7 +242,7 @@ const VendorAddMenuItem: React.FC = () => {
                   name="price"
                   value={form.price}
                   onChange={handleChange}
-                  className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-transparent"
+                  className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-transparent"
                   placeholder="e.g. 2500"
                 />
               </div>
@@ -253,7 +253,7 @@ const VendorAddMenuItem: React.FC = () => {
                   name="description"
                   value={form.description}
                   onChange={handleChange}
-                  className="w-full min-h-[90px] px-3 py-2 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-transparent"
+                  className="w-full min-h-[90px] px-3 py-2 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-transparent"
                   placeholder="Short description about the item"
                 />
               </div>
@@ -264,7 +264,7 @@ const VendorAddMenuItem: React.FC = () => {
                   name="imageUrl"
                   value={form.imageUrl}
                   onChange={handleChange}
-                  className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-transparent"
+                  className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-transparent"
                   placeholder="https://example.com/cover.jpg"
                 />
               </div>
@@ -284,7 +284,7 @@ const VendorAddMenuItem: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSaving}
-                className="inline-flex items-center justify-center gap-2 w-full h-10 px-4 bg-[#C62222] text-white text-sm font-medium rounded-md hover:bg-[#A01B1B] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C62222] disabled:opacity-70 disabled:cursor-not-allowed"
+                className="inline-flex items-center justify-center gap-2 w-full h-10 px-4 bg-[#E00B0B] text-white text-sm font-medium rounded-md hover:bg-[#B80909] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E00B0B] disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 <Upload className="w-4 h-4" />
                 {isSaving ? 'Adding…' : `Add ${typeMeta.itemSingular}`}

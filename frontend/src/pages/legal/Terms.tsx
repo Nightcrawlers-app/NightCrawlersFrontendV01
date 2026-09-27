@@ -52,7 +52,7 @@ const Terms: React.FC = () => {
         },
         {
             title: '12. Contact Information',
-            content: `For questions about these Terms of Service, please contact us at legal@nightcrawlers.ng or through our Contact page.`
+            content: `For questions about these Terms of Service, please contact us at support@nightcrawlers.app or through our Contact page.`
         },
     ];
 

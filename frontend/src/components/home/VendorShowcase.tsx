@@ -87,7 +87,7 @@ const VendorShowcase: React.FC = () => {
         </h2>
         <Link
           to={`/explore?category=${encodeURIComponent(tab)}`}
-          className="inline-flex items-center gap-2 bg-[#C62222] text-white text-[15px] sm:text-[16px] font-semibold font-poppins px-6 py-3 rounded-[8px] shadow-sm hover:bg-[#A01B1B] active:scale-[0.98] transition-all whitespace-nowrap"
+          className="inline-flex items-center gap-2 bg-[#E00B0B] text-white text-[15px] sm:text-[16px] font-semibold font-poppins px-6 py-3 rounded-[8px] shadow-sm hover:bg-[#B80909] active:scale-[0.98] transition-all whitespace-nowrap"
         >
           Explore all {meta.plural}
           <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={3} />
@@ -102,7 +102,7 @@ const VendorShowcase: React.FC = () => {
             role="tab"
             aria-selected={tab === c.type}
             onClick={() => setTab(c.type)}
-            className={`shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium font-poppins transition-colors ${tab === c.type ? 'bg-[#C62222] border-[#C62222] text-white' : 'bg-white border-[#EAECF0] text-[#344054] hover:border-[#C62222]'}`}
+            className={`shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-full border text-sm font-medium font-poppins transition-colors ${tab === c.type ? 'bg-[#E00B0B] border-[#E00B0B] text-white' : 'bg-white border-[#EAECF0] text-[#344054] hover:border-[#E00B0B]'}`}
           >
             <img src={c.icon} alt="" className="w-4 h-4 object-contain" />
             {c.label}
@@ -113,17 +113,17 @@ const VendorShowcase: React.FC = () => {
       <div role="tabpanel" className="w-full px-4 lg:px-8 min-h-[220px]">
         {loadingTab === tab && tiles.length === 0 ? (
           <div className="flex justify-center py-16">
-            <Loader2 className="animate-spin text-[#C62222]" />
+            <Loader2 className="animate-spin text-[#E00B0B]" />
           </div>
         ) : tiles.length === 0 ? (
           <div className="flex flex-col items-center text-center py-12 gap-3">
             <span className="w-14 h-14 rounded-full bg-[#FFF5F5] flex items-center justify-center">
-              <StoreIcon className="text-[#C62222]" size={24} />
+              <StoreIcon className="text-[#E00B0B]" size={24} />
             </span>
             <p className="text-[#222222] font-semibold font-poppins">{meta.plural} are coming soon</p>
             <p className="text-sm text-[#667085] max-w-[360px]">
               We're signing up {meta.plural.toLowerCase()} near you. Run one?{' '}
-              <Link to="/partner-signup" className="text-[#C62222] font-medium hover:underline">
+              <Link to="/partner-signup" className="text-[#E00B0B] font-medium hover:underline">
                 Partner with Nightcrawlers
               </Link>
               .
@@ -139,15 +139,15 @@ const VendorShowcase: React.FC = () => {
                   aria-label={`Open ${t.name}`}
                   className="group w-full flex flex-col items-center gap-3 focus:outline-none"
                 >
-                  <div className="relative w-full aspect-[158/167] overflow-hidden rounded-[10px] shadow-sm bg-[#F2F4F7] group-hover:shadow-md group-focus-visible:ring-2 group-focus-visible:ring-[#C62222] transition-all">
+                  <div className="relative w-full aspect-[158/167] overflow-hidden rounded-[10px] shadow-sm bg-[#F2F4F7] group-hover:shadow-md group-focus-visible:ring-2 group-focus-visible:ring-[#E00B0B] transition-all">
                     <img src={t.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
                     {t.kind === 'featured' && opening === t.vendor.name && (
                       <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
-                        <Loader2 className="animate-spin text-[#C62222]" size={22} />
+                        <Loader2 className="animate-spin text-[#E00B0B]" size={22} />
                       </div>
                     )}
                   </div>
-                  <span className="text-[#222222] text-[14px] sm:text-[16px] font-medium font-poppins text-center line-clamp-2 group-hover:text-[#C62222]">
+                  <span className="text-[#222222] text-[14px] sm:text-[16px] font-medium font-poppins text-center line-clamp-2 group-hover:text-[#E00B0B]">
                     {t.name}
                   </span>
                 </button>

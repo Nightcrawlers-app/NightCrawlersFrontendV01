@@ -280,10 +280,10 @@ const MapPicker: React.FC<MapPickerProps> = ({
                             if (results[0]) pickResult(results[0]);
                         }}
                         placeholder="Search a street, estate or landmark"
-                        className="w-full h-[42px] pl-9 pr-9 bg-[#F9FAFB] border border-[#EAECF0] rounded-[8px] text-[15px] text-[#222222] placeholder:text-[#98A2B3] outline-none focus:border-[#C62222] transition-colors"
+                        className="w-full h-[42px] pl-9 pr-9 bg-[#F9FAFB] border border-[#EAECF0] rounded-[8px] text-[15px] text-[#222222] placeholder:text-[#98A2B3] outline-none focus:border-[#E00B0B] transition-colors"
                     />
                     {searching && (
-                        <Loader2 size={16} className="absolute right-8 top-[13px] text-[#C62222] animate-spin" />
+                        <Loader2 size={16} className="absolute right-8 top-[13px] text-[#E00B0B] animate-spin" />
                     )}
                     {showResults && results.length > 0 && (
                         <ul className="absolute left-5 right-5 top-[46px] z-[500] bg-white border border-[#EAECF0] rounded-[10px] shadow-lg max-h-[240px] overflow-y-auto py-1">
@@ -294,7 +294,7 @@ const MapPicker: React.FC<MapPickerProps> = ({
                                         onClick={() => pickResult(r)}
                                         className="w-full text-left px-4 py-2.5 hover:bg-[#F9FAFB] flex gap-2.5"
                                     >
-                                        <MapPin size={15} className="text-[#C62222] mt-[3px] flex-shrink-0" />
+                                        <MapPin size={15} className="text-[#E00B0B] mt-[3px] flex-shrink-0" />
                                         <span className="min-w-0">
                                             <span className="block text-[14px] font-medium text-[#222222] truncate">{r.label}</span>
                                             <span className="block text-[12px] text-[#667085] truncate">{r.fullAddress}</span>
@@ -312,7 +312,7 @@ const MapPicker: React.FC<MapPickerProps> = ({
 
                     {!mapReady && !mapError && (
                         <div className="absolute inset-0 flex items-center justify-center text-[#667085] text-sm gap-2">
-                            <Loader2 size={18} className="animate-spin text-[#C62222]" /> Loading map…
+                            <Loader2 size={18} className="animate-spin text-[#E00B0B]" /> Loading map…
                         </div>
                     )}
                     {mapError && (
@@ -328,7 +328,7 @@ const MapPicker: React.FC<MapPickerProps> = ({
                                 <svg width="36" height="46" viewBox="0 0 36 46" aria-hidden="true">
                                     <path
                                         d="M18 0C8.06 0 0 8.06 0 18c0 12.6 15.3 26.2 16 26.8a3 3 0 0 0 4 0C20.7 44.2 36 30.6 36 18 36 8.06 27.94 0 18 0Z"
-                                        fill="#C62222"
+                                        fill="#E00B0B"
                                     />
                                     <circle cx="18" cy="18" r="6.5" fill="#fff" />
                                 </svg>
@@ -345,7 +345,7 @@ const MapPicker: React.FC<MapPickerProps> = ({
                             onClick={locateMe}
                             disabled={locating}
                             aria-label="Use my current location"
-                            className="absolute right-3 bottom-3 z-[400] w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center text-[#C62222] hover:bg-[#FFF5F5] disabled:opacity-60"
+                            className="absolute right-3 bottom-3 z-[400] w-11 h-11 rounded-full bg-white shadow-md flex items-center justify-center text-[#E00B0B] hover:bg-[#FFF5F5] disabled:opacity-60"
                         >
                             {locating ? <Loader2 size={20} className="animate-spin" /> : <LocateFixed size={20} />}
                         </button>
@@ -373,7 +373,7 @@ const MapPicker: React.FC<MapPickerProps> = ({
                         type="button"
                         onClick={confirm}
                         disabled={!mapReady || busy}
-                        className="mt-3 w-full h-[46px] rounded-[8px] bg-[#C62222] text-white text-[15px] font-semibold hover:bg-[#A01B1B] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
+                        className="mt-3 w-full h-[46px] rounded-[8px] bg-[#E00B0B] text-white text-[15px] font-semibold hover:bg-[#B80909] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                     >
                         {confirmText}
                     </button>

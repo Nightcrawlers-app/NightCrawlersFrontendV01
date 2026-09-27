@@ -36,7 +36,7 @@ const PasswordInput: React.FC<PasswordInputProps> = ({ className = '', label, in
         aria-label={visible ? 'Hide password' : 'Show password'}
         aria-pressed={visible}
         title={visible ? 'Hide password' : 'Show password'}
-        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded text-gray-400 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C62222]/40"
+        className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 rounded text-gray-400 hover:text-gray-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E00B0B]/40"
         tabIndex={0}
       >
         {visible ? <EyeOff size={16} /> : <Eye size={16} />}
@@ -61,7 +61,7 @@ export const PasswordMatchHint: React.FC<{ password: string; confirm: string }> 
   if (!confirm) return null;
   const match = password === confirm;
   return (
-    <p className={`text-[11px] font-medium ${match ? 'text-green-600' : 'text-[#C62222]'}`} role="status" aria-live="polite">
+    <p className={`text-[11px] font-medium ${match ? 'text-green-600' : 'text-[#E00B0B]'}`} role="status" aria-live="polite">
       {match ? '✓ Passwords match' : "Passwords don't match"}
     </p>
   );

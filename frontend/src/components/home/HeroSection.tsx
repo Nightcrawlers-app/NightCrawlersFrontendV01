@@ -11,7 +11,7 @@ const HeroSection: React.FC = () => {
           Food, groceries, pharmacy and drinks — delivered fast, any hour of the night.
         </p>
       <div className="flex items-center justify-center">
-        <Link to="/explore" className="inline-flex items-center gap-2 bg-[#C62222] text-white text-[15px] sm:text-[16px] font-semibold font-poppins px-6 py-3 rounded-[8px] shadow-sm hover:bg-[#A01B1B] active:scale-[0.98] transition-all whitespace-nowrap">
+        <Link to="/explore" className="inline-flex items-center gap-2 bg-[#E00B0B] text-white text-[15px] sm:text-[16px] font-semibold font-poppins px-6 py-3 rounded-[8px] shadow-sm hover:bg-[#B80909] active:scale-[0.98] transition-all whitespace-nowrap">
           Explore Categories
           <ChevronRight className="w-4 h-4 sm:w-5 sm:h-5" strokeWidth={3} />
         </Link>

@@ -46,17 +46,17 @@ const VendorsHeroSection: React.FC = () => {
             {/* Primary CTA */}
             <button
               onClick={handleSignUp}
-              className="flex items-center justify-center px-[10px] py-[10px] gap-[10px] w-full sm:w-[191px] h-[40px] sm:h-[41px] bg-[#C62222] rounded-[4px] hover:bg-red-700 transition-all duration-200"
+              className="flex items-center justify-center px-[10px] py-[10px] gap-[10px] w-full sm:w-[191px] h-[40px] sm:h-[41px] bg-[#E00B0B] rounded-[4px] hover:bg-red-700 transition-all duration-200"
             >
               <span className="font-poppins font-medium text-[14px] leading-[21px] text-[#FCFCFC]">
-                Sign up as a Partner
+                Sign up as a Vendor
               </span>
             </button>
 
             {/* Secondary CTA */}
             <button
               onClick={handleContinueShopping}
-              className="flex items-center justify-center w-full sm:w-[138px] h-[40px] sm:h-[41px] bg-white border border-[#C62222] rounded-[4px] text-[#C62222] font-poppins font-medium text-[14px] leading-[21px] transition-all duration-200 hover:bg-red-700 hover:border-red-700 hover:text-white"
+              className="flex items-center justify-center w-full sm:w-[138px] h-[40px] sm:h-[41px] bg-white border border-[#E00B0B] rounded-[4px] text-[#E00B0B] font-poppins font-medium text-[14px] leading-[21px] transition-all duration-200 hover:bg-red-700 hover:border-red-700 hover:text-white"
             >
               Log In
             </button>
@@ -78,7 +78,7 @@ const VendorsHeroSection: React.FC = () => {
 
       {/* Underline Accent */}
       <div className="flex justify-center mb-[60px] sm:mb-[80px] md:mb-[100px]">
-        <div className="w-[89px] h-[12px] border-b-[2px] border-[#C62222]"></div>
+        <div className="w-[89px] h-[12px] border-b-[2px] border-[#E00B0B]"></div>
       </div>
     </section>
   );

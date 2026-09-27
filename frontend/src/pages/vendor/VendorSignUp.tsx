@@ -6,7 +6,7 @@ import { ChevronDown, MapPin, CheckCircle2 } from 'lucide-react';
 import MapPicker from '../../components/map/MapPicker';
 import type { PickedLocation } from '../../components/map/MapPicker';
 import type { Coordinates } from '../../types/models';
-import logo from '../../assets/logo.png';
+import logo from '../../assets/logo.svg';
 import vendorSignUpImage from '../../assets/signin-image.webp';
 import { BUSINESS_TYPES, createVendorAccount, createRiderAccount, getBusinessTypeMeta, toErrorMessage } from '../../services/api';
 import type { BusinessType } from '../../services/api';
@@ -162,7 +162,7 @@ const VendorSignUp: React.FC = () => {
         </Link>
         <p className="text-sm text-night-gray-700">
           Already {signUpType === 'partner' ? 'a partner' : 'a rider'}?{' '}
-          <Link to="/vendor-signin" className="text-[#C62222] font-semibold hover:underline">
+          <Link to="/vendor-signin" className="text-[#E00B0B] font-semibold hover:underline">
             Log In
           </Link>
         </p>
@@ -173,7 +173,7 @@ const VendorSignUp: React.FC = () => {
           <div className="bg-[#f7f7f7] border border-[#e8e8e8] rounded-2xl shadow-[0_12px_36px_rgba(0,0,0,0.05)] px-6 sm:px-7 md:px-8 py-8 md:py-9 h-full">
 
             <div className="flex flex-col gap-4 mb-6">
-              <h1 className="text-2xl font-semibold text-[#C62222] text-center">
+              <h1 className="text-2xl font-semibold text-[#E00B0B] text-center">
                 {signUpType === 'partner' ? 'Become a Partner' : 'Become a Rider'}
               </h1>
 
@@ -211,7 +211,7 @@ const VendorSignUp: React.FC = () => {
                     value={formData.firstName}
                     onChange={handleInputChange}
                     placeholder="First name"
-                    className="w-full h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] transition"
+                    className="w-full h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B] transition"
                     required
                   />
                 </div>
@@ -223,7 +223,7 @@ const VendorSignUp: React.FC = () => {
                     value={formData.lastName}
                     onChange={handleInputChange}
                     placeholder="Last name"
-                    className="w-full h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] transition"
+                    className="w-full h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B] transition"
                     required
                   />
                 </div>
@@ -238,7 +238,7 @@ const VendorSignUp: React.FC = () => {
                       name="businessType"
                       value={formData.businessType}
                       onChange={handleInputChange}
-                      className={`w-full h-11 px-3 pr-9 border border-[#d8d8d8] rounded-sm text-sm bg-white ${formData.businessType ? 'text-gray-900' : 'text-gray-400'} appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] transition`}
+                      className={`w-full h-11 px-3 pr-9 border border-[#d8d8d8] rounded-sm text-sm bg-white ${formData.businessType ? 'text-gray-900' : 'text-gray-400'} appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B] transition`}
                       required
                     >
                       <option value="" disabled>Select business type</option>
@@ -260,7 +260,7 @@ const VendorSignUp: React.FC = () => {
                       name="vehicleType"
                       value={formData.vehicleType}
                       onChange={handleInputChange}
-                      className={`w-full h-11 px-3 pr-9 border border-[#d8d8d8] rounded-sm text-sm bg-white ${formData.vehicleType ? 'text-gray-900' : 'text-gray-400'} appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] transition`}
+                      className={`w-full h-11 px-3 pr-9 border border-[#d8d8d8] rounded-sm text-sm bg-white ${formData.vehicleType ? 'text-gray-900' : 'text-gray-400'} appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B] transition`}
                       required
                     >
                       <option value="" disabled>Select vehicle type</option>
@@ -282,7 +282,7 @@ const VendorSignUp: React.FC = () => {
                     value={formData.phoneNumber}
                     onChange={handleInputChange}
                     placeholder="Phone Number"
-                    className="w-full h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] transition"
+                    className="w-full h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B] transition"
                   />
                 </div>
                 <div className="space-y-1">
@@ -293,7 +293,7 @@ const VendorSignUp: React.FC = () => {
                     value={formData.email}
                     onChange={handleInputChange}
                     placeholder="you@gmail.com"
-                    className="w-full h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] transition"
+                    className="w-full h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B] transition"
                     required
                   />
                 </div>
@@ -305,7 +305,7 @@ const VendorSignUp: React.FC = () => {
                     onChange={handleInputChange}
                     placeholder="Create a password"
                     autoComplete="new-password"
-                    className="w-full h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] transition"
+                    className="w-full h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B] transition"
                     required
                   />
                 </div>
@@ -319,7 +319,7 @@ const VendorSignUp: React.FC = () => {
                   onChange={handleInputChange}
                   placeholder="Type your password again"
                   autoComplete="new-password"
-                  className="w-full h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] transition"
+                  className="w-full h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B] transition"
                   required
                 />
                 <PasswordMatchHint password={formData.password} confirm={formData.confirmPassword} />
@@ -336,13 +336,13 @@ const VendorSignUp: React.FC = () => {
                     value={formData.location}
                     onChange={(e) => { handleInputChange(e); setPin(null); }}
                     placeholder={signUpType === 'partner' ? 'e.g. 12 Aminu Kano Crescent, Wuse 2' : 'e.g. Garki, Abuja'}
-                    className="flex-1 min-w-0 h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] transition"
+                    className="flex-1 min-w-0 h-11 px-3 border border-[#d8d8d8] rounded-sm text-sm bg-white focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B] transition"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowMap(true)}
-                    className="h-11 px-3 inline-flex items-center gap-1.5 border border-[#C62222] text-[#C62222] rounded-sm text-xs font-semibold hover:bg-[#FFF5F5] transition whitespace-nowrap"
+                    className="h-11 px-3 inline-flex items-center gap-1.5 border border-[#E00B0B] text-[#E00B0B] rounded-sm text-xs font-semibold hover:bg-[#FFF5F5] transition whitespace-nowrap"
                   >
                     <MapPin size={15} />
                     {formData.location.trim() && !pin ? 'Confirm on map' : pin ? 'Move pin' : 'Pick on map'}
@@ -376,11 +376,11 @@ const VendorSignUp: React.FC = () => {
                   name="agreeToPolicy"
                   checked={formData.agreeToPolicy}
                   onChange={handleInputChange}
-                  className="w-4 h-4 border border-[#d8d8d8] rounded-sm focus:ring-[#C62222]"
+                  className="w-4 h-4 border border-[#d8d8d8] rounded-sm focus:ring-[#E00B0B]"
                 />
                 <span>
                   You agree to our friendly{' '}
-                  <Link to="/privacy-policy" className="text-[#C62222] font-medium hover:underline">
+                  <Link to="/privacy-policy" className="text-[#E00B0B] font-medium hover:underline">
                     privacy policy
                   </Link>
                 </span>
@@ -389,12 +389,12 @@ const VendorSignUp: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="w-full h-11 bg-[#C62222] text-white rounded-sm font-semibold shadow-sm hover:bg-[#aa1c1c] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                className="w-full h-11 bg-[#E00B0B] text-white rounded-sm font-semibold shadow-sm hover:bg-[#aa1c1c] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isSubmitting ? 'Creating account...' : 'Get Started'}
               </button>
               {errorMessage && (
-                <p className="text-xs text-[#C62222]" role="alert">
+                <p className="text-xs text-[#E00B0B]" role="alert">
                   {errorMessage}
                 </p>
               )}
@@ -411,7 +411,7 @@ const VendorSignUp: React.FC = () => {
         </div>
 
         <div className="mt-6 text-right">
-          <Link to="/terms" className="text-[#C62222] text-sm underline">
+          <Link to="/terms" className="text-[#E00B0B] text-sm underline">
             Terms of Service
           </Link>
         </div>

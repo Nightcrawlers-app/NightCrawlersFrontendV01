@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { SignUpForm } from '../../types';
 import Input from '../../components/ui/Input';
 import signupImage from '../../assets/signup-image.webp';
-import signupLogo from '../../assets/signup-logo.png';
+import signupLogo from '../../assets/logo.svg';
 import mailIcon from '../../assets/mail.svg';
 import { useAuth } from '../../context/AuthContext';
 
@@ -106,7 +106,7 @@ const SignUp: React.FC = () => {
                     placeholder="Enter your username"
                     value={formData.username}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222]"
+                    className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B]"
                     required
                   />
                 </div>
@@ -119,7 +119,7 @@ const SignUp: React.FC = () => {
                     placeholder="Enter your email address"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222]"
+                    className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B]"
                     required
                   />
                 </div>
@@ -133,7 +133,7 @@ const SignUp: React.FC = () => {
                       placeholder="Create a password"
                       value={formData.password}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222]"
+                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B]"
                       required
                     />
                   </div>
@@ -148,7 +148,7 @@ const SignUp: React.FC = () => {
                       placeholder="Confirm password"
                       value={formData.confirmPassword}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222]"
+                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B]"
                       required
                     />
                   </div>
@@ -160,7 +160,7 @@ const SignUp: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting}
-                  className="w-full bg-[#C62222] text-white py-2 px-4 rounded-md hover:bg-[#A01B1B] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium flex items-center justify-center gap-2"
+                  className="w-full bg-[#E00B0B] text-white py-2 px-4 rounded-md hover:bg-[#B80909] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     <>
@@ -178,7 +178,7 @@ const SignUp: React.FC = () => {
               <div className="mt-3 text-center">
                 <p className="text-xs text-[#667085]">
                   Already have an account?{' '}
-                  <Link to="/signin" className="text-[#C62222] hover:underline font-medium">
+                  <Link to="/signin" className="text-[#E00B0B] hover:underline font-medium">
                     Log in
                   </Link>
                 </p>
@@ -187,7 +187,7 @@ const SignUp: React.FC = () => {
           </div>
           <div className="w-full flex items-center justify-between text-xs text-[#667085] px-1">
             <span>© Nightcrawlers 2026, inc</span>
-            <a href="mailto:help@nightcrawlers.com" className="flex items-center gap-2 hover:text-[#C62222]">
+            <a href="mailto:help@nightcrawlers.com" className="flex items-center gap-2 hover:text-[#E00B0B]">
               <img src={mailIcon} alt="" className="w-3.5 h-3.5" />
               help@nightcrawlers.com
             </a>

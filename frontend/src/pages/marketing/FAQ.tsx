@@ -71,7 +71,7 @@ const FAQ: React.FC = () => {
           <div className="flex flex-col lg:flex-row gap-[30px] lg:gap-[60px] w-full">
             {/* Left - Categories Sidebar */}
             <div className="flex flex-col items-start gap-[24px] lg:gap-[40px] w-full lg:w-[307px] lg:sticky lg:top-[80px] lg:h-fit">
-              <h2 className="text-[#C62222] text-[20px] lg:text-[24px] font-semibold leading-[20px] lg:leading-[24px]">Categories</h2>
+              <h2 className="text-[#E00B0B] text-[20px] lg:text-[24px] font-semibold leading-[20px] lg:leading-[24px]">Categories</h2>
               <div className="flex flex-row lg:flex-col gap-[12px] lg:gap-[16px] w-full lg:w-[307px] overflow-x-auto lg:overflow-x-visible pb-2 lg:pb-0">
                 {categories.map((category) => (
                   <button
@@ -81,7 +81,7 @@ const FAQ: React.FC = () => {
                       setOpenIndex(null);
                     }}
                     className={`h-[40px] lg:h-[41px] px-[14px] lg:px-[17px] leading-[20px] lg:leading-[24px] text-[14px] lg:text-[16px] text-left transition-all duration-200 whitespace-nowrap flex-shrink-0 ${selectedCategory === category
-                        ? 'font-medium text-[#222222] border-l-[3px] border-[#C62222] bg-[rgba(198,34,34,0.05)]'
+                        ? 'font-medium text-[#222222] border-l-[3px] border-[#E00B0B] bg-[rgba(224,11,11,0.05)]'
                         : 'font-normal text-[#667085] border-l-[3px] border-transparent hover:bg-gray-50'
                       }`}
                   >
@@ -99,7 +99,7 @@ const FAQ: React.FC = () => {
                     key={faq.id}
                     onClick={() => setOpenIndex(openIndex === idx ? null : idx)}
                     className={`rounded-[8px] px-[16px] lg:px-[20px] py-[16px] lg:py-[20px] cursor-pointer transition-all duration-200 ${openIndex === idx
-                        ? 'border-[1px] border-[#C62222] bg-white shadow-sm'
+                        ? 'border-[1px] border-[#E00B0B] bg-white shadow-sm'
                         : 'bg-[rgba(234,236,240,0.42)] border border-transparent hover:bg-[rgba(234,236,240,0.6)]'
                       }`}
                   >
@@ -141,14 +141,14 @@ const FAQ: React.FC = () => {
               <p className="leading-[18px] text-[#667085] text-[14px]">If you didn't find your answer, feel free to reach out.</p>
               <a
                 href="/contact"
-                className="inline-flex items-center justify-center lg:justify-start leading-[24px] text-[#C62222] text-[16px] underline hover:no-underline transition-all duration-200"
+                className="inline-flex items-center justify-center lg:justify-start leading-[24px] text-[#E00B0B] text-[16px] underline hover:no-underline transition-all duration-200"
               >
                 Contact us
               </a>
             </div>
 
             {/* Decorative underline */}
-            <div className="hidden lg:block w-[60px] h-[2px] border-t-[2px] border-[#C62222]"></div>
+            <div className="hidden lg:block w-[60px] h-[2px] border-t-[2px] border-[#E00B0B]"></div>
           </div>
         </div>
       </main>

@@ -132,7 +132,7 @@ const VendorDetails: React.FC = () => {
         <main className="flex-grow flex items-center justify-center px-6 py-20">
           <div className="text-center max-w-sm">
             <div className="w-16 h-16 bg-[#FEECEC] rounded-full flex items-center justify-center mx-auto mb-5">
-              <UtensilsCrossed className="w-8 h-8 text-[#C62222]" />
+              <UtensilsCrossed className="w-8 h-8 text-[#E00B0B]" />
             </div>
             <h1 className="text-xl font-semibold text-[#222222] mb-2">Store not found</h1>
             <p className="text-sm text-[#667085] mb-6">
@@ -140,7 +140,7 @@ const VendorDetails: React.FC = () => {
             </p>
             <button
               onClick={() => navigate('/explore')}
-              className="px-5 py-2.5 bg-[#C62222] text-white text-sm font-semibold rounded-lg hover:bg-[#A01B1B] transition-colors"
+              className="px-5 py-2.5 bg-[#E00B0B] text-white text-sm font-semibold rounded-lg hover:bg-[#B80909] transition-colors"
             >
               Browse stores
             </button>
@@ -173,7 +173,7 @@ const VendorDetails: React.FC = () => {
                 type="button"
                 onClick={() => setSearchQuery('')}
                 aria-label="Clear search"
-                className="w-[36px] sm:w-[40px] h-full bg-[#C62222] flex items-center justify-center text-white hover:bg-[#A01B1B] transition-colors"
+                className="w-[36px] sm:w-[40px] h-full bg-[#E00B0B] flex items-center justify-center text-white hover:bg-[#B80909] transition-colors"
               >
                 <X size={16} className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
               </button>
@@ -181,7 +181,7 @@ const VendorDetails: React.FC = () => {
               <button
                 type="button"
                 aria-label="Search"
-                className="w-[36px] sm:w-[40px] h-full bg-[#C62222] flex items-center justify-center text-white hover:bg-[#A01B1B] transition-colors"
+                className="w-[36px] sm:w-[40px] h-full bg-[#E00B0B] flex items-center justify-center text-white hover:bg-[#B80909] transition-colors"
               >
                 <Search size={16} className="w-4 h-4 sm:w-[18px] sm:h-[18px]" />
               </button>
@@ -204,7 +204,7 @@ const VendorDetails: React.FC = () => {
         {/* Breadcrumb */}
         <div className="flex items-center gap-[3px] sm:gap-[4px] text-[#667085] text-[12px] sm:text-[14px] mb-[20px] sm:mb-[24px]">
           <ChevronLeft size={12} />
-          <span className="text-[#667085] font-medium cursor-pointer hover:text-[#C62222]">{store.businessType}</span>
+          <span className="text-[#667085] font-medium cursor-pointer hover:text-[#E00B0B]">{store.businessType}</span>
         </div>
 
         <div className="flex flex-col lg:flex-row gap-[40px]">
@@ -237,7 +237,7 @@ const VendorDetails: React.FC = () => {
                         ? { title: store.promotions[0].title, detail: store.promotions[0].badge }
                         : null;
                     return promo ? (
-                      <p className="mt-2 inline-flex items-center gap-1.5 bg-[#FFF5F5] border border-[#F5C2C2] text-[#C62222] text-[12px] font-semibold px-3 py-1 rounded-full">
+                      <p className="mt-2 inline-flex items-center gap-1.5 bg-[#FFF5F5] border border-[#F5C2C2] text-[#E00B0B] text-[12px] font-semibold px-3 py-1 rounded-full">
                         <Tag size={12} /> {promo.title} · {promo.detail} — applied at checkout
                       </p>
                     ) : null;
@@ -254,12 +254,12 @@ const VendorDetails: React.FC = () => {
               {/* Bottom Row: Icons */}
               <div className="flex items-center gap-[32px] sm:gap-[40px]">
                 <div className="flex flex-col items-center gap-1">
-                  <Clock size={20} className="text-[#C62222] stroke-[1.5]" />
+                  <Clock size={20} className="text-[#E00B0B] stroke-[1.5]" />
                   <span className="text-[#667085] text-[10px] sm:text-[12px]">30-45 mins</span>
                 </div>
                 <div className="flex flex-col items-center gap-1">
                   {/* Using a custom SVG for the scooter if possible, or a Lucide icon as fallback */}
-                  <div className="text-[#C62222]">
+                  <div className="text-[#E00B0B]">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
                       <path d="M5.5 17a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Zm13 0a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z" />
                       <path d="M8 14.5h8" />
@@ -280,7 +280,7 @@ const VendorDetails: React.FC = () => {
                   <button
                     key={cat}
                     onClick={() => setActiveCategory(cat)}
-                    className={`text-[12px] sm:text-[14px] font-medium transition-colors px-[12px] sm:px-[16px] py-[4px] sm:py-[6px] rounded-[4px] whitespace-nowrap min-w-fit text-center flex-shrink-0 ${activeCategory === cat ? 'text-[#C62222] bg-[#FEE4E2]' : 'text-[#667085] hover:text-[#222222]'}`}
+                    className={`text-[12px] sm:text-[14px] font-medium transition-colors px-[12px] sm:px-[16px] py-[4px] sm:py-[6px] rounded-[4px] whitespace-nowrap min-w-fit text-center flex-shrink-0 ${activeCategory === cat ? 'text-[#E00B0B] bg-[#FEE4E2]' : 'text-[#667085] hover:text-[#222222]'}`}
                   >
                     {cat}
                   </button>
@@ -302,7 +302,7 @@ const VendorDetails: React.FC = () => {
             ) : menuError ? (
               <div className="flex flex-col items-center justify-center py-[60px] px-[24px] text-center">
                 <div className="w-[80px] h-[80px] bg-[#FEECEC] rounded-full flex items-center justify-center mb-[16px]">
-                  <UtensilsCrossed size={32} className="text-[#C62222]" />
+                  <UtensilsCrossed size={32} className="text-[#E00B0B]" />
                 </div>
                 <h3 className="text-[18px] font-semibold text-[#222222] mb-[8px]">Couldn't load the menu</h3>
                 <p className="text-[#667085] text-[14px] max-w-[300px]">{menuError}</p>
@@ -310,7 +310,7 @@ const VendorDetails: React.FC = () => {
             ) : filteredMenuItems.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-[60px] px-[24px] text-center">
                 <div className="w-[80px] h-[80px] bg-[#FEECEC] rounded-full flex items-center justify-center mb-[16px]">
-                  <UtensilsCrossed size={32} className="text-[#C62222]" />
+                  <UtensilsCrossed size={32} className="text-[#E00B0B]" />
                 </div>
                 <h3 className="text-[18px] font-semibold text-[#222222] mb-[8px]">
                   {menuItems.length === 0 ? 'No menu items yet' : 'No items in this category'}
@@ -360,7 +360,7 @@ const VendorDetails: React.FC = () => {
 
               {cartItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-start w-full text-center pt-4 pb-4">
-                  <ShoppingBasket size={42} className="text-[#C62222] mb-[10px]" />
+                  <ShoppingBasket size={42} className="text-[#E00B0B] mb-[10px]" />
                   <p className="text-[#667085] text-[12px] sm:text-[13px]">Your Cart is empty</p>
                 </div>
               ) : (
@@ -380,7 +380,7 @@ const VendorDetails: React.FC = () => {
                           <h3 className="text-[#222222] text-[12px] sm:text-[14px] font-bold truncate w-[100px] sm:w-[140px]">{item.name}</h3>
                           <button
                             onClick={() => removeFromCart(item.id)}
-                            className="text-[#C62222] hover:text-[#A01B1B] transition-colors"
+                            className="text-[#E00B0B] hover:text-[#B80909] transition-colors"
                           >
                             <Trash2 size={12} />
                           </button>
@@ -419,7 +419,7 @@ const VendorDetails: React.FC = () => {
                       </div>
                       <button
                         onClick={() => navigate('/order-summary')}
-                        className="h-[28px] sm:h-[32px] px-[12px] sm:px-[16px] bg-[#C62222] text-white text-[10px] sm:text-[12px] font-medium rounded-[3px] hover:bg-[#A01B1B] transition-colors"
+                        className="h-[28px] sm:h-[32px] px-[12px] sm:px-[16px] bg-[#E00B0B] text-white text-[10px] sm:text-[12px] font-medium rounded-[3px] hover:bg-[#B80909] transition-colors"
                       >
                         Proceed to Checkout
                       </button>
@@ -448,9 +448,9 @@ const VendorDetails: React.FC = () => {
         <div className="fixed inset-0 z-[80] bg-black/20 backdrop-blur-sm lg:hidden">
           <div className="absolute inset-y-0 right-0 w-full max-w-[360px] sm:max-w-[420px] bg-white shadow-[-6px_0_18px_rgba(0,0,0,0.12)]">
             <div className="flex items-center justify-between px-4 py-3 border-b border-[#EAECF0]">
-              <div className="flex items-center gap-2 text-[#C62222] text-[15px] font-semibold">
+              <div className="flex items-center gap-2 text-[#E00B0B] text-[15px] font-semibold">
                 Cart
-                <div className="w-[18px] h-[18px] bg-[#C62222] text-white text-[11px] rounded-full flex items-center justify-center">
+                <div className="w-[18px] h-[18px] bg-[#E00B0B] text-white text-[11px] rounded-full flex items-center justify-center">
                   {cartItems.length}
                 </div>
               </div>
@@ -462,7 +462,7 @@ const VendorDetails: React.FC = () => {
             <div className="flex flex-col h-[calc(100%-52px)] px-4 py-4 overflow-y-auto">
               {cartItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-start h-full text-center pt-6">
-                  <ShoppingBasket size={48} className="text-[#C62222] mb-2" />
+                  <ShoppingBasket size={48} className="text-[#E00B0B] mb-2" />
                   <p className="text-[#667085] text-[12px]">Your Cart is empty</p>
                 </div>
               ) : (
@@ -511,7 +511,7 @@ const VendorDetails: React.FC = () => {
                             <div className="flex items-center gap-3">
                               <button
                                 onClick={() => navigate('/order-summary')}
-                                className="h-[36px] px-4 bg-[#C62222] text-white text-[12px] font-semibold rounded-[6px] hover:bg-[#A01B1B] transition-colors"
+                                className="h-[36px] px-4 bg-[#E00B0B] text-white text-[12px] font-semibold rounded-[6px] hover:bg-[#B80909] transition-colors"
                               >
                                 Proceed to Checkout
                               </button>
@@ -520,7 +520,7 @@ const VendorDetails: React.FC = () => {
                                   /* In a real app we would remove only this vendor's items */
                                   clearCart();
                                 }}
-                                className="text-[#C62222] hover:text-[#A01B1B]"
+                                className="text-[#E00B0B] hover:text-[#B80909]"
                               >
                                 <Trash2 size={18} />
                               </button>
@@ -534,7 +534,7 @@ const VendorDetails: React.FC = () => {
                   <div className="mt-4 flex justify-end">
                     <button
                       onClick={clearCart}
-                      className="px-4 py-2 bg-[#FEE4E2] text-[#C62222] text-[12px] font-semibold rounded-[6px] hover:bg-[#FECDCA] transition-colors"
+                      className="px-4 py-2 bg-[#FEE4E2] text-[#E00B0B] text-[12px] font-semibold rounded-[6px] hover:bg-[#FECDCA] transition-colors"
                     >
                       Clear Cart
                     </button>

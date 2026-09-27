@@ -493,6 +493,18 @@ export type OrderTracking = {
     };
     /** Arrival window; null once delivered or cancelled. */
     eta: { earliest: string; latest: string } | null;
+    /** Live trip while a rider is on the way (road route + position); null otherwise. */
+    trip: {
+        destination: 'store' | 'customer';
+        distanceKm: number;
+        durationMin: number;
+        line: [number, number][];
+        riderLocation: Coordinates;
+        arrived: boolean | null;
+        updatedAt: string;
+    } | null;
+    pickupPoint: Coordinates | null;
+    deliveryPoint: Coordinates | null;
     store: { name: string; address: string; businessType: BusinessType } | null;
     rider: { firstName: string; vehicleType: string; phoneNumber: string | null; distanceKm: number | null } | null;
     deliveryAddress: string;
@@ -503,4 +515,18 @@ export type OrderTracking = {
     discount: number;
     total: number;
     serverTime: string;
+};
+
+/** Live trip progress for a rider's active order (returned with each location update). */
+export type RiderTrip = {
+    orderId: string;
+    destination: 'store' | 'customer';
+    distanceKm: number;
+    durationMin: number;
+    line: [number, number][];
+    riderLocation: Coordinates & { accuracy?: number | null };
+    /** At the store (before pickup) / at the customer's address (after pickup) */
+    arrived: boolean | null;
+    source: string;
+    updatedAt: string;
 };

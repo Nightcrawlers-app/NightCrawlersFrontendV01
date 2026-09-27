@@ -89,10 +89,10 @@ const PhoneVerificationModal: React.FC<PhoneVerificationModalProps> = ({
   };
 
   const primaryBtn =
-    'w-full py-2.5 bg-[#C62222] text-white rounded-lg text-sm font-semibold hover:bg-[#A01B1B] transition-colors disabled:opacity-50';
+    'w-full py-2.5 bg-[#E00B0B] text-white rounded-lg text-sm font-semibold hover:bg-[#B80909] transition-colors disabled:opacity-50';
   const icon = (
     <div className="w-12 h-12 bg-[#FFF0F0] rounded-full flex items-center justify-center mx-auto">
-      <Phone size={22} className="text-[#C62222]" />
+      <Phone size={22} className="text-[#E00B0B]" />
     </div>
   );
 
@@ -124,9 +124,9 @@ const PhoneVerificationModal: React.FC<PhoneVerificationModalProps> = ({
               onChange={e => { setPhoneInput(e.target.value); setError(''); }}
               onKeyDown={e => e.key === 'Enter' && phoneInput.trim() && handleSaveNumber()}
               placeholder="0803 123 4567"
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-center text-lg tracking-wide focus:outline-none focus:border-[#C62222] transition-colors"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-center text-lg tracking-wide focus:outline-none focus:border-[#E00B0B] transition-colors"
             />
-            {error && <p className="text-xs text-[#C62222]">{error}</p>}
+            {error && <p className="text-xs text-[#E00B0B]">{error}</p>}
             <button onClick={handleSaveNumber} disabled={loading || !phoneInput.trim()} className={primaryBtn}>
               {loading ? 'Saving…' : 'Continue'}
             </button>
@@ -149,13 +149,13 @@ const PhoneVerificationModal: React.FC<PhoneVerificationModalProps> = ({
                 <button
                   type="button"
                   onClick={() => { setStep('number'); setError(''); }}
-                  className="mt-1 inline-flex items-center gap-1 text-[11px] text-gray-500 hover:text-[#C62222]"
+                  className="mt-1 inline-flex items-center gap-1 text-[11px] text-gray-500 hover:text-[#E00B0B]"
                 >
                   <Pencil size={11} /> Change number
                 </button>
               )}
             </div>
-            {error && <p className="text-xs text-[#C62222]">{error}</p>}
+            {error && <p className="text-xs text-[#E00B0B]">{error}</p>}
             <button onClick={handleSend} disabled={loading} className={primaryBtn}>
               {loading ? 'Sending…' : 'Send Code'}
             </button>
@@ -184,16 +184,16 @@ const PhoneVerificationModal: React.FC<PhoneVerificationModalProps> = ({
               onChange={e => { setCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
               placeholder="123456"
               maxLength={6}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-center text-xl font-mono tracking-widest focus:outline-none focus:border-[#C62222] transition-colors"
+              className="w-full px-4 py-3 border-2 border-gray-200 rounded-lg text-center text-xl font-mono tracking-widest focus:outline-none focus:border-[#E00B0B] transition-colors"
             />
-            {error && <p className="text-xs text-[#C62222]">{error}</p>}
+            {error && <p className="text-xs text-[#E00B0B]">{error}</p>}
             <button onClick={handleVerify} disabled={loading || code.length !== 6} className={primaryBtn}>
               {loading ? 'Verifying…' : 'Verify'}
             </button>
             <button
               onClick={() => { setStep('send'); setCode(''); setError(''); }}
               disabled={cooldown > 0}
-              className="w-full text-xs text-gray-400 hover:text-[#C62222] disabled:cursor-not-allowed transition-colors"
+              className="w-full text-xs text-gray-400 hover:text-[#E00B0B] disabled:cursor-not-allowed transition-colors"
             >
               {cooldown > 0 ? `Resend in ${cooldown}s` : 'Resend code'}
             </button>

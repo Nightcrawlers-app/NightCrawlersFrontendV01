@@ -103,13 +103,13 @@ const LocationField: React.FC<LocationFieldProps> = ({
             autoComplete="off"
           />
           {searching && (
-            <Loader2 size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 animate-spin text-[#C62222]" />
+            <Loader2 size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 animate-spin text-[#E00B0B]" />
           )}
         </div>
         <button
           type="button"
           onClick={() => setShowMap(true)}
-          className="shrink-0 px-3 inline-flex items-center gap-1.5 border border-[#C62222] text-[#C62222] rounded-md text-xs font-semibold hover:bg-[#FFF5F5] transition"
+          className="shrink-0 px-3 inline-flex items-center gap-1.5 border border-[#E00B0B] text-[#E00B0B] rounded-md text-xs font-semibold hover:bg-[#FFF5F5] transition"
         >
           <MapPin size={15} />
           {value.coords ? 'Move pin' : value.address.trim() ? 'Confirm on map' : 'Pick on map'}
@@ -126,7 +126,7 @@ const LocationField: React.FC<LocationFieldProps> = ({
                 onClick={() => choose(p)}
                 className="w-full text-left px-3 py-2 hover:bg-gray-50 flex gap-2"
               >
-                <MapPin size={14} className="text-[#C62222] mt-0.5 shrink-0" />
+                <MapPin size={14} className="text-[#E00B0B] mt-0.5 shrink-0" />
                 <span className="min-w-0">
                   <span className="block text-sm font-medium text-gray-900 truncate">{p.label}</span>
                   <span className="block text-xs text-gray-500 truncate">{p.fullAddress}</span>

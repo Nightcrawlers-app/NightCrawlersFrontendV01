@@ -72,12 +72,12 @@ const StoreCard: React.FC<StoreCardProps> = ({ name, rating, time, image, badge,
       <div className="relative w-full h-[140px] sm:h-[160px] md:h-[180px] rounded-[8px] sm:rounded-[10px] md:rounded-[12px] overflow-hidden">
         <img src={image} alt={name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
         {badge && (
-          <span className="absolute left-[8px] top-[8px] sm:left-[12px] sm:top-[12px] inline-flex items-center gap-1 bg-[#C62222] text-white text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full shadow">
+          <span className="absolute left-[8px] top-[8px] sm:left-[12px] sm:top-[12px] inline-flex items-center gap-1 bg-[#E00B0B] text-white text-[11px] font-bold uppercase tracking-wide px-2 py-1 rounded-full shadow">
             <Tag size={11} /> {badge}
           </span>
         )}
         <button className="absolute top-[8px] right-[8px] sm:top-[12px] sm:right-[12px] w-[28px] h-[28px] sm:w-[32px] sm:h-[32px] bg-white/80 rounded-full flex items-center justify-center hover:bg-white transition-colors">
-          <Heart size={14} className="text-[#C62222]" />
+          <Heart size={14} className="text-[#E00B0B]" />
         </button>
       </div>
       <div className="flex flex-col gap-[3px] sm:gap-[4px]">
@@ -93,7 +93,7 @@ const StoreCard: React.FC<StoreCardProps> = ({ name, rating, time, image, badge,
           <span className="text-[11px] sm:text-[12px] leading-[16px] sm:leading-[18px]">{time}</span>
         </div>
         {matchedItems && matchedItems.length > 0 && (
-          <p className="text-[11px] sm:text-[12px] text-[#C62222] truncate">Has: {matchedItems.join(', ')}</p>
+          <p className="text-[11px] sm:text-[12px] text-[#E00B0B] truncate">Has: {matchedItems.join(', ')}</p>
         )}
       </div>
     </div>
@@ -289,7 +289,7 @@ const Explore: React.FC = () => {
                 e.preventDefault();
                 submitSearch();
               }}
-              className="flex items-center w-[50%] md:w-[70%] max-w-[500px] h-[40px] border border-[#D0D5DD] rounded-[8px] overflow-hidden bg-white/50 focus-within:ring-2 focus-within:ring-[#C62222]/20 transition-all shadow-sm"
+              className="flex items-center w-[50%] md:w-[70%] max-w-[500px] h-[40px] border border-[#D0D5DD] rounded-[8px] overflow-hidden bg-white/50 focus-within:ring-2 focus-within:ring-[#E00B0B]/20 transition-all shadow-sm"
             >
               <input
                 type="text"
@@ -306,7 +306,7 @@ const Explore: React.FC = () => {
               )}
               <button
                 type="submit"
-                className="h-full px-4 md:px-6 bg-[#C62222] flex items-center justify-center gap-2 text-white hover:bg-[#A01B1B] transition-colors shrink-0 cursor-pointer"
+                className="h-full px-4 md:px-6 bg-[#E00B0B] flex items-center justify-center gap-2 text-white hover:bg-[#B80909] transition-colors shrink-0 cursor-pointer"
                 aria-label="Search"
               >
                 <span className="hidden sm:inline text-[13px] font-medium">Search</span>
@@ -393,7 +393,7 @@ const Explore: React.FC = () => {
               {promoFilter && (
                 <div className="mb-[20px] flex items-start sm:items-center justify-between gap-3 rounded-[12px] border border-[#F5C2C2] bg-[#FFF5F5] px-4 py-3">
                   <div className="flex items-start sm:items-center gap-3 min-w-0">
-                    <span className="mt-0.5 sm:mt-0 flex-shrink-0 w-8 h-8 rounded-full bg-[#C62222] text-white flex items-center justify-center">
+                    <span className="mt-0.5 sm:mt-0 flex-shrink-0 w-8 h-8 rounded-full bg-[#E00B0B] text-white flex items-center justify-center">
                       <Tag size={15} />
                     </span>
                     <div className="min-w-0">
@@ -406,7 +406,7 @@ const Explore: React.FC = () => {
                   <button
                     type="button"
                     onClick={clearPromoFilter}
-                    className="flex-shrink-0 text-[13px] font-medium text-[#C62222] hover:underline"
+                    className="flex-shrink-0 text-[13px] font-medium text-[#E00B0B] hover:underline"
                   >
                     Show all stores
                   </button>
@@ -424,7 +424,7 @@ const Explore: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setSelectedCategory('All')}
-                    className="self-start sm:self-auto mb-[16px] sm:mb-[24px] md:mb-[32px] text-[13px] font-medium text-[#C62222] hover:underline"
+                    className="self-start sm:self-auto mb-[16px] sm:mb-[24px] md:mb-[32px] text-[13px] font-medium text-[#E00B0B] hover:underline"
                   >
                     Show all stores
                   </button>
@@ -453,7 +453,7 @@ const Explore: React.FC = () => {
                   <button
                     type="button"
                     onClick={() => setStoresReloadKey((k) => k + 1)}
-                    className="mt-[4px] px-[20px] py-[10px] rounded-[8px] bg-[#C62222] text-white text-[14px] font-medium hover:bg-[#991B1B] transition-colors"
+                    className="mt-[4px] px-[20px] py-[10px] rounded-[8px] bg-[#E00B0B] text-white text-[14px] font-medium hover:bg-[#991B1B] transition-colors"
                   >
                     Try again
                   </button>
@@ -525,8 +525,8 @@ const Explore: React.FC = () => {
             {/* Cart Header */}
             <div className="flex items-center justify-between mb-[32px]">
               <div className="flex items-center gap-[8px]">
-                <h2 className="text-[#C62222] text-[20px] font-medium">Cart</h2>
-                <div className="w-[20px] h-[20px] bg-[#C62222] rounded-full flex items-center justify-center text-white text-[12px] font-bold">{cartItems.length}</div>
+                <h2 className="text-[#E00B0B] text-[20px] font-medium">Cart</h2>
+                <div className="w-[20px] h-[20px] bg-[#E00B0B] rounded-full flex items-center justify-center text-white text-[12px] font-bold">{cartItems.length}</div>
               </div>
               <button onClick={toggleCart} className="text-[#667085] hover:text-[#222222]">
                 <X size={24} />
@@ -537,7 +537,7 @@ const Explore: React.FC = () => {
             <div className="flex-grow overflow-y-auto">
               {cartItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-start h-full text-center pt-6">
-                  <ShoppingBasket size={48} className="text-[#C62222] mb-2" />
+                  <ShoppingBasket size={48} className="text-[#E00B0B] mb-2" />
                   <p className="text-[#667085] text-[12px]">Your Cart is empty</p>
                 </div>
               ) : (
@@ -559,7 +559,7 @@ const Explore: React.FC = () => {
                         </p>
                         <button
                           onClick={() => removeFromCart(item.id)}
-                          className="text-[#C62222] hover:text-[#A01B1B] p-1"
+                          className="text-[#E00B0B] hover:text-[#B80909] p-1"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -581,7 +581,7 @@ const Explore: React.FC = () => {
                       }
                       navigate('/order-summary');
                     }}
-                    className="h-[36px] px-[16px] bg-[#C62222] text-white text-[12px] font-medium rounded-[4px] hover:bg-[#A01B1B] transition-colors"
+                    className="h-[36px] px-[16px] bg-[#E00B0B] text-white text-[12px] font-medium rounded-[4px] hover:bg-[#B80909] transition-colors"
                     >
                       Proceed to Checkout
                       </button>
@@ -594,7 +594,7 @@ const Explore: React.FC = () => {
                 <div className="mt-auto flex justify-end">
                   <button
                     onClick={clearCart}
-                    className="h-[32px] px-[12px] bg-[#FEE4E2] text-[#C62222] text-[12px] font-medium rounded-[4px] hover:bg-[#FECDCA] transition-colors"
+                    className="h-[32px] px-[12px] bg-[#FEE4E2] text-[#E00B0B] text-[12px] font-medium rounded-[4px] hover:bg-[#FECDCA] transition-colors"
                   >
                     Clear Cart
                   </button>

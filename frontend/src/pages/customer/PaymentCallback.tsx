@@ -56,7 +56,7 @@ const PaymentCallback: React.FC = () => {
                 <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center max-w-md w-full">
                     {state === 'checking' && (
                         <>
-                            <Loader2 className="w-10 h-10 text-[#C62222] animate-spin mx-auto mb-4" />
+                            <Loader2 className="w-10 h-10 text-[#E00B0B] animate-spin mx-auto mb-4" />
                             <h1 className="text-xl font-bold text-[#222222]">Confirming your payment…</h1>
                         </>
                     )}
@@ -75,7 +75,7 @@ const PaymentCallback: React.FC = () => {
                             )}
                             <button
                                 onClick={() => navigate(orderId ? `/orders/${orderId}` : '/user-profile')}
-                                className="w-full py-3 bg-[#C62222] text-white font-semibold rounded-lg hover:bg-[#A01B1B]"
+                                className="w-full py-3 bg-[#E00B0B] text-white font-semibold rounded-lg hover:bg-[#B80909]"
                             >
                                 Track your order
                             </button>
@@ -85,7 +85,7 @@ const PaymentCallback: React.FC = () => {
                     {(state === 'unpaid' || state === 'error') && (
                         <>
                             <div className="w-20 h-20 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-6">
-                                <XCircle className="w-10 h-10 text-[#C62222]" />
+                                <XCircle className="w-10 h-10 text-[#E00B0B]" />
                             </div>
                             <h1 className="text-2xl font-bold text-[#222222] mb-2">
                                 {state === 'error' ? 'Still checking' : 'Payment not completed'}
@@ -103,7 +103,7 @@ const PaymentCallback: React.FC = () => {
                                     <button
                                         onClick={retry}
                                         disabled={retrying}
-                                        className="w-full py-3 bg-[#C62222] text-white font-semibold rounded-lg hover:bg-[#A01B1B] disabled:opacity-60"
+                                        className="w-full py-3 bg-[#E00B0B] text-white font-semibold rounded-lg hover:bg-[#B80909] disabled:opacity-60"
                                     >
                                         {retrying ? 'Opening payment…' : 'Try paying again'}
                                     </button>

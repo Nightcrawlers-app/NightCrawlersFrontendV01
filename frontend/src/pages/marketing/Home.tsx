@@ -38,9 +38,9 @@ const Home: React.FC = () => {
         <div className="fixed inset-0 z-[80] bg-black/20 backdrop-blur-sm">
           <div className="absolute inset-y-0 right-0 w-full max-w-[360px] sm:max-w-[420px] bg-white shadow-[-6px_0_18px_rgba(0,0,0,0.12)] flex flex-col">
             <div className="flex items-center justify-between px-4 py-3 border-b border-[#EAECF0]">
-              <div className="flex items-center gap-2 text-[#C62222] text-[15px] font-semibold">
+              <div className="flex items-center gap-2 text-[#E00B0B] text-[15px] font-semibold">
                 Cart
-                <div className="w-[18px] h-[18px] bg-[#C62222] text-white text-[11px] rounded-full flex items-center justify-center">
+                <div className="w-[18px] h-[18px] bg-[#E00B0B] text-white text-[11px] rounded-full flex items-center justify-center">
                   {cartItems.length}
                 </div>
               </div>
@@ -52,7 +52,7 @@ const Home: React.FC = () => {
             <div className="flex-1 overflow-y-auto px-4 py-4">
               {cartItems.length === 0 ? (
                 <div className="flex flex-col items-center justify-start h-full text-center pt-6">
-                  <ShoppingBasket size={48} className="text-[#C62222] mb-2" />
+                  <ShoppingBasket size={48} className="text-[#E00B0B] mb-2" />
                   <p className="text-[#667085] text-[12px]">Your Cart is empty</p>
                 </div>
               ) : (
@@ -69,7 +69,7 @@ const Home: React.FC = () => {
                           <h3 className="text-[13px] font-semibold text-[#222222] leading-tight">{item.name}</h3>
                           <button
                             onClick={() => removeFromCart(item.id)}
-                            className="text-[#C62222] hover:text-[#A01B1B]"
+                            className="text-[#E00B0B] hover:text-[#B80909]"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -90,13 +90,13 @@ const Home: React.FC = () => {
                 </div>
                 <button
                   onClick={() => { setIsCartOpen(false); navigate('/order-summary'); }}
-                  className="w-full h-[40px] bg-[#C62222] text-white text-[13px] font-semibold rounded-[6px] hover:bg-[#A01B1B] transition-colors mb-2"
+                  className="w-full h-[40px] bg-[#E00B0B] text-white text-[13px] font-semibold rounded-[6px] hover:bg-[#B80909] transition-colors mb-2"
                 >
                   Proceed to Checkout
                 </button>
                 <button
                   onClick={clearCart}
-                  className="w-full h-[36px] text-[#C62222] border border-[#FEE4E2] bg-[#FEF2F2] text-[12px] font-semibold rounded-[6px] hover:bg-[#FEE4E2] transition-colors"
+                  className="w-full h-[36px] text-[#E00B0B] border border-[#FEE4E2] bg-[#FEF2F2] text-[12px] font-semibold rounded-[6px] hover:bg-[#FEE4E2] transition-colors"
                 >
                   Clear Cart
                 </button>

@@ -169,7 +169,7 @@ const AdminDashboard: React.FC = () => {
                 <div className="min-h-screen bg-gray-50 flex items-center justify-center font-poppins p-6">
                     <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 max-w-md w-full text-center">
                         <div className="w-14 h-14 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-5">
-                            <ShieldAlert className="w-7 h-7 text-[#C62222]" />
+                            <ShieldAlert className="w-7 h-7 text-[#E00B0B]" />
                         </div>
                         <h1 className="text-xl font-bold text-gray-900 mb-2">Couldn't load the dashboard</h1>
                         <p className="text-sm text-gray-500 mb-6">{loadError}</p>
@@ -181,7 +181,7 @@ const AdminDashboard: React.FC = () => {
                                     setLoadError('');
                                     setReloadKey((k) => k + 1);
                                 }}
-                                className="w-full py-2.5 bg-[#C62222] text-white text-sm font-semibold rounded-lg hover:bg-[#A01B1B] transition-colors"
+                                className="w-full py-2.5 bg-[#E00B0B] text-white text-sm font-semibold rounded-lg hover:bg-[#B80909] transition-colors"
                             >
                                 Try again
                             </button>
@@ -206,13 +206,13 @@ const AdminDashboard: React.FC = () => {
             <header className="bg-white border-b border-gray-100 sticky top-0 z-30">
                 <div className="max-w-[1400px] mx-auto px-3 md:px-6 h-16 md:h-20 flex items-center justify-between">
                     <div className="flex items-center gap-2 md:gap-3">
-                        <div className="h-7 w-7 md:h-10 md:w-10 bg-[#C62222] text-white rounded-xl flex items-center justify-center shadow-lg shadow-gray-200">
+                        <div className="h-7 w-7 md:h-10 md:w-10 bg-[#E00B0B] text-white rounded-xl flex items-center justify-center shadow-lg shadow-gray-200">
                             <ShieldAlert size={14} className="md:hidden" />
                             <ShieldAlert size={20} className="hidden md:block" />
                         </div>
                         <div>
                             <h1 className="font-bold text-gray-900 leading-none text-xs md:text-base">Admin Console</h1>
-                            <span className="text-[7px] md:text-[10px] font-semibold text-[#C62222] uppercase tracking-widest">Nightcrawlers</span>
+                            <span className="text-[7px] md:text-[10px] font-semibold text-[#E00B0B] uppercase tracking-widest">Nightcrawlers</span>
                         </div>
                     </div>
 
@@ -220,9 +220,9 @@ const AdminDashboard: React.FC = () => {
                     <div className="flex items-center gap-1.5 md:hidden">
                         <div className="text-right mr-1">
                             <p className="text-[10px] font-bold text-gray-900">{admin.username}</p>
-                            <p className="text-[8px] text-[#C62222] font-medium">Online</p>
+                            <p className="text-[8px] text-[#E00B0B] font-medium">Online</p>
                         </div>
-                        <div className="h-7 w-7 bg-[#C62222] rounded-full flex items-center justify-center text-white text-[10px] font-bold border border-gray-200">
+                        <div className="h-7 w-7 bg-[#E00B0B] rounded-full flex items-center justify-center text-white text-[10px] font-bold border border-gray-200">
                             {admin.username.substring(0, 2).toUpperCase()}
                         </div>
                         <button
@@ -240,7 +240,7 @@ const AdminDashboard: React.FC = () => {
                             <input
                                 type="text"
                                 placeholder="Search system..."
-                                className="w-64 h-10 pl-9 pr-4 bg-gray-50 border border-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#C62222]/20 transition-all font-medium"
+                                className="w-64 h-10 pl-9 pr-4 bg-gray-50 border border-gray-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-[#E00B0B]/20 transition-all font-medium"
                             />
                         </div>
 
@@ -249,16 +249,16 @@ const AdminDashboard: React.FC = () => {
                         <div className="flex items-center gap-3">
                             <div className="text-right">
                                 <p className="text-sm font-bold text-gray-900">{admin.username}</p>
-                                <p className="text-[10px] text-[#C62222] font-medium bg-red-50 px-2 rounded-full inline-block">Online</p>
+                                <p className="text-[10px] text-[#E00B0B] font-medium bg-red-50 px-2 rounded-full inline-block">Online</p>
                             </div>
-                            <div className="h-10 w-10 bg-[#C62222] rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white shadow-md">
+                            <div className="h-10 w-10 bg-[#E00B0B] rounded-full flex items-center justify-center text-white text-xs font-bold border-2 border-white shadow-md">
                                 {admin.username.substring(0, 2).toUpperCase()}
                             </div>
                         </div>
 
                         <button
                             onClick={handleLogout}
-                            className="p-2 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-[#C62222] transition-colors"
+                            className="p-2 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-[#E00B0B] transition-colors"
                         >
                             <LogOut size={20} />
                         </button>
@@ -292,7 +292,7 @@ const AdminDashboard: React.FC = () => {
                 <div className="flex justify-end mb-4">
                     <button
                         onClick={() => setShowPromotions(true)}
-                        className="inline-flex items-center gap-2 bg-[#C62222] text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-[#A01B1B] shadow-sm"
+                        className="inline-flex items-center gap-2 bg-[#E00B0B] text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-[#B80909] shadow-sm"
                     >
                         <BarChart3 size={16} /> Manage promotions
                     </button>
@@ -304,10 +304,10 @@ const AdminDashboard: React.FC = () => {
                     {/* Revenue Card - CLICKABLE for Earnings */}
                     <div
                         onClick={() => setShowEarningsModal(true)}
-                        className="group bg-white p-4 md:p-6 rounded-xl md:rounded-2xl border border-gray-100 hover:border-[#C62222]/20 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 cursor-pointer"
+                        className="group bg-white p-4 md:p-6 rounded-xl md:rounded-2xl border border-gray-100 hover:border-[#E00B0B]/20 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 cursor-pointer"
                     >
                         <div className="flex justify-between items-start mb-2 md:mb-4">
-                            <div className="p-2 md:p-3 bg-red-50 text-[#C62222] rounded-lg md:rounded-xl group-hover:scale-110 transition-transform">
+                            <div className="p-2 md:p-3 bg-red-50 text-[#E00B0B] rounded-lg md:rounded-xl group-hover:scale-110 transition-transform">
                                 <TrendingUp size={18} className="md:hidden" />
                                 <TrendingUp size={24} className="hidden md:block" />
                             </div>
@@ -315,13 +315,13 @@ const AdminDashboard: React.FC = () => {
                         </div>
                         <h3 className="text-xl md:text-3xl font-bold text-gray-900 tracking-tight mb-0.5 md:mb-1">{formatCurrency(stats.totalRevenue)}</h3>
                         <p className="text-[10px] md:text-xs font-medium text-gray-400 uppercase tracking-wider">Total Revenue</p>
-                        <p className="text-[10px] md:text-xs text-[#C62222] mt-1 md:mt-2 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">Click to view earnings breakdown →</p>
+                        <p className="text-[10px] md:text-xs text-[#E00B0B] mt-1 md:mt-2 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">Click to view earnings breakdown →</p>
                     </div>
 
                     {/* Vendors Card */}
-                    <div className="group bg-white p-4 md:p-6 rounded-xl md:rounded-2xl border border-gray-100 hover:border-[#C62222]/20 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300">
+                    <div className="group bg-white p-4 md:p-6 rounded-xl md:rounded-2xl border border-gray-100 hover:border-[#E00B0B]/20 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300">
                         <div className="flex justify-between items-start mb-2 md:mb-4">
-                            <div className="p-2 md:p-3 bg-red-50 text-[#C62222] rounded-lg md:rounded-xl group-hover:scale-110 transition-transform">
+                            <div className="p-2 md:p-3 bg-red-50 text-[#E00B0B] rounded-lg md:rounded-xl group-hover:scale-110 transition-transform">
                                 <Store size={18} className="md:hidden" />
                                 <Store size={24} className="hidden md:block" />
                             </div>
@@ -336,16 +336,16 @@ const AdminDashboard: React.FC = () => {
                     {/* Riders Card - With Online Status - CLICKABLE */}
                     <div
                         onClick={() => setShowRidersModal(true)}
-                        className="group bg-white p-4 md:p-6 rounded-xl md:rounded-2xl border border-gray-100 hover:border-[#C62222]/20 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 cursor-pointer"
+                        className="group bg-white p-4 md:p-6 rounded-xl md:rounded-2xl border border-gray-100 hover:border-[#E00B0B]/20 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300 cursor-pointer"
                     >
                         <div className="flex justify-between items-start mb-2 md:mb-4">
-                            <div className="p-2 md:p-3 bg-red-50 text-[#C62222] rounded-lg md:rounded-xl group-hover:scale-110 transition-transform">
+                            <div className="p-2 md:p-3 bg-red-50 text-[#E00B0B] rounded-lg md:rounded-xl group-hover:scale-110 transition-transform">
                                 <Bike size={18} className="md:hidden" />
                                 <Bike size={24} className="hidden md:block" />
                             </div>
                             {orderStats && (
-                                <span className={`text-[10px] md:text-xs font-semibold px-1.5 md:px-2 py-0.5 md:py-1 rounded-md flex items-center gap-1 ${orderStats.onlineRiders > 0 ? 'text-[#C62222] bg-red-50' : 'text-gray-500 bg-gray-100'}`}>
-                                    <span className={`w-1.5 h-1.5 rounded-full ${orderStats.onlineRiders > 0 ? 'bg-[#C62222] animate-pulse' : 'bg-gray-400'}`}></span>
+                                <span className={`text-[10px] md:text-xs font-semibold px-1.5 md:px-2 py-0.5 md:py-1 rounded-md flex items-center gap-1 ${orderStats.onlineRiders > 0 ? 'text-[#E00B0B] bg-red-50' : 'text-gray-500 bg-gray-100'}`}>
+                                    <span className={`w-1.5 h-1.5 rounded-full ${orderStats.onlineRiders > 0 ? 'bg-[#E00B0B] animate-pulse' : 'bg-gray-400'}`}></span>
                                     <span className="hidden sm:inline">{orderStats.onlineRiders} Online</span>
                                     <span className="sm:hidden">{orderStats.onlineRiders}</span>
                                 </span>
@@ -356,18 +356,18 @@ const AdminDashboard: React.FC = () => {
                             <span className="text-xs md:text-sm font-medium text-gray-400">riders</span>
                         </div>
                         <p className="text-[10px] md:text-xs font-medium text-gray-400 uppercase tracking-wider">Delivery Fleet</p>
-                        <p className="text-[10px] md:text-xs text-[#C62222] mt-1 md:mt-2 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">Click to view all riders →</p>
+                        <p className="text-[10px] md:text-xs text-[#E00B0B] mt-1 md:mt-2 opacity-0 group-hover:opacity-100 transition-opacity hidden md:block">Click to view all riders →</p>
                     </div>
 
                     {/* Orders Card - With Active Orders */}
-                    <div className="group bg-white p-4 md:p-6 rounded-xl md:rounded-2xl border border-gray-100 hover:border-[#C62222]/20 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300">
+                    <div className="group bg-white p-4 md:p-6 rounded-xl md:rounded-2xl border border-gray-100 hover:border-[#E00B0B]/20 hover:shadow-[0_8px_30px_rgb(0,0,0,0.04)] transition-all duration-300">
                         <div className="flex justify-between items-start mb-2 md:mb-4">
-                            <div className="p-2 md:p-3 bg-red-50 text-[#C62222] rounded-lg md:rounded-xl group-hover:scale-110 transition-transform">
+                            <div className="p-2 md:p-3 bg-red-50 text-[#E00B0B] rounded-lg md:rounded-xl group-hover:scale-110 transition-transform">
                                 <Package size={18} className="md:hidden" />
                                 <Package size={24} className="hidden md:block" />
                             </div>
                             {orderStats && orderStats.activeOrders > 0 && (
-                                <span className="text-[10px] md:text-xs font-semibold text-white bg-[#C62222] px-1.5 md:px-2 py-0.5 md:py-1 rounded-md flex items-center gap-1">
+                                <span className="text-[10px] md:text-xs font-semibold text-white bg-[#E00B0B] px-1.5 md:px-2 py-0.5 md:py-1 rounded-md flex items-center gap-1">
                                     <Truck size={10} className="md:hidden" />
                                     <Truck size={12} className="hidden md:block" />
                                     <span className="hidden sm:inline">{orderStats.activeOrders} Active</span>
@@ -388,7 +388,7 @@ const AdminDashboard: React.FC = () => {
                 {/* Order Stats Row */}
                 {orderStats && (orderStats.todayOrders > 0 || orderStats.activeOrders > 0) && (
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-6 md:mb-10">
-                        <div className="bg-[#C62222] p-3 md:p-4 rounded-lg md:rounded-xl text-white">
+                        <div className="bg-[#E00B0B] p-3 md:p-4 rounded-lg md:rounded-xl text-white">
                             <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
                                 <Clock size={14} className="md:hidden" />
                                 <Clock size={16} className="hidden md:block" />
@@ -397,7 +397,7 @@ const AdminDashboard: React.FC = () => {
                             <p className="text-lg md:text-2xl font-bold">{orderStats.todayOrders}</p>
                             <p className="text-[10px] md:text-xs text-white/70">Orders</p>
                         </div>
-                        <div className="bg-[#C62222] p-3 md:p-4 rounded-lg md:rounded-xl text-white border border-red-700">
+                        <div className="bg-[#E00B0B] p-3 md:p-4 rounded-lg md:rounded-xl text-white border border-red-700">
                             <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2">
                                 <Package size={14} className="md:hidden" />
                                 <Package size={16} className="hidden md:block" />
@@ -416,7 +416,7 @@ const AdminDashboard: React.FC = () => {
                             <p className="text-[10px] md:text-xs text-white/70">Delivering</p>
                         </div>
                         <div className="bg-white border border-gray-200 p-3 md:p-4 rounded-lg md:rounded-xl text-gray-600">
-                            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2 text-[#C62222]">
+                            <div className="flex items-center gap-1.5 md:gap-2 mb-1 md:mb-2 text-[#E00B0B]">
                                 <CheckCircle size={14} className="md:hidden" />
                                 <CheckCircle size={16} className="hidden md:block" />
                                 <span className="text-[10px] md:text-xs font-medium text-gray-500">Done</span>
@@ -432,7 +432,7 @@ const AdminDashboard: React.FC = () => {
                     <div className="lg:col-span-2 bg-white rounded-xl md:rounded-2xl border border-gray-100 p-4 md:p-6 overflow-hidden relative">
                         <div className="flex justify-between items-center mb-4 md:mb-6">
                             <h3 className="font-bold text-gray-900 text-base md:text-lg">System Activity</h3>
-                            <button className="text-xs md:text-sm font-medium text-[#C62222] hover:text-[#a01b1b] transition-colors">View Logs</button>
+                            <button className="text-xs md:text-sm font-medium text-[#E00B0B] hover:text-[#B80909] transition-colors">View Logs</button>
                         </div>
 
                         {/* Real Activity List */}
@@ -440,7 +440,7 @@ const AdminDashboard: React.FC = () => {
                             {activity.length > 0 ? (
                                 activity.map((item, i) => (
                                     <div key={i} className="flex gap-3 md:gap-4 relative">
-                                        <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full ${item.type === 'vendor' ? 'bg-[#C62222]' : item.type === 'rider' ? 'bg-black' : 'bg-gray-600'} flex items-center justify-center text-white shadow-sm flex-shrink-0 z-10 border-2 md:border-4 border-white`}>
+                                        <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full ${item.type === 'vendor' ? 'bg-[#E00B0B]' : item.type === 'rider' ? 'bg-black' : 'bg-gray-600'} flex items-center justify-center text-white shadow-sm flex-shrink-0 z-10 border-2 md:border-4 border-white`}>
                                             {item.type === 'vendor' && <Store size={12} className="md:hidden" />}
                                             {item.type === 'vendor' && <Store size={14} className="hidden md:block" />}
                                             {item.type === 'rider' && <Bike size={12} className="md:hidden" />}
@@ -463,7 +463,7 @@ const AdminDashboard: React.FC = () => {
                     </div>
 
                     {/* Pending Actions - UPDATED STYLING */}
-                    <div className="bg-gradient-to-br from-[#C62222] to-[#991b1b] rounded-xl md:rounded-2xl p-4 md:p-6 text-white relative overflow-hidden flex flex-col shadow-lg shadow-red-900/20">
+                    <div className="bg-gradient-to-br from-[#E00B0B] to-[#991b1b] rounded-xl md:rounded-2xl p-4 md:p-6 text-white relative overflow-hidden flex flex-col shadow-lg shadow-red-900/20">
                         {/* Decorative Background Elements */}
                         <div className="absolute top-0 right-0 w-40 h-40 bg-white opacity-5 rounded-full -mr-16 -mt-16 blur-2xl"></div>
                         <div className="absolute bottom-0 left-0 w-32 h-32 bg-black opacity-10 rounded-full -ml-10 -mb-10 blur-2xl"></div>
@@ -486,14 +486,14 @@ const AdminDashboard: React.FC = () => {
                                         onClick={() => openAction(item)}
                                         className="bg-white border border-gray-100 flex items-center p-3 md:p-4 rounded-xl shadow-sm hover:shadow-md hover:scale-[1.02] transition-all cursor-pointer group"
                                     >
-                                        <div className={`w-10 h-10 rounded-full ${item.type === 'vendor' ? 'bg-red-50 text-[#C62222]' : 'bg-orange-50 text-orange-600'} flex items-center justify-center flex-shrink-0 mr-3`}>
+                                        <div className={`w-10 h-10 rounded-full ${item.type === 'vendor' ? 'bg-red-50 text-[#E00B0B]' : 'bg-orange-50 text-orange-600'} flex items-center justify-center flex-shrink-0 mr-3`}>
                                             {item.type === 'vendor' ? <Store size={18} /> : <Bike size={18} />}
                                         </div>
                                         <div className="flex-1 min-w-0">
                                             <p className="font-bold text-gray-900 text-xs md:text-sm truncate">{item.title}</p>
                                             <p className="text-[10px] text-gray-500 truncate font-medium">Tap to review application</p>
                                         </div>
-                                        <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-[#C62222] group-hover:text-white transition-colors">
+                                        <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-400 group-hover:bg-[#E00B0B] group-hover:text-white transition-colors">
                                             <div className="md:hidden"><Check size={14} /></div>
                                             <div className="hidden md:block"><Check size={16} /></div>
                                         </div>
@@ -552,7 +552,7 @@ const AdminDashboard: React.FC = () => {
                                     maxLength={500}
                                     rows={3}
                                     placeholder="e.g. The CAC number doesn't match the business name."
-                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#C62222]"
+                                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-[#E00B0B]"
                                 />
                                 <p className="text-xs text-gray-500">They keep their account and can reapply after fixing it. Tap Reject again to confirm.</p>
                             </div>
@@ -561,13 +561,13 @@ const AdminDashboard: React.FC = () => {
                         <div className="flex gap-3">
                             <button
                                 onClick={() => handleProcessAction('reject')}
-                                className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-red-50 hover:text-[#C62222] transition-colors flex items-center justify-center gap-2"
+                                className="flex-1 py-3 px-4 bg-gray-100 text-gray-700 font-bold rounded-xl hover:bg-red-50 hover:text-[#E00B0B] transition-colors flex items-center justify-center gap-2"
                             >
                                 <XCircle size={18} /> {confirmReject ? 'Confirm reject' : 'Reject'}
                             </button>
                             <button
                                 onClick={() => handleProcessAction('approve')}
-                                className="flex-1 py-3 px-4 bg-[#C62222] text-white font-bold rounded-xl hover:bg-[#a01b1b] transition-colors shadow-lg shadow-red-200 flex items-center justify-center gap-2"
+                                className="flex-1 py-3 px-4 bg-[#E00B0B] text-white font-bold rounded-xl hover:bg-[#B80909] transition-colors shadow-lg shadow-red-200 flex items-center justify-center gap-2"
                             >
                                 <Check size={18} /> Approve
                             </button>
@@ -584,7 +584,7 @@ const AdminDashboard: React.FC = () => {
                         <div className="p-6 border-b border-gray-100 flex justify-between items-center bg-gray-50">
                             <div>
                                 <h3 className="text-xl font-bold text-gray-900">Delivery Fleet</h3>
-                                <p className="text-sm text-gray-500 mt-1">{allRiders.length} riders registered • <span className="text-[#C62222] font-medium">{onlineRiders.length} online</span></p>
+                                <p className="text-sm text-gray-500 mt-1">{allRiders.length} riders registered • <span className="text-[#E00B0B] font-medium">{onlineRiders.length} online</span></p>
                             </div>
                             <button
                                 onClick={() => setShowRidersModal(false)}
@@ -608,15 +608,15 @@ const AdminDashboard: React.FC = () => {
                                             className={`p-3 sm:p-4 rounded-xl border ${rider.isOnline ? 'border-red-200 bg-red-50/30' : 'border-gray-100 bg-white'} transition-all overflow-hidden`}
                                         >
                                             <div className="flex items-start gap-3 sm:gap-4">
-                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base flex-shrink-0 ${rider.isOnline ? 'bg-[#C62222]' : 'bg-gray-800'}`}>
+                                                <div className={`w-10 h-10 sm:w-12 sm:h-12 rounded-full flex items-center justify-center text-white font-bold text-sm sm:text-base flex-shrink-0 ${rider.isOnline ? 'bg-[#E00B0B]' : 'bg-gray-800'}`}>
                                                     {rider.firstName.charAt(0)}{rider.lastName.charAt(0)}
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center gap-2 flex-wrap">
                                                         <h4 className="font-bold text-gray-900 text-sm sm:text-base truncate max-w-[140px] sm:max-w-none">{rider.firstName} {rider.lastName}</h4>
                                                         {rider.isOnline && (
-                                                            <span className="text-[10px] font-bold text-[#C62222] bg-red-100 px-2 py-0.5 rounded-full flex items-center gap-1 flex-shrink-0">
-                                                                <span className="w-1.5 h-1.5 bg-[#C62222] rounded-full animate-pulse"></span>
+                                                            <span className="text-[10px] font-bold text-[#E00B0B] bg-red-100 px-2 py-0.5 rounded-full flex items-center gap-1 flex-shrink-0">
+                                                                <span className="w-1.5 h-1.5 bg-[#E00B0B] rounded-full animate-pulse"></span>
                                                                 ONLINE
                                                             </span>
                                                         )}
@@ -670,7 +670,7 @@ const AdminDashboard: React.FC = () => {
                             <div className="flex justify-between items-start">
                                 <div>
                                     <div className="flex items-center gap-2 mb-1">
-                                        <BarChart3 size={20} className="text-[#C62222]" />
+                                        <BarChart3 size={20} className="text-[#E00B0B]" />
                                         <h3 className="text-xl font-bold text-gray-900">Earnings Overview</h3>
                                     </div>
                                     <p className="text-sm text-gray-500">Detailed breakdown by day, month &amp; year</p>
@@ -687,21 +687,21 @@ const AdminDashboard: React.FC = () => {
                             <div className="flex gap-2 mt-4 overflow-x-auto scrollbar-hide" style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
                                 <button
                                     onClick={() => setEarningsTab('vendors')}
-                                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2 flex-shrink-0 ${earningsTab === 'vendors' ? 'bg-[#C62222] text-white shadow-lg shadow-red-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2 flex-shrink-0 ${earningsTab === 'vendors' ? 'bg-[#E00B0B] text-white shadow-lg shadow-red-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                                 >
                                     <Users size={16} />
                                     Vendors
                                 </button>
                                 <button
                                     onClick={() => setEarningsTab('stores')}
-                                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2 flex-shrink-0 ${earningsTab === 'stores' ? 'bg-[#C62222] text-white shadow-lg shadow-red-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2 flex-shrink-0 ${earningsTab === 'stores' ? 'bg-[#E00B0B] text-white shadow-lg shadow-red-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                                 >
                                     <Store size={16} />
                                     Stores
                                 </button>
                                 <button
                                     onClick={() => setEarningsTab('riders')}
-                                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2 flex-shrink-0 ${earningsTab === 'riders' ? 'bg-[#C62222] text-white shadow-lg shadow-red-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
+                                    className={`px-4 py-2 rounded-lg text-sm font-bold transition-colors flex items-center gap-2 flex-shrink-0 ${earningsTab === 'riders' ? 'bg-[#E00B0B] text-white shadow-lg shadow-red-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                                 >
                                     <Bike size={16} />
                                     Riders
@@ -762,7 +762,7 @@ const AdminDashboard: React.FC = () => {
                                         <>
                                             {/* Summary Bar */}
                                             <div className="grid grid-cols-2 gap-3 mb-4">
-                                                <div className="bg-gradient-to-br from-[#C62222] to-[#991b1b] text-white p-4 rounded-xl">
+                                                <div className="bg-gradient-to-br from-[#E00B0B] to-[#991b1b] text-white p-4 rounded-xl">
                                                     <div className="flex items-center gap-2 mb-1">
                                                         <DollarSign size={16} />
                                                         <span className="text-xs font-bold text-red-100 uppercase tracking-wider">Total Store Earnings</span>
@@ -794,7 +794,7 @@ const AdminDashboard: React.FC = () => {
                                                                 {/* Vendor header */}
                                                                 <div className="flex items-center justify-between p-4 bg-gray-50 border-b border-gray-100">
                                                                     <div className="flex items-center gap-3">
-                                                                        <div className="w-8 h-8 rounded-full bg-[#C62222] flex items-center justify-center text-white text-xs font-bold">
+                                                                        <div className="w-8 h-8 rounded-full bg-[#E00B0B] flex items-center justify-center text-white text-xs font-bold">
                                                                             {vendorStores[0].vendorName.split(' ').map(n => n.charAt(0)).join('').substring(0, 2)}
                                                                         </div>
                                                                         <div>
@@ -813,7 +813,7 @@ const AdminDashboard: React.FC = () => {
                                                                             const count = getStoreOrders(se);
                                                                             return (
                                                                                 <div key={se.storeId} className="flex items-center gap-3 p-3 px-4 hover:bg-gray-50/50 transition-colors">
-                                                                                    <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center text-[#C62222] flex-shrink-0">
+                                                                                    <div className="w-8 h-8 bg-red-50 rounded-lg flex items-center justify-center text-[#E00B0B] flex-shrink-0">
                                                                                         <Store size={14} />
                                                                                     </div>
                                                                                     <div className="flex-1 min-w-0">
@@ -838,21 +838,21 @@ const AdminDashboard: React.FC = () => {
                                                     All Periods Summary (Stores)
                                                 </h4>
                                                 <div className="grid grid-cols-3 gap-3">
-                                                    <div className={`p-3 rounded-lg border transition-colors ${earningsPeriod === 'today' ? 'border-[#C62222] bg-red-50' : 'border-gray-200 bg-white'}`}>
+                                                    <div className={`p-3 rounded-lg border transition-colors ${earningsPeriod === 'today' ? 'border-[#E00B0B] bg-red-50' : 'border-gray-200 bg-white'}`}>
                                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Today</p>
                                                         <p className="text-sm font-bold text-gray-900 mt-1">
                                                             ₦{allStoreEarnings.reduce((s, se) => s + se.todayEarnings, 0).toLocaleString()}
                                                         </p>
                                                         <p className="text-[10px] text-gray-400">{allStoreEarnings.reduce((s, se) => s + se.todayOrders, 0)} orders</p>
                                                     </div>
-                                                    <div className={`p-3 rounded-lg border transition-colors ${earningsPeriod === 'month' ? 'border-[#C62222] bg-red-50' : 'border-gray-200 bg-white'}`}>
+                                                    <div className={`p-3 rounded-lg border transition-colors ${earningsPeriod === 'month' ? 'border-[#E00B0B] bg-red-50' : 'border-gray-200 bg-white'}`}>
                                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">This Month</p>
                                                         <p className="text-sm font-bold text-gray-900 mt-1">
                                                             ₦{allStoreEarnings.reduce((s, se) => s + se.monthEarnings, 0).toLocaleString()}
                                                         </p>
                                                         <p className="text-[10px] text-gray-400">{allStoreEarnings.reduce((s, se) => s + se.monthOrders, 0)} orders</p>
                                                     </div>
-                                                    <div className={`p-3 rounded-lg border transition-colors ${earningsPeriod === 'year' ? 'border-[#C62222] bg-red-50' : 'border-gray-200 bg-white'}`}>
+                                                    <div className={`p-3 rounded-lg border transition-colors ${earningsPeriod === 'year' ? 'border-[#E00B0B] bg-red-50' : 'border-gray-200 bg-white'}`}>
                                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">This Year</p>
                                                         <p className="text-sm font-bold text-gray-900 mt-1">
                                                             ₦{allStoreEarnings.reduce((s, se) => s + se.yearEarnings, 0).toLocaleString()}
@@ -898,7 +898,7 @@ const AdminDashboard: React.FC = () => {
                                         <>
                                             {/* Summary Bar */}
                                             <div className="grid grid-cols-2 gap-3 mb-4">
-                                                <div className="bg-gradient-to-br from-[#C62222] to-[#991b1b] text-white p-4 rounded-xl">
+                                                <div className="bg-gradient-to-br from-[#E00B0B] to-[#991b1b] text-white p-4 rounded-xl">
                                                     <div className="flex items-center gap-2 mb-1">
                                                         <DollarSign size={16} />
                                                         <span className="text-xs font-bold text-red-100 uppercase tracking-wider">Total Earnings</span>
@@ -935,7 +935,7 @@ const AdminDashboard: React.FC = () => {
 
                                                         return (
                                                             <div key={entity.id} className="flex items-center gap-4 p-4 rounded-xl border border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm transition-all">
-                                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${entity.type === 'vendor' ? 'bg-[#C62222]' : 'bg-gray-800'}`}>
+                                                                <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${entity.type === 'vendor' ? 'bg-[#E00B0B]' : 'bg-gray-800'}`}>
                                                                     {entity.name.split(' ').map(n => n.charAt(0)).join('').substring(0, 2)}
                                                                 </div>
                                                                 <div className="flex-1 min-w-0">
@@ -951,7 +951,7 @@ const AdminDashboard: React.FC = () => {
                                                                     {entity.type === 'vendor' && (
                                                                         <button
                                                                             onClick={() => setEarningsTab('stores')}
-                                                                            className="text-gray-300 hover:text-[#C62222] transition-colors"
+                                                                            className="text-gray-300 hover:text-[#E00B0B] transition-colors"
                                                                             title="View stores breakdown"
                                                                         >
                                                                             <ChevronRight size={16} />
@@ -971,21 +971,21 @@ const AdminDashboard: React.FC = () => {
                                                     All Periods Summary
                                                 </h4>
                                                 <div className="grid grid-cols-3 gap-3">
-                                                    <div className={`p-3 rounded-lg border transition-colors ${earningsPeriod === 'today' ? 'border-[#C62222] bg-red-50' : 'border-gray-200 bg-white'}`}>
+                                                    <div className={`p-3 rounded-lg border transition-colors ${earningsPeriod === 'today' ? 'border-[#E00B0B] bg-red-50' : 'border-gray-200 bg-white'}`}>
                                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Today</p>
                                                         <p className="text-sm font-bold text-gray-900 mt-1">
                                                             ₦{filtered.reduce((s, e) => s + e.earnings.today, 0).toLocaleString()}
                                                         </p>
                                                         <p className="text-[10px] text-gray-400">{filtered.reduce((s, e) => s + e.earnings.todayOrders, 0)} orders</p>
                                                     </div>
-                                                    <div className={`p-3 rounded-lg border transition-colors ${earningsPeriod === 'month' ? 'border-[#C62222] bg-red-50' : 'border-gray-200 bg-white'}`}>
+                                                    <div className={`p-3 rounded-lg border transition-colors ${earningsPeriod === 'month' ? 'border-[#E00B0B] bg-red-50' : 'border-gray-200 bg-white'}`}>
                                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">This Month</p>
                                                         <p className="text-sm font-bold text-gray-900 mt-1">
                                                             ₦{filtered.reduce((s, e) => s + e.earnings.thisMonth, 0).toLocaleString()}
                                                         </p>
                                                         <p className="text-[10px] text-gray-400">{filtered.reduce((s, e) => s + e.earnings.monthOrders, 0)} orders</p>
                                                     </div>
-                                                    <div className={`p-3 rounded-lg border transition-colors ${earningsPeriod === 'year' ? 'border-[#C62222] bg-red-50' : 'border-gray-200 bg-white'}`}>
+                                                    <div className={`p-3 rounded-lg border transition-colors ${earningsPeriod === 'year' ? 'border-[#E00B0B] bg-red-50' : 'border-gray-200 bg-white'}`}>
                                                         <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">This Year</p>
                                                         <p className="text-sm font-bold text-gray-900 mt-1">
                                                             ₦{filtered.reduce((s, e) => s + e.earnings.thisYear, 0).toLocaleString()}

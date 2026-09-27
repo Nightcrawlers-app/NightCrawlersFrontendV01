@@ -17,7 +17,7 @@ const CategoryStrip: React.FC = () => (
         <li key={c.type} className={c.type === 'Clubs/Lounges' ? 'col-span-2 sm:col-span-1' : ''}>
           <Link
             to={`/explore?category=${encodeURIComponent(c.type)}`}
-            className="group h-full flex items-center gap-3 sm:flex-col sm:items-center sm:text-center p-3 sm:p-5 rounded-2xl border border-[#EAECF0] bg-white hover:border-[#C62222] hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#C62222]"
+            className="group h-full flex items-center gap-3 sm:flex-col sm:items-center sm:text-center p-3 sm:p-5 rounded-2xl border border-[#EAECF0] bg-white hover:border-[#E00B0B] hover:shadow-md transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E00B0B]"
           >
             <span className="shrink-0 w-12 h-12 sm:w-16 sm:h-16 rounded-full bg-[#FFF5F5] flex items-center justify-center group-hover:scale-105 transition-transform">
               <img src={c.icon} alt="" className="w-7 h-7 sm:w-9 sm:h-9 object-contain" />
@@ -25,7 +25,7 @@ const CategoryStrip: React.FC = () => (
             <span className="min-w-0 flex-1">
               <span className="flex items-center gap-1 sm:justify-center text-[15px] sm:text-[16px] font-semibold text-[#222222] font-poppins">
                 {c.label}
-                <ChevronRight size={14} className="text-[#C62222] opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
+                <ChevronRight size={14} className="text-[#E00B0B] opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all" />
               </span>
               <span className="block text-[12px] sm:text-[13px] text-[#667085] leading-snug mt-0.5">{c.tagline}</span>
             </span>

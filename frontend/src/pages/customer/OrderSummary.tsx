@@ -341,7 +341,7 @@ const OrderSummary: React.FC = () => {
 
                         <button
                             onClick={() => navigate(`/orders/${orderId}`)}
-                            className="w-full py-3 bg-[#C62222] text-white font-semibold rounded-lg hover:bg-[#A01B1B] transition-colors mb-3"
+                            className="w-full py-3 bg-[#E00B0B] text-white font-semibold rounded-lg hover:bg-[#B80909] transition-colors mb-3"
                         >
                             Track your order
                         </button>
@@ -365,13 +365,13 @@ const OrderSummary: React.FC = () => {
                 <main className="flex-grow flex flex-col items-center justify-center p-4">
                     <div className="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center max-w-md w-full">
                         <div className="w-16 h-16 bg-[#FEECEC] rounded-full flex items-center justify-center mx-auto mb-4">
-                            <CreditCard className="w-8 h-8 text-[#C62222]" />
+                            <CreditCard className="w-8 h-8 text-[#E00B0B]" />
                         </div>
                         <h1 className="text-2xl font-bold text-[#222222] mb-2">Your Cart is Empty</h1>
                         <p className="text-[#667085] mb-6">Looks like you haven't added anything to your order yet.</p>
                         <button
                             onClick={() => navigate('/explore')}
-                            className="w-full py-3 bg-[#C62222] text-white font-medium rounded-lg hover:bg-[#A01B1B] transition-colors"
+                            className="w-full py-3 bg-[#E00B0B] text-white font-medium rounded-lg hover:bg-[#B80909] transition-colors"
                         >
                             Start Exploring
                         </button>
@@ -390,7 +390,7 @@ const OrderSummary: React.FC = () => {
                 {/* Breadcrumb / Back */}
                 <button
                     onClick={() => navigate(-1)}
-                    className="flex items-center gap-2 text-[#667085] hover:text-[#C62222] transition-colors mb-6 sm:mb-8 font-medium text-sm"
+                    className="flex items-center gap-2 text-[#667085] hover:text-[#E00B0B] transition-colors mb-6 sm:mb-8 font-medium text-sm"
                 >
                     <ChevronLeft size={16} />
                     Back to Menu
@@ -407,7 +407,7 @@ const OrderSummary: React.FC = () => {
                                 <h2 className="text-lg font-semibold text-[#222222]">Items Details</h2>
                                 <button
                                     onClick={clearCart}
-                                    className="text-sm text-[#C62222] hover:text-[#A01B1B] font-medium"
+                                    className="text-sm text-[#E00B0B] hover:text-[#B80909] font-medium"
                                 >
                                     Clear Order
                                 </button>
@@ -430,13 +430,13 @@ const OrderSummary: React.FC = () => {
                                             <div className="flex justify-between items-start">
                                                 <div>
                                                     <h3 className="text-base sm:text-lg font-bold text-[#222222] mb-1 line-clamp-2">{item.name}</h3>
-                                                    <p className="text-[#C62222] font-semibold text-sm sm:text-base">
+                                                    <p className="text-[#E00B0B] font-semibold text-sm sm:text-base">
                                                         ₦ {item.price.toLocaleString()}
                                                     </p>
                                                 </div>
                                                 <button
                                                     onClick={() => removeFromCart(item.id)}
-                                                    className="text-[#98A2B3] hover:text-[#C62222] p-1 transition-colors"
+                                                    className="text-[#98A2B3] hover:text-[#E00B0B] p-1 transition-colors"
                                                     aria-label="Remove item"
                                                 >
                                                     <Trash2 size={18} />
@@ -447,14 +447,14 @@ const OrderSummary: React.FC = () => {
                                                 <div className="flex items-center gap-3">
                                                     <button
                                                         onClick={() => decrementItem(item.id)}
-                                                        className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-[#C62222] hover:text-[#C62222] transition-colors"
+                                                        className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-[#E00B0B] hover:text-[#E00B0B] transition-colors"
                                                     >
                                                         <Minus size={14} />
                                                     </button>
                                                     <span className="text-[#222222] font-semibold text-sm w-6 text-center">{item.quantity}</span>
                                                     <button
                                                         onClick={() => incrementItem(item.id)}
-                                                        className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-[#C62222] hover:text-[#C62222] transition-colors"
+                                                        className="w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-gray-600 hover:border-[#E00B0B] hover:text-[#E00B0B] transition-colors"
                                                     >
                                                         <Plus size={14} />
                                                     </button>
@@ -476,7 +476,7 @@ const OrderSummary: React.FC = () => {
                                 {/* Address Section */}
                                 <div className="p-4 bg-[#F9FAFB] rounded-lg border border-[#EAECF0]">
                                     <div className="flex items-center gap-2 mb-3">
-                                        <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm text-[#C62222]">
+                                        <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm text-[#E00B0B]">
                                             <MapPin size={16} />
                                         </div>
                                         <p className="text-[#222222] font-medium text-sm">Delivery Address</p>
@@ -488,7 +488,7 @@ const OrderSummary: React.FC = () => {
                                             <p className="text-[#667085] text-sm mb-2">You need to sign in to set a delivery address</p>
                                             <button
                                                 onClick={() => navigate('/signin')}
-                                                className="text-[#C62222] text-xs font-semibold hover:underline"
+                                                className="text-[#E00B0B] text-xs font-semibold hover:underline"
                                             >
                                                 Sign In / Sign Up →
                                             </button>
@@ -500,7 +500,7 @@ const OrderSummary: React.FC = () => {
                                             <button
                                                 onClick={() => setShowMap(true)}
                                                 disabled={savingPin}
-                                                className="inline-flex items-center gap-2 px-4 py-2 bg-[#C62222] text-white text-xs font-semibold rounded-lg hover:bg-[#A01B1B] disabled:opacity-60"
+                                                className="inline-flex items-center gap-2 px-4 py-2 bg-[#E00B0B] text-white text-xs font-semibold rounded-lg hover:bg-[#B80909] disabled:opacity-60"
                                             >
                                                 <MapPin size={14} />
                                                 {savingPin ? 'Saving…' : 'Choose on the map'}
@@ -514,29 +514,29 @@ const OrderSummary: React.FC = () => {
                                                     key={addr.id}
                                                     onClick={() => setDeliveryAddress(addr.address)}
                                                     className={`w-full text-left p-3 rounded-lg border text-sm transition-all flex items-start gap-3 ${deliveryAddress === addr.address
-                                                        ? 'border-[#C62222] bg-[#FFF5F5]'
-                                                        : 'border-gray-200 bg-white hover:border-[#C62222]/40'
+                                                        ? 'border-[#E00B0B] bg-[#FFF5F5]'
+                                                        : 'border-gray-200 bg-white hover:border-[#E00B0B]/40'
                                                         }`}
                                                 >
                                                     <div className={`mt-0.5 w-4 h-4 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${deliveryAddress === addr.address
-                                                        ? 'border-[#C62222]'
+                                                        ? 'border-[#E00B0B]'
                                                         : 'border-gray-300'
                                                         }`}>
                                                         {deliveryAddress === addr.address && (
-                                                            <div className="w-2 h-2 rounded-full bg-[#C62222]" />
+                                                            <div className="w-2 h-2 rounded-full bg-[#E00B0B]" />
                                                         )}
                                                     </div>
                                                     <div>
-                                                        <p className={`font-semibold text-xs mb-0.5 ${deliveryAddress === addr.address ? 'text-[#C62222]' : 'text-gray-800'
+                                                        <p className={`font-semibold text-xs mb-0.5 ${deliveryAddress === addr.address ? 'text-[#E00B0B]' : 'text-gray-800'
                                                             }`}>
                                                             {addr.label}
                                                             {addr.isDefault && (
-                                                                <span className="ml-1.5 text-[9px] font-bold bg-[#FEE4E2] text-[#C62222] px-1.5 py-0.5 rounded-full">
+                                                                <span className="ml-1.5 text-[9px] font-bold bg-[#FEE4E2] text-[#E00B0B] px-1.5 py-0.5 rounded-full">
                                                                     Default
                                                                 </span>
                                                             )}
                                                         </p>
-                                                        <p className={`text-xs ${deliveryAddress === addr.address ? 'text-[#C62222]/70' : 'text-gray-500'
+                                                        <p className={`text-xs ${deliveryAddress === addr.address ? 'text-[#E00B0B]/70' : 'text-gray-500'
                                                             }`}>
                                                             {addr.address}
                                                         </p>
@@ -546,7 +546,7 @@ const OrderSummary: React.FC = () => {
                                             <button
                                                 onClick={() => setShowMap(true)}
                                                 disabled={savingPin}
-                                                className="w-full p-3 rounded-lg border border-dashed border-[#C62222]/40 text-[#C62222] text-xs font-semibold flex items-center justify-center gap-2 hover:bg-[#FFF5F5] disabled:opacity-60"
+                                                className="w-full p-3 rounded-lg border border-dashed border-[#E00B0B]/40 text-[#E00B0B] text-xs font-semibold flex items-center justify-center gap-2 hover:bg-[#FFF5F5] disabled:opacity-60"
                                             >
                                                 <MapPin size={14} />
                                                 {savingPin ? 'Saving…' : 'Deliver somewhere else — pick on the map'}
@@ -557,7 +557,7 @@ const OrderSummary: React.FC = () => {
 
                                 {/* Estimated time */}
                                 <div className="flex items-start gap-4 p-4 bg-[#F9FAFB] rounded-lg border border-[#EAECF0]">
-                                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-[#C62222]">
+                                    <div className="w-10 h-10 bg-white rounded-full flex items-center justify-center shadow-sm text-[#E00B0B]">
                                         <Clock size={20} />
                                     </div>
                                     <div className="flex-grow">
@@ -614,9 +614,9 @@ const OrderSummary: React.FC = () => {
                                                     setPromoDeclined(applied);
                                                     selectPromotion(applied ? null : p);
                                                 }}
-                                                className={`w-full text-left p-3 rounded-lg border text-xs transition-all flex items-start gap-2.5 ${applied ? 'border-[#C62222] bg-[#FFF5F5]' : 'border-gray-200 hover:border-[#C62222]/40'}`}
+                                                className={`w-full text-left p-3 rounded-lg border text-xs transition-all flex items-start gap-2.5 ${applied ? 'border-[#E00B0B] bg-[#FFF5F5]' : 'border-gray-200 hover:border-[#E00B0B]/40'}`}
                                             >
-                                                <Tag size={14} className={`mt-0.5 flex-shrink-0 ${applied ? 'text-[#C62222]' : 'text-gray-400'}`} />
+                                                <Tag size={14} className={`mt-0.5 flex-shrink-0 ${applied ? 'text-[#E00B0B]' : 'text-gray-400'}`} />
                                                 <span className="flex-1 min-w-0">
                                                     <span className="block font-semibold text-[#222222]">{p.title}</span>
                                                     <span className="block text-[#667085]">{describeDiscount(p)}</span>
@@ -624,7 +624,7 @@ const OrderSummary: React.FC = () => {
                                                         <span className="block text-amber-700 mt-1">{quote.reason}</span>
                                                     )}
                                                 </span>
-                                                <span className={`font-semibold ${applied ? 'text-[#C62222]' : 'text-gray-500'}`}>
+                                                <span className={`font-semibold ${applied ? 'text-[#E00B0B]' : 'text-gray-500'}`}>
                                                     {applied ? 'Remove' : 'Apply'}
                                                 </span>
                                             </button>
@@ -635,7 +635,7 @@ const OrderSummary: React.FC = () => {
 
                             <div className="flex justify-between items-center mb-4">
                                 <span className="text-[#222222] font-bold text-lg">Total</span>
-                                <span className="text-[#C62222] font-bold text-xl">₦ {finalTotal.toLocaleString()}</span>
+                                <span className="text-[#E00B0B] font-bold text-xl">₦ {finalTotal.toLocaleString()}</span>
                             </div>
 
                             {/* Payment method */}
@@ -651,9 +651,9 @@ const OrderSummary: React.FC = () => {
                                         key={opt.value}
                                         type="button"
                                         onClick={() => setPaymentMethod(opt.value)}
-                                        className={`w-full text-left p-3 rounded-lg border text-xs transition-all flex items-start gap-2.5 ${paymentMethod === opt.value ? 'border-[#C62222] bg-[#FFF5F5]' : 'border-gray-200 hover:border-[#C62222]/40'}`}
+                                        className={`w-full text-left p-3 rounded-lg border text-xs transition-all flex items-start gap-2.5 ${paymentMethod === opt.value ? 'border-[#E00B0B] bg-[#FFF5F5]' : 'border-gray-200 hover:border-[#E00B0B]/40'}`}
                                     >
-                                        <CreditCard size={14} className={`mt-0.5 flex-shrink-0 ${paymentMethod === opt.value ? 'text-[#C62222]' : 'text-gray-400'}`} />
+                                        <CreditCard size={14} className={`mt-0.5 flex-shrink-0 ${paymentMethod === opt.value ? 'text-[#E00B0B]' : 'text-gray-400'}`} />
                                         <span>
                                             <span className="block font-semibold text-[#222222]">{opt.title}</span>
                                             <span className="block text-[#667085]">{opt.detail}</span>
@@ -683,7 +683,7 @@ const OrderSummary: React.FC = () => {
                                     <p className="text-[11px] text-amber-600">Add your phone number so the rider can contact you for delivery.</p>
                                     <button
                                         onClick={() => navigate('/user-profile')}
-                                        className="text-[11px] text-[#C62222] font-semibold mt-1 hover:underline"
+                                        className="text-[11px] text-[#E00B0B] font-semibold mt-1 hover:underline"
                                     >
                                         Go to Profile →
                                     </button>
@@ -697,7 +697,7 @@ const OrderSummary: React.FC = () => {
                                     <p className="text-[11px] text-amber-600">Pick where to deliver before placing your order.</p>
                                     <button
                                         onClick={() => setShowMap(true)}
-                                        className="text-[11px] text-[#C62222] font-semibold mt-1 hover:underline"
+                                        className="text-[11px] text-[#E00B0B] font-semibold mt-1 hover:underline"
                                     >
                                         Choose on the map →
                                     </button>

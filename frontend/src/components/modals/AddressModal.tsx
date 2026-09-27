@@ -127,7 +127,7 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose, onSelectAd
 
         {/* Search / free-text entry */}
         <div className="relative mb-[16px]">
-          <div className="absolute left-[16px] top-1/2 -translate-y-1/2 text-[#C62222]">
+          <div className="absolute left-[16px] top-1/2 -translate-y-1/2 text-[#E00B0B]">
             <img src={pinIcon} alt="" className="w-5 h-5" />
           </div>
           <input
@@ -136,7 +136,7 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose, onSelectAd
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={handleKeyDown}
-            className="w-full h-[48px] pl-[48px] pr-[16px] bg-[#F9FAFB] border border-[#EAECF0] rounded-[8px] text-[16px] text-[#222222] placeholder:text-[#667085] outline-none focus:border-[#C62222] transition-colors"
+            className="w-full h-[48px] pl-[48px] pr-[16px] bg-[#F9FAFB] border border-[#EAECF0] rounded-[8px] text-[16px] text-[#222222] placeholder:text-[#667085] outline-none focus:border-[#E00B0B] transition-colors"
           />
         </div>
 
@@ -146,7 +146,7 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose, onSelectAd
           onClick={() => setMapMode('locate')}
           className="w-full flex items-center gap-[10px] px-[16px] py-[12px] mb-[8px] border border-[#EAECF0] rounded-[8px] hover:bg-[#F9FAFB] transition-colors"
         >
-          <Crosshair size={18} className="text-[#C62222] flex-shrink-0" />
+          <Crosshair size={18} className="text-[#E00B0B] flex-shrink-0" />
           <span className="text-[14px] font-medium text-[#222222]">Use my current location</span>
         </button>
         <button
@@ -154,7 +154,7 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose, onSelectAd
           onClick={() => setMapMode('pick')}
           className="w-full flex items-center gap-[10px] px-[16px] py-[12px] mb-[12px] border border-[#EAECF0] rounded-[8px] hover:bg-[#F9FAFB] transition-colors"
         >
-          <MapIcon size={18} className="text-[#C62222] flex-shrink-0" />
+          <MapIcon size={18} className="text-[#E00B0B] flex-shrink-0" />
           <span className="text-[14px] font-medium text-[#222222]">
             {typed ? `Find “${typed}” on the map` : 'Choose on the map'}
           </span>
@@ -176,7 +176,7 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose, onSelectAd
                   <span className="flex items-center gap-[8px]">
                     <span className="text-[14px] font-medium text-[#222222]">{addr.label}</span>
                     {addr.isDefault && (
-                      <span className="text-[10px] font-semibold uppercase tracking-wide text-[#C62222] bg-[#FEECEC] px-[6px] py-[2px] rounded">
+                      <span className="text-[10px] font-semibold uppercase tracking-wide text-[#E00B0B] bg-[#FEECEC] px-[6px] py-[2px] rounded">
                         Default
                       </span>
                     )}
@@ -205,7 +205,7 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose, onSelectAd
                   onClick={() => choosePlace(place)}
                   className="w-full text-left px-[16px] py-[12px] hover:bg-[#F9FAFB] rounded-[8px] transition-colors flex gap-[10px]"
                 >
-                  <MapPin size={16} className="text-[#C62222] flex-shrink-0 mt-[2px]" />
+                  <MapPin size={16} className="text-[#E00B0B] flex-shrink-0 mt-[2px]" />
                   <span>
                     <span className="block text-[14px] font-medium text-[#222222]">{place.label}</span>
                     <span className="block text-[12px] text-[#667085] mt-[2px] line-clamp-1">{place.fullAddress}</span>
@@ -231,7 +231,7 @@ const AddressModal: React.FC<AddressModalProps> = ({ isOpen, onClose, onSelectAd
                 <Link
                   to="/user-profile"
                   onClick={onClose}
-                  className="inline-flex items-center gap-[6px] mt-[12px] text-[13px] font-semibold text-[#C62222] hover:underline"
+                  className="inline-flex items-center gap-[6px] mt-[12px] text-[13px] font-semibold text-[#E00B0B] hover:underline"
                 >
                   <Plus size={14} />
                   Add one in your profile

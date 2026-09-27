@@ -495,7 +495,7 @@ const VendorRestaurant: React.FC = () => {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center font-poppins">
         <div className="flex flex-col items-center gap-3">
-          <div className="w-8 h-8 border-2 border-[#C62222] border-t-transparent rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-[#E00B0B] border-t-transparent rounded-full animate-spin" />
           <p className="text-sm text-[#667085]">Loading store…</p>
         </div>
       </div>
@@ -507,14 +507,14 @@ const VendorRestaurant: React.FC = () => {
       <main className="flex-grow w-full max-w-[1240px] mx-auto px-4 sm:px-6 md:px-8">
         <div className="pt-6 pb-0">
           <div className="flex items-center gap-3 mb-10">
-            <div className="w-9 h-9 flex items-center justify-center text-[#C62222]">
+            <div className="w-9 h-9 flex items-center justify-center text-[#E00B0B]">
               <Store className="w-6 h-6" />
             </div>
-            <h1 className="text-2xl font-semibold text-[#C62222] leading-tight">Vendor Dashboard</h1>
+            <h1 className="text-2xl font-semibold text-[#E00B0B] leading-tight">Vendor Dashboard</h1>
           </div>
           <Link
             to="/vendor-dashboard"
-            className="inline-flex items-center gap-2 text-[#475467] hover:text-[#C62222] text-sm mb-1"
+            className="inline-flex items-center gap-2 text-[#475467] hover:text-[#E00B0B] text-sm mb-1"
           >
             <ChevronLeft className="w-4 h-4" />
             Back to Dashboard
@@ -557,7 +557,7 @@ const VendorRestaurant: React.FC = () => {
                 <button
                   onClick={() => setViewMode('menu')}
                   className={`px-4 py-2 text-xs font-medium rounded-sm ${viewMode === 'menu'
-                    ? 'bg-[#C62222] text-white'
+                    ? 'bg-[#E00B0B] text-white'
                     : 'text-[#4B5563] hover:text-[#111827]'
                     }`}
                 >
@@ -573,7 +573,7 @@ const VendorRestaurant: React.FC = () => {
                     }
                   }}
                   className={`px-4 py-2 text-xs font-medium rounded-sm ${viewMode === 'add'
-                    ? 'bg-[#C62222] text-white'
+                    ? 'bg-[#E00B0B] text-white'
                     : 'text-[#4B5563] hover:text-[#111827]'
                     }`}
                 >
@@ -582,7 +582,7 @@ const VendorRestaurant: React.FC = () => {
                 <button
                   onClick={() => setViewMode('edit')}
                   className={`px-4 py-2 text-xs font-medium rounded-sm ${viewMode === 'edit'
-                    ? 'bg-[#C62222] text-white'
+                    ? 'bg-[#E00B0B] text-white'
                     : 'text-[#4B5563] hover:text-[#111827]'
                     }`}
                 >
@@ -600,7 +600,7 @@ const VendorRestaurant: React.FC = () => {
                     key={cat}
                     onClick={() => setActiveCategory(cat)}
                     className={`min-w-[70px] text-center text-sm px-3 py-1 rounded ${activeCategory === cat
-                      ? 'text-[#C62222] bg-[#FEE4E2] font-medium'
+                      ? 'text-[#E00B0B] bg-[#FEE4E2] font-medium'
                       : 'text-[#667085] hover:text-[#222222]'
                       }`}
                   >
@@ -627,7 +627,7 @@ const VendorRestaurant: React.FC = () => {
                             setAddItemCategories([]);
                           }
                         }}
-                        className="text-[#C62222] font-medium hover:underline"
+                        className="text-[#E00B0B] font-medium hover:underline"
                       >
                         Add your first item
                       </button>
@@ -651,7 +651,7 @@ const VendorRestaurant: React.FC = () => {
                                 name="name"
                                 value={editItemForm.name}
                                 onChange={handleEditItemChange}
-                                className="w-full h-9 px-3 bg-white border border-[#EAECF0] rounded-md text-gray-700 text-sm focus:outline-none focus:ring-1 focus:ring-[#C62222]"
+                                className="w-full h-9 px-3 bg-white border border-[#EAECF0] rounded-md text-gray-700 text-sm focus:outline-none focus:ring-1 focus:ring-[#E00B0B]"
                                 placeholder="Item Name"
                               />
                             </div>
@@ -660,7 +660,7 @@ const VendorRestaurant: React.FC = () => {
                                 name="price"
                                 value={editItemForm.price}
                                 onChange={handleEditItemChange}
-                                className="w-full h-9 px-3 bg-white border border-[#EAECF0] rounded-md text-gray-700 text-sm focus:outline-none focus:ring-1 focus:ring-[#C62222]"
+                                className="w-full h-9 px-3 bg-white border border-[#EAECF0] rounded-md text-gray-700 text-sm focus:outline-none focus:ring-1 focus:ring-[#E00B0B]"
                                 placeholder="Price"
                               />
                             </div>
@@ -671,7 +671,7 @@ const VendorRestaurant: React.FC = () => {
                               name="description"
                               value={editItemForm.description}
                               onChange={handleEditItemChange}
-                              className="w-full min-h-[60px] px-3 py-2 bg-white border border-[#EAECF0] rounded-md text-gray-700 text-sm focus:outline-none focus:ring-1 focus:ring-[#C62222]"
+                              className="w-full min-h-[60px] px-3 py-2 bg-white border border-[#EAECF0] rounded-md text-gray-700 text-sm focus:outline-none focus:ring-1 focus:ring-[#E00B0B]"
                               placeholder="Description"
                             />
                           </div>
@@ -679,7 +679,7 @@ const VendorRestaurant: React.FC = () => {
                           <div className="flex gap-2 items-center flex-wrap">
                             <div className="flex-1 min-w-[200px] border border-[#EAECF0] bg-white rounded-md p-1.5 flex gap-1 flex-wrap items-center">
                               {editItemCategories.map(cat => (
-                                <span key={cat} className="text-[10px] bg-[#C62222] text-white px-2 py-0.5 rounded-full flex items-center gap-1">
+                                <span key={cat} className="text-[10px] bg-[#E00B0B] text-white px-2 py-0.5 rounded-full flex items-center gap-1">
                                   {cat}
                                   <button type="button" onClick={() => removeEditItemCategory(cat)}><X size={10} /></button>
                                 </span>
@@ -715,7 +715,7 @@ const VendorRestaurant: React.FC = () => {
                             <button
                               type="submit"
                               disabled={isUpdatingItem}
-                              className="px-3 py-1.5 text-xs font-semibold text-white bg-[#C62222] hover:bg-[#A01B1B] rounded transition-colors disabled:opacity-50"
+                              className="px-3 py-1.5 text-xs font-semibold text-white bg-[#E00B0B] hover:bg-[#B80909] rounded transition-colors disabled:opacity-50"
                             >
                               {isUpdatingItem ? 'Saving...' : 'Save Changes'}
                             </button>
@@ -797,19 +797,19 @@ const VendorRestaurant: React.FC = () => {
                     name="name"
                     value={addItemForm.name}
                     onChange={handleAddItemChange}
-                    className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-transparent"
+                    className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-transparent"
                     placeholder="e.g. Fried Rice"
                   />
                 </div>
 
                 <div>
                   <label className="block text-gray-700 text-sm font-medium mb-1">Item Categories</label>
-                  <div className="w-full min-h-[48px] px-4 py-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md focus-within:ring-2 focus-within:ring-[#C62222] focus-within:border-transparent">
+                  <div className="w-full min-h-[48px] px-4 py-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md focus-within:ring-2 focus-within:ring-[#E00B0B] focus-within:border-transparent">
                     <div className="flex flex-wrap gap-3 items-center">
                       {addItemCategories.map((category) => (
                         <span
                           key={category}
-                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#C62222] text-white text-sm font-medium rounded-full"
+                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#E00B0B] text-white text-sm font-medium rounded-full"
                         >
                           {category}
                           <button
@@ -846,7 +846,7 @@ const VendorRestaurant: React.FC = () => {
                                   setAddItemCategories(prev => [...prev, c]);
                                 }
                               }}
-                              className="text-[#C62222] hover:underline"
+                              className="text-[#E00B0B] hover:underline"
                             >
                               {c}
                             </button>
@@ -863,7 +863,7 @@ const VendorRestaurant: React.FC = () => {
                     name="price"
                     value={addItemForm.price}
                     onChange={handleAddItemChange}
-                    className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-transparent"
+                    className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-transparent"
                     placeholder="e.g. 2500"
                   />
                 </div>
@@ -874,7 +874,7 @@ const VendorRestaurant: React.FC = () => {
                     name="description"
                     value={addItemForm.description}
                     onChange={handleAddItemChange}
-                    className="w-full min-h-[90px] px-3 py-2 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-transparent"
+                    className="w-full min-h-[90px] px-3 py-2 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-transparent"
                     placeholder="Short description about the item"
                   />
                 </div>
@@ -885,7 +885,7 @@ const VendorRestaurant: React.FC = () => {
                     name="imageUrl"
                     value={addItemForm.imageUrl}
                     onChange={handleAddItemChange}
-                    className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-transparent"
+                    className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-transparent"
                     placeholder="https://example.com/cover.jpg (optional)"
                   />
                 </div>
@@ -903,7 +903,7 @@ const VendorRestaurant: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isAddingItem}
-                  className="inline-flex items-center justify-center gap-2 w-full h-10 px-4 bg-[#C62222] text-white text-sm font-medium rounded-md hover:bg-[#A01B1B] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C62222] disabled:opacity-70"
+                  className="inline-flex items-center justify-center gap-2 w-full h-10 px-4 bg-[#E00B0B] text-white text-sm font-medium rounded-md hover:bg-[#B80909] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E00B0B] disabled:opacity-70"
                 >
                   <Upload className="w-4 h-4" />
                   {isAddingItem ? 'Adding...' : `Add ${typeMeta.itemSingular}`}
@@ -926,19 +926,19 @@ const VendorRestaurant: React.FC = () => {
                     name="name"
                     value={editForm.name}
                     onChange={handleEditChange}
-                    className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-transparent"
+                    className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-transparent"
                     placeholder="Store name"
                   />
                 </div>
 
                 <div>
                   <label className="block text-gray-700 text-sm font-medium mb-1">Categories</label>
-                  <div className="w-full min-h-[48px] px-4 py-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md focus-within:ring-2 focus-within:ring-[#C62222] focus-within:border-transparent">
+                  <div className="w-full min-h-[48px] px-4 py-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md focus-within:ring-2 focus-within:ring-[#E00B0B] focus-within:border-transparent">
                     <div className="flex flex-wrap gap-3 items-center">
                       {editCategories.map((category) => (
                         <span
                           key={category}
-                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#C62222] text-white text-sm font-medium rounded-full"
+                          className="inline-flex items-center gap-2 px-3 py-1.5 bg-[#E00B0B] text-white text-sm font-medium rounded-full"
                         >
                           {category}
                           <button
@@ -973,7 +973,7 @@ const VendorRestaurant: React.FC = () => {
                     }}
                     mapTitle="Where is this branch?"
                     placeholder="e.g. 12 Aminu Kano Crescent, Wuse 2"
-                    inputClassName="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-transparent"
+                    inputClassName="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-transparent"
                   />
                 </div>
 
@@ -983,7 +983,7 @@ const VendorRestaurant: React.FC = () => {
                     name="description"
                     value={editForm.description}
                     onChange={handleEditChange}
-                    className="w-full min-h-[90px] px-3 py-2 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-transparent"
+                    className="w-full min-h-[90px] px-3 py-2 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-transparent"
                     placeholder="Short description about the store"
                   />
                 </div>
@@ -995,7 +995,7 @@ const VendorRestaurant: React.FC = () => {
                       name="openingTime"
                       value={editForm.openingTime}
                       onChange={handleEditChange}
-                      className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-transparent"
+                      className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-transparent"
                       placeholder="8:00 am - 8:00 pm"
                     />
                   </div>
@@ -1005,7 +1005,7 @@ const VendorRestaurant: React.FC = () => {
                       name="closingTime"
                       value={editForm.closingTime}
                       onChange={handleEditChange}
-                      className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-transparent"
+                      className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-transparent"
                       placeholder="Optional"
                     />
                   </div>
@@ -1017,7 +1017,7 @@ const VendorRestaurant: React.FC = () => {
                     name="imageUrl"
                     value={editForm.imageUrl}
                     onChange={handleEditChange}
-                    className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-transparent"
+                    className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-transparent"
                     placeholder="https://example.com/cover.jpg"
                   />
                 </div>
@@ -1035,14 +1035,14 @@ const VendorRestaurant: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSaving}
-                  className="inline-flex items-center justify-center gap-2 w-full h-10 px-4 bg-[#C62222] text-white text-sm font-medium rounded-md hover:bg-[#A01B1B] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#C62222] disabled:opacity-70"
+                  className="inline-flex items-center justify-center gap-2 w-full h-10 px-4 bg-[#E00B0B] text-white text-sm font-medium rounded-md hover:bg-[#B80909] transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#E00B0B] disabled:opacity-70"
                 >
                   <Upload className="w-4 h-4" />
                   {isSaving ? 'Saving...' : 'Save Changes'}
                 </button>
 
                 {editError && (
-                  <p className="text-xs text-[#C62222]" role="alert">
+                  <p className="text-xs text-[#E00B0B]" role="alert">
                     {editError}
                   </p>
                 )}

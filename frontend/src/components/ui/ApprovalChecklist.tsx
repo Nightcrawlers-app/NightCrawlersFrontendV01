@@ -95,12 +95,12 @@ const ApprovalChecklist: React.FC<ApprovalChecklistProps> = ({ role, account, on
             </p>
           )}
           <p className="mt-1 text-xs text-gray-500">Fix anything needed below, then send it for review again.</p>
-          {reapplyError && <p className="mt-2 text-xs text-[#C62222]">{reapplyError}</p>}
+          {reapplyError && <p className="mt-2 text-xs text-[#E00B0B]">{reapplyError}</p>}
           <button
             type="button"
             onClick={reapply}
             disabled={reapplying}
-            className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-[#C62222] text-white text-sm font-semibold rounded-lg hover:bg-[#A01B1B] disabled:opacity-60"
+            className="mt-3 inline-flex items-center gap-2 px-4 py-2 bg-[#E00B0B] text-white text-sm font-semibold rounded-lg hover:bg-[#B80909] disabled:opacity-60"
           >
             {reapplying && <Loader2 size={14} className="animate-spin" />} Reapply
           </button>
@@ -116,7 +116,7 @@ const ApprovalChecklist: React.FC<ApprovalChecklistProps> = ({ role, account, on
               type="button"
               onClick={r.done ? undefined : r.action}
               disabled={r.done}
-              className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-colors ${r.done ? 'border-green-200 bg-green-50/60 cursor-default' : 'border-gray-200 hover:border-[#C62222] hover:bg-[#FFF5F5]'}`}
+              className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-colors ${r.done ? 'border-green-200 bg-green-50/60 cursor-default' : 'border-gray-200 hover:border-[#E00B0B] hover:bg-[#FFF5F5]'}`}
             >
               {r.done ? (
                 <CheckCircle2 size={20} className="text-green-600 flex-shrink-0" />

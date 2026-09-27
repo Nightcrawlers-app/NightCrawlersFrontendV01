@@ -38,8 +38,8 @@ const Features: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8 mb-[48px] sm:mb-[64px]">
                         {features.map((feature) => (
-                            <div key={feature.title} className="bg-white border border-[#EAECF0] rounded-[12px] p-6 sm:p-8 hover:shadow-md hover:border-[#C62222]/20 transition-all group">
-                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform ${feature.trust ? 'bg-night-green-50 text-night-green-700' : 'bg-[#FFF0F0] text-[#C62222]'}`}>
+                            <div key={feature.title} className="bg-white border border-[#EAECF0] rounded-[12px] p-6 sm:p-8 hover:shadow-md hover:border-[#E00B0B]/20 transition-all group">
+                                <div className={`w-12 h-12 rounded-xl flex items-center justify-center mb-5 group-hover:scale-110 transition-transform ${feature.trust ? 'bg-night-green-50 text-night-green-700' : 'bg-[#FFF0F0] text-[#E00B0B]'}`}>
                                     {feature.icon}
                                 </div>
                                 <h3 className="text-[#222222] text-[18px] sm:text-[20px] font-semibold mb-2">{feature.title}</h3>
@@ -48,7 +48,7 @@ const Features: React.FC = () => {
                         ))}
                     </div>
 
-                    <div className="bg-gradient-to-br from-[#C62222] to-[#991b1b] rounded-[16px] p-8 sm:p-12 mb-[48px] sm:mb-[64px] relative overflow-hidden">
+                    <div className="bg-gradient-to-br from-[#E00B0B] to-[#991b1b] rounded-[16px] p-8 sm:p-12 mb-[48px] sm:mb-[64px] relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-64 h-64 bg-white opacity-5 rounded-full -mr-20 -mt-20 blur-3xl"></div>
                         <div className="absolute bottom-0 left-0 w-48 h-48 bg-black opacity-10 rounded-full -ml-12 -mb-12 blur-3xl"></div>
                         <div className="relative z-10 flex flex-col lg:flex-row items-center justify-between gap-8">
@@ -56,20 +56,20 @@ const Features: React.FC = () => {
                                 <h2 className="text-white text-[24px] sm:text-[32px] font-bold mb-3">Want to become a vendor?</h2>
                                 <p className="text-red-100 text-[14px] sm:text-[16px] max-w-[500px]">Reach thousands of new customers in your area.</p>
                             </div>
-                            <Link to="/vendor-signup" className="inline-flex items-center justify-center gap-2 bg-white text-[#C62222] text-[15px] font-bold rounded-[8px] px-8 py-3.5 hover:bg-gray-50 transition-colors shadow-lg flex-shrink-0">
-                                Sign Up as Partner
+                            <Link to="/vendor-signup" className="inline-flex items-center justify-center gap-2 bg-white text-[#E00B0B] text-[15px] font-bold rounded-[8px] px-8 py-3.5 hover:bg-gray-50 transition-colors shadow-lg flex-shrink-0">
+                                Sign Up as Vendor
                             </Link>
                         </div>
                     </div>
 
                     <div className="mb-[60px]">
                         <div className="text-center mb-[40px]">
-                            <p className="text-[#C62222] text-[14px] sm:text-[16px] font-semibold mb-2">Built for Everyone</p>
+                            <p className="text-[#E00B0B] text-[14px] sm:text-[16px] font-semibold mb-2">Built for Everyone</p>
                             <h2 className="text-[#222222] text-[24px] sm:text-[32px] font-semibold leading-tight tracking-[-0.02em]">Three Platforms, One Ecosystem</h2>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6">
                             {[
-                                { title: 'For Customers', items: ['Browse & order from any vendor', 'Real-time order tracking', 'Saved addresses & favorites', 'Order history & reorder'], accent: '#C62222' },
+                                { title: 'For Customers', items: ['Browse & order from any vendor', 'Real-time order tracking', 'Saved addresses & favorites', 'Order history & reorder'], accent: '#E00B0B' },
                                 { title: 'For Vendors', items: ['Full store management', 'Menu & item control', 'Order notifications', 'Earnings analytics'], accent: '#222222' },
                                 { title: 'For Riders', items: ['Accept orders nearby', 'Turn-by-turn navigation', 'Earnings tracking', 'Flexible schedule'], accent: '#008751' },
                             ].map((role) => (

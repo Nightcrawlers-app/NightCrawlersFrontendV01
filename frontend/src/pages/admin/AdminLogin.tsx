@@ -4,7 +4,7 @@ import PasswordInput from '../../components/ui/PasswordInput';
 import { useNavigate, Link } from 'react-router-dom';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
-import logo from '../../assets/logo.png';
+import logo from '../../assets/logo.svg';
 import { signInAdmin, toErrorMessage } from '../../services/api';
 import { ShieldCheck, ArrowRight } from 'lucide-react';
 
@@ -58,7 +58,7 @@ const AdminLogin: React.FC = () => {
                             />
                         </Link>
                         <div className="flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-full border border-gray-100 mb-3">
-                            <ShieldCheck size={14} className="text-[#C62222]" />
+                            <ShieldCheck size={14} className="text-[#E00B0B]" />
                             <span className="text-[10px] font-bold tracking-wider text-gray-500 uppercase">Secure Admin Portal</span>
                         </div>
                         <h1 className="text-2xl font-bold text-gray-900 text-center">Welcome Back</h1>
@@ -79,8 +79,8 @@ const AdminLogin: React.FC = () => {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 required
-                                className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-300 focus:border-[#C62222] focus:ring-1 focus:ring-[#C62222] h-11"
-                                placeholder="admin@nightcrawlers.ng"
+                                className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-300 focus:border-[#E00B0B] focus:ring-1 focus:ring-[#E00B0B] h-11"
+                                placeholder="support@nightcrawlers.app"
                             />
                         </div>
 
@@ -90,7 +90,7 @@ const AdminLogin: React.FC = () => {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 required
-                                className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-300 focus:border-[#C62222] focus:ring-1 focus:ring-[#C62222] h-11"
+                                className="bg-white border-gray-200 text-gray-900 placeholder:text-gray-300 focus:border-[#E00B0B] focus:ring-1 focus:ring-[#E00B0B] h-11"
                                 placeholder="••••••••"
                             />
                         </div>

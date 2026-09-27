@@ -5,7 +5,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { SignInForm } from '../../types';
 import Input from '../../components/ui/Input';
 import signinImage from '../../assets/signin-image.webp';
-import signupLogo from '../../assets/signup-logo.png';
+import signupLogo from '../../assets/logo.svg';
 import helpCircle from '../../assets/help-circle.svg';
 import mailIcon from '../../assets/mail.svg';
 import { useAuth } from '../../context/AuthContext';
@@ -111,13 +111,13 @@ const SignIn: React.FC = () => {
                       value={loginCode}
                       onChange={(e) => { setLoginCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
                       placeholder="123456"
-                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-center text-base tracking-widest font-mono focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222]"
+                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-center text-base tracking-widest font-mono focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B]"
                       required
                     />
                     <button
                       type="button"
                       onClick={() => { setCodeStep(null); setError(''); }}
-                      className="text-xs text-[#667085] hover:text-[#C62222]"
+                      className="text-xs text-[#667085] hover:text-[#E00B0B]"
                     >
                       ← Use a different account
                     </button>
@@ -131,7 +131,7 @@ const SignIn: React.FC = () => {
                     placeholder="Enter your email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222]"
+                    className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B]"
                     required
                   />
                 </div>
@@ -144,7 +144,7 @@ const SignIn: React.FC = () => {
                       placeholder="Create a password"
                       value={formData.password}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] pr-8"
+                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B] pr-8"
                       required
                     />
                     <img src={helpCircle} alt="help" className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-60" />
@@ -158,11 +158,11 @@ const SignIn: React.FC = () => {
                       type="checkbox"
                       checked={rememberMe}
                       onChange={(e) => setRememberMe(e.target.checked)}
-                      className="w-3.5 h-3.5 border-gray-300 rounded text-[#C62222] focus:ring-[#C62222]"
+                      className="w-3.5 h-3.5 border-gray-300 rounded text-[#E00B0B] focus:ring-[#E00B0B]"
                     />
                     <span className="text-xs text-[#667085]">Remember for 30 days</span>
                   </label>
-                  <Link to="/forgot-password" className="text-xs text-[#C62222] hover:underline">
+                  <Link to="/forgot-password" className="text-xs text-[#E00B0B] hover:underline">
                     Forgot password
                   </Link>
                 </div>
@@ -172,7 +172,7 @@ const SignIn: React.FC = () => {
                 <button
                   type="submit"
                   disabled={isSubmitting || (!!codeStep && loginCode.length !== 6)}
-                  className="w-full bg-[#C62222] text-white py-2 px-4 rounded-md hover:bg-[#A01B1B] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium flex items-center justify-center gap-2"
+                  className="w-full bg-[#E00B0B] text-white py-2 px-4 rounded-md hover:bg-[#B80909] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium flex items-center justify-center gap-2"
                 >
                   {isSubmitting ? (
                     <>
@@ -190,7 +190,7 @@ const SignIn: React.FC = () => {
               <div className="mt-3 text-center">
                 <p className="text-xs text-[#667085]">
                   Don't have an account?{' '}
-                  <Link to="/signup" className="text-[#C62222] hover:underline font-medium">
+                  <Link to="/signup" className="text-[#E00B0B] hover:underline font-medium">
                     Sign Up
                   </Link>
                 </p>
@@ -199,7 +199,7 @@ const SignIn: React.FC = () => {
           </div>
           <div className="w-full flex items-center justify-between text-xs text-[#667085] px-1">
             <span>© Nightcrawlers 2026, inc</span>
-            <a href="mailto:help@nightcrawlers.com" className="flex items-center gap-2 hover:text-[#C62222]">
+            <a href="mailto:help@nightcrawlers.com" className="flex items-center gap-2 hover:text-[#E00B0B]">
               <img src={mailIcon} alt="" className="w-3.5 h-3.5" />
               help@nightcrawlers.com
             </a>

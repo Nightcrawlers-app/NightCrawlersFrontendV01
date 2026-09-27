@@ -3,7 +3,7 @@ import PageNav from '../../components/ui/PageNav';
 import PasswordInput, { PasswordMatchHint } from '../../components/ui/PasswordInput';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import signinImage from '../../assets/signin-image.webp';
-import signupLogo from '../../assets/signup-logo.png';
+import signupLogo from '../../assets/logo.svg';
 import mailIcon from '../../assets/mail.svg';
 import helpCircle from '../../assets/help-circle.svg';
 import { resetPassword, toErrorMessage } from '../../services/api';
@@ -85,7 +85,7 @@ const ResetPassword: React.FC = () => {
                       value={email}
                       onChange={(e) => { setEmail(e.target.value); setError(''); }}
                       placeholder="you@example.com"
-                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222]"
+                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B]"
                       required
                     />
                   </div>
@@ -98,7 +98,7 @@ const ResetPassword: React.FC = () => {
                       onChange={(e) => { setCode(e.target.value.replace(/\D/g, '').slice(0, 6)); setError(''); }}
                       placeholder="123456"
                       maxLength={6}
-                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] tracking-widest text-center text-base font-mono"
+                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B] tracking-widest text-center text-base font-mono"
                       required
                     />
                   </div>
@@ -110,7 +110,7 @@ const ResetPassword: React.FC = () => {
                         value={newPassword}
                         onChange={(e) => { setNewPassword(e.target.value); setError(''); }}
                         placeholder="Min. 8 characters"
-                        className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222] pr-8"
+                        className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B] pr-8"
                         required
                       />
                       <img src={helpCircle} alt="" className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 opacity-60" />
@@ -123,27 +123,27 @@ const ResetPassword: React.FC = () => {
                       value={confirmPassword}
                       onChange={(e) => { setConfirmPassword(e.target.value); setError(''); }}
                       placeholder="Repeat your new password"
-                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222]"
+                      className="w-full px-3 py-2 border border-[#D0D5DD] rounded-md shadow-sm text-xs focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B]"
                       required
                     />
                     <PasswordMatchHint password={newPassword} confirm={confirmPassword} />
                   </div>
 
-                  {error && <p className="text-xs text-[#C62222]">{error}</p>}
+                  {error && <p className="text-xs text-[#E00B0B]">{error}</p>}
 
                   <button
                     type="submit"
                     disabled={isSubmitting || code.length !== 6}
-                    className="w-full bg-[#C62222] text-white py-2 px-4 rounded-md hover:bg-[#A01B1B] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium"
+                    className="w-full bg-[#E00B0B] text-white py-2 px-4 rounded-md hover:bg-[#B80909] transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-xs font-medium"
                   >
                     {isSubmitting ? 'Resetting…' : 'Reset Password'}
                   </button>
 
                   <div className="flex items-center justify-between text-xs text-[#667085]">
-                    <Link to="/forgot-password" className="hover:text-[#C62222]">
+                    <Link to="/forgot-password" className="hover:text-[#E00B0B]">
                       Resend code
                     </Link>
-                    <Link to="/signin" className="hover:text-[#C62222]">
+                    <Link to="/signin" className="hover:text-[#E00B0B]">
                       Back to Sign In
                     </Link>
                   </div>
@@ -154,7 +154,7 @@ const ResetPassword: React.FC = () => {
 
           <div className="w-full flex items-center justify-between text-xs text-[#667085] px-1">
             <span>© Nightcrawlers 2026, inc</span>
-            <a href="mailto:help@nightcrawlers.app" className="flex items-center gap-2 hover:text-[#C62222]">
+            <a href="mailto:help@nightcrawlers.app" className="flex items-center gap-2 hover:text-[#E00B0B]">
               <img src={mailIcon} alt="" className="w-3.5 h-3.5" />
               help@nightcrawlers.app
             </a>

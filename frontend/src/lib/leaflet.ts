@@ -23,8 +23,20 @@ export const DEFAULT_CENTER = { latitude: 9.0579, longitude: 7.4951 };
 // ── The small slice of Leaflet's API we use ──────────────────────────────────
 export type LatLngTuple = [number, number];
 
+export interface LeafletLayer {
+    addTo(map: LeafletMap): LeafletLayer;
+    remove(): void;
+}
+export interface LeafletMarker extends LeafletLayer {
+    setLatLng(p: LatLngTuple): LeafletMarker;
+}
+export interface LeafletPolyline extends LeafletLayer {
+    setLatLngs(p: LatLngTuple[]): LeafletPolyline;
+}
+
 export interface LeafletMap {
     setView(center: LatLngTuple, zoom?: number, options?: { animate?: boolean }): LeafletMap;
+    fitBounds(bounds: LatLngTuple[], options?: { padding?: [number, number]; maxZoom?: number; animate?: boolean }): LeafletMap;
     flyTo(center: LatLngTuple, zoom?: number, options?: { duration?: number }): LeafletMap;
     getCenter(): { lat: number; lng: number };
     getZoom(): number;
@@ -43,6 +55,9 @@ export interface LeafletStatic {
     control: {
         zoom(options: { position: string }): { addTo(map: LeafletMap): unknown };
     };
+    polyline(points: LatLngTuple[], options?: { color?: string; weight?: number; opacity?: number; dashArray?: string }): LeafletPolyline;
+    marker(p: LatLngTuple, options?: { icon?: unknown; zIndexOffset?: number; interactive?: boolean }): LeafletMarker;
+    divIcon(options: { html: string; className?: string; iconSize?: [number, number]; iconAnchor?: [number, number] }): unknown;
 }
 
 declare global {

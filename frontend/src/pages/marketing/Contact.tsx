@@ -46,7 +46,7 @@ const Contact: React.FC = () => {
                 <div className="w-full px-4 sm:px-6 lg:px-[32px] mt-8 mb-8 lg:mb-12">
                     <div className="flex flex-col items-start gap-4 lg:gap-5 max-w-3xl">
                         <div className="flex flex-col items-start gap-3">
-                            <p className="text-[#C62222] text-base font-semibold leading-normal font-poppins">Contact us</p>
+                            <p className="text-[#E00B0B] text-base font-semibold leading-normal font-poppins">Contact us</p>
                             <h1 className="text-[#101828] text-[24px] sm:text-4xl lg:text-5xl font-semibold leading-tight tracking-tight font-poppins">
                                 Chat to our friendly team
                             </h1>
@@ -64,36 +64,36 @@ const Contact: React.FC = () => {
                         <div className="flex flex-col sm:flex-row items-start self-stretch gap-[32px]">
                             <div className="flex flex-col grow items-start gap-[16px]">
                                 <div className="w-[24px] h-[24px] bg-white rounded-full flex items-center justify-center">
-                                    <Mail className="w-[20px] h-[16px] text-[#C62222]" />
+                                    <Mail className="w-[20px] h-[16px] text-[#E00B0B]" />
                                 </div>
                                 <div className="flex flex-col items-start self-stretch gap-[8px]">
                                     <p className="text-[#101828] text-[20px] font-medium leading-[30px] font-poppins">Email</p>
                                     <p className="text-[#667085] text-[16px] leading-[24px] font-poppins">Our friendly team is here to help.</p>
                                 </div>
-                                <a href="mailto:support@nightcrawlers.app" className="text-[#C62222] text-[16px] font-medium leading-[24px] font-poppins hover:underline">support@nightcrawlers.app</a>
+                                <a href="mailto:help@nightcrawlers.app" className="text-[#E00B0B] text-[16px] font-medium leading-[24px] font-poppins hover:underline">help@nightcrawlers.app</a>
                             </div>
 
                             <div className="flex flex-col grow items-start gap-[16px]">
                                 <div className="w-[24px] h-[24px] bg-white rounded-full flex items-center justify-center">
-                                    <MessageCircle className="w-[18px] h-[18px] text-[#C62222]" />
+                                    <MessageCircle className="w-[18px] h-[18px] text-[#E00B0B]" />
                                 </div>
                                 <div className="flex flex-col items-start self-stretch gap-[8px]">
                                     <p className="text-[#101828] text-[20px] font-medium leading-[30px] font-poppins">Live chat</p>
                                     <p className="text-[#667085] text-[16px] leading-[24px] font-poppins">Our friendly team is here to help.</p>
                                 </div>
-                                <a href="#" className="text-[#C62222] text-[16px] font-medium leading-[24px] font-poppins hover:underline">Start new chat</a>
+                                <a href="#" className="text-[#E00B0B] text-[16px] font-medium leading-[24px] font-poppins hover:underline">Start new chat</a>
                             </div>
                         </div>
 
                         <div className="flex flex-col items-start self-stretch gap-[16px]">
                             <div className="w-[24px] h-[24px] bg-white rounded-full flex items-center justify-center">
-                                <Phone className="w-[20px] h-[16px] text-[#C62222]" />
+                                <Phone className="w-[20px] h-[16px] text-[#E00B0B]" />
                             </div>
                             <div className="flex flex-col items-start self-stretch gap-[8px]">
                                 <p className="text-[#101828] text-[20px] font-medium leading-[30px] font-poppins">Phone</p>
                                 <p className="text-[#667085] text-[16px] leading-[24px] font-poppins">Mon-Fri from 8am to 5pm.</p>
                             </div>
-                            <a href="tel:+15550000000" className="text-[#C62222] text-[16px] font-medium leading-[24px] font-poppins hover:underline">+1 (555) 000-0000</a>
+                            <a href="tel:+15550000000" className="text-[#E00B0B] text-[16px] font-medium leading-[24px] font-poppins hover:underline">+1 (555) 000-0000</a>
                         </div>
                     </div>
 
@@ -166,7 +166,7 @@ const Contact: React.FC = () => {
                                 <button
                                     type="submit"
                                     disabled={isSubmitting}
-                                    className="flex items-center self-stretch justify-center gap-[8px] border border-[#C62222] rounded-[4px] bg-[#C62222] shadow-sm px-[19px] py-[10px] sm:py-[11px] hover:bg-[#a51d1d] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
+                                    className="flex items-center self-stretch justify-center gap-[8px] border border-[#E00B0B] rounded-[4px] bg-[#E00B0B] shadow-sm px-[19px] py-[10px] sm:py-[11px] hover:bg-[#a51d1d] transition-colors disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
                                     <p className="text-white text-[14px] sm:text-[20px] font-medium leading-[24px] font-poppins">
                                         {isSubmitting ? 'Sending...' : 'Send message'}

@@ -106,7 +106,7 @@ export const SmileIDVerification: React.FC<SmileIDVerificationProps> = ({
           logo_url: `${window.location.origin}/favicon.png`,
           partner_id: import.meta.env.VITE_SMILEID_PARTNER_ID,
           policy_url: `${window.location.origin}/privacy-policy`,
-          theme_color: '#C62222',
+          theme_color: '#E00B0B',
         },
 
         // The verification product
@@ -182,8 +182,8 @@ export const SmileIDVerification: React.FC<SmileIDVerificationProps> = ({
 
       {status === 'idle' && (
         <div className="text-center py-6 px-4">
-          <div className="w-16 h-16 bg-[#C62222]/10 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-[#C62222]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div className="w-16 h-16 bg-[#E00B0B]/10 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-8 h-8 text-[#E00B0B]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
                 d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
             </svg>
@@ -195,7 +195,7 @@ export const SmileIDVerification: React.FC<SmileIDVerificationProps> = ({
           </p>
           <button
             onClick={startVerification}
-            className="w-full py-3 bg-[#C62222] text-white rounded-lg font-semibold text-sm
+            className="w-full py-3 bg-[#E00B0B] text-white rounded-lg font-semibold text-sm
                        hover:bg-[#aa1c1c] transition-colors"
           >
             Start Verification
@@ -205,7 +205,7 @@ export const SmileIDVerification: React.FC<SmileIDVerificationProps> = ({
 
       {status === 'loading' && (
         <div className="text-center py-8">
-          <div className="w-8 h-8 border-2 border-[#C62222] border-t-transparent rounded-full
+          <div className="w-8 h-8 border-2 border-[#E00B0B] border-t-transparent rounded-full
                           animate-spin mx-auto mb-3" />
           <p className="text-sm text-gray-500">Opening verification…</p>
         </div>
@@ -222,8 +222,8 @@ export const SmileIDVerification: React.FC<SmileIDVerificationProps> = ({
           <p className="text-sm text-red-600 mb-4">{errorMessage}</p>
           <button
             onClick={() => { setStatus('idle'); setErrorMessage(''); }}
-            className="py-2 px-6 border border-[#C62222] text-[#C62222] rounded-lg text-sm
-                       font-medium hover:bg-[#C62222]/5 transition-colors"
+            className="py-2 px-6 border border-[#E00B0B] text-[#E00B0B] rounded-lg text-sm
+                       font-medium hover:bg-[#E00B0B]/5 transition-colors"
           >
             Try Again
           </button>

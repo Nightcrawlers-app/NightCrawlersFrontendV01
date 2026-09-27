@@ -28,11 +28,11 @@ interface KycOnboardingProps {
 type Step = 'type' | 'nin' | 'cac' | 'tin' | 'license' | 'selfie' | 'address' | 'terms' | 'done';
 
 const StepIndicator = ({ done, active, label }: { done: boolean; active: boolean; label: string }) => (
-  <div className={`flex items-center gap-2 text-sm ${done ? 'text-green-600' : active ? 'text-[#C62222]' : 'text-gray-400'}`}>
+  <div className={`flex items-center gap-2 text-sm ${done ? 'text-green-600' : active ? 'text-[#E00B0B]' : 'text-gray-400'}`}>
     {done
       ? <CheckCircle className="w-5 h-5 flex-shrink-0" />
       : active
-        ? <div className="w-5 h-5 rounded-full border-2 border-[#C62222] flex-shrink-0" />
+        ? <div className="w-5 h-5 rounded-full border-2 border-[#E00B0B] flex-shrink-0" />
         : <Circle className="w-5 h-5 flex-shrink-0" />
     }
     <span className={done ? 'line-through' : ''}>{label}</span>
@@ -149,7 +149,7 @@ export const KycOnboarding: React.FC<KycOnboardingProps> = ({ role, userId, firs
         onChange={e => setForm(f => ({ ...f, [name]: e.target.value }))}
         placeholder={placeholder}
         className="w-full h-11 px-3 border border-gray-300 rounded-lg text-sm
-                   focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-[#C62222]"
+                   focus:outline-none focus:ring-2 focus:ring-[#E00B0B] focus:border-[#E00B0B]"
       />
     </div>
   );
@@ -160,7 +160,7 @@ export const KycOnboarding: React.FC<KycOnboardingProps> = ({ role, userId, firs
     <button
       onClick={onClick}
       disabled={disabled || loading}
-      className="w-full py-3 bg-[#C62222] text-white rounded-lg font-semibold text-sm
+      className="w-full py-3 bg-[#E00B0B] text-white rounded-lg font-semibold text-sm
                  hover:bg-[#aa1c1c] disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
     >
       {loading ? 'Please wait…' : label}
@@ -239,18 +239,18 @@ export const KycOnboarding: React.FC<KycOnboardingProps> = ({ role, userId, firs
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
                   <button
                     onClick={() => handleDeclare(false)}
-                    className="p-4 border-2 border-gray-200 rounded-xl text-left hover:border-[#C62222]
-                               hover:bg-[#C62222]/5 transition-all group"
+                    className="p-4 border-2 border-gray-200 rounded-xl text-left hover:border-[#E00B0B]
+                               hover:bg-[#E00B0B]/5 transition-all group"
                   >
-                    <p className="font-semibold text-gray-900 group-hover:text-[#C62222]">Yes, I have a CAC number</p>
+                    <p className="font-semibold text-gray-900 group-hover:text-[#E00B0B]">Yes, I have a CAC number</p>
                     <p className="text-xs text-gray-500 mt-1">Formal business — CAC + TIN verification</p>
                   </button>
                   <button
                     onClick={() => handleDeclare(true)}
-                    className="p-4 border-2 border-gray-200 rounded-xl text-left hover:border-[#C62222]
-                               hover:bg-[#C62222]/5 transition-all group"
+                    className="p-4 border-2 border-gray-200 rounded-xl text-left hover:border-[#E00B0B]
+                               hover:bg-[#E00B0B]/5 transition-all group"
                   >
-                    <p className="font-semibold text-gray-900 group-hover:text-[#C62222]">No, I'm an informal vendor</p>
+                    <p className="font-semibold text-gray-900 group-hover:text-[#E00B0B]">No, I'm an informal vendor</p>
                     <p className="text-xs text-gray-500 mt-1">Home kitchen, suya stand etc. — NIN + selfie or agent visit</p>
                   </button>
                 </div>
@@ -370,7 +370,7 @@ export const KycOnboarding: React.FC<KycOnboardingProps> = ({ role, userId, firs
                 </p>
                 <button
                   onClick={() => navigate(role === 'rider' ? '/rider-dashboard' : '/vendor-dashboard')}
-                  className="flex items-center gap-2 mx-auto py-2 px-6 bg-[#C62222] text-white
+                  className="flex items-center gap-2 mx-auto py-2 px-6 bg-[#E00B0B] text-white
                              rounded-lg font-semibold text-sm hover:bg-[#aa1c1c] transition-colors"
                 >
                   Go to Dashboard <ChevronRight className="w-4 h-4" />

@@ -59,7 +59,7 @@ const NewsletterSection: React.FC = () => {
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="h-[40px] w-[103px] -ml-px bg-[#C62222] text-white text-[14px] sm:text-[16px] font-medium font-poppins rounded-r-[4px] hover:bg-[#A01B1B] transition-colors disabled:opacity-70 shrink-0"
+                className="h-[40px] w-[103px] -ml-px bg-[#E00B0B] text-white text-[14px] sm:text-[16px] font-medium font-poppins rounded-r-[4px] hover:bg-[#B80909] transition-colors disabled:opacity-70 shrink-0"
               >
                 {isSubmitting ? '...' : 'Subscribe'}
               </button>
