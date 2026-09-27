@@ -29,6 +29,7 @@ type FormState = {
     scope: PromotionScope;
     businessType: BusinessType | '';
     storeIds: string[];
+    itemKeywords: string;
     fundedBy: 'platform' | 'vendor';
     startsAt: string;
     endsAt: string;
@@ -48,6 +49,7 @@ const EMPTY: FormState = {
     scope: 'all',
     businessType: '',
     storeIds: [],
+    itemKeywords: '',
     fundedBy: 'platform',
     startsAt: '',
     endsAt: '',
@@ -75,6 +77,7 @@ const fromPromotion = (p: Promotion): FormState => ({
     scope: p.scope,
     businessType: p.businessType ?? '',
     storeIds: p.storeIds,
+    itemKeywords: (p.itemKeywords || []).join(', '),
     fundedBy: p.fundedBy,
     startsAt: toLocalInput(p.startsAt),
     endsAt: toLocalInput(p.endsAt),
@@ -94,6 +97,7 @@ const toInput = (f: FormState): PromotionInput => ({
     scope: f.scope,
     businessType: f.scope === 'category' ? (f.businessType || null) : null,
     storeIds: f.scope === 'stores' ? f.storeIds : [],
+    itemKeywords: f.itemKeywords.split(',').map((k) => k.trim()).filter(Boolean),
     fundedBy: f.fundedBy,
     startsAt: f.startsAt ? new Date(f.startsAt).toISOString() : null,
     endsAt: f.endsAt ? new Date(f.endsAt).toISOString() : null,
@@ -350,7 +354,7 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
                                 <div>
                                     <label className={labelCls}>Paid for by</label>
                                     <select className={input} value={form.fundedBy} onChange={(e) => set('fundedBy', e.target.value as 'platform' | 'vendor')}>
-                                        <option value="platform">Night Crawlers</option>
+                                        <option value="platform">Nightcrawlers</option>
                                         <option value="vendor">The vendor</option>
                                     </select>
                                 </div>
@@ -406,6 +410,20 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
                                         </p>
                                     </div>
                                 )}
+                            </div>
+
+                            <div>
+                                <label className={labelCls}>Only these items (optional)</label>
+                                <input
+                                    className={input}
+                                    value={form.itemKeywords}
+                                    onChange={(e) => set('itemKeywords', e.target.value)}
+                                    placeholder="e.g. pizza, shawarma — leave empty for the whole order"
+                                />
+                                <p className="text-[11px] text-gray-500 mt-1">
+                                    Separate with commas. Matches menu item names and categories, so "pizza" covers
+                                    "Pepperoni Pizza" and anything in a "Pizza" category. Stores without a matching item won't show this promo.
+                                </p>
                             </div>
 
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">

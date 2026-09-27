@@ -1,6 +1,6 @@
 import React from 'react';
 import blobSvg from '../../../../.figma/image/mjcs0hhd-e552yif.svg';
-import bowlPng from '../../../../.figma/image/mjcs0hhx-rdln25f.png';
+import bowlPng from '../../assets/home-promo-bowl.webp';
 
 const PromotionalBanner: React.FC = () => {
   return (
@@ -30,8 +30,8 @@ const PromotionalBanner: React.FC = () => {
             <h2 className="text-[#222222] text-[28px] sm:text-[36px] lg:text-[48px] font-semibold leading-[36px] sm:leading-[44px] lg:leading-[58px] tracking-[-0.02em] font-poppins m-0">
               Redefining Convenience, One Delivery at a Time.
             </h2>
-            <p className="text-[#222222] text-[14px] sm:text-[18px] lg:text-[20px] leading-[20px] sm:leading-[22px] lg:leading-[24px] tracking-[-0.02em] font-poppins m-0">
-              Night Crawlers is more than a delivery app - we're a platform built to elevate how people discover, enjoy, and experience food. We combine seamless technology with trusted restaurant partners to bring quality meals closer to you, no matter the hour. From everyday favorites to late-night cravings, we make ordering effortless and satisfying, with fast delivery and a user experience designed around your comfort.
+            <p className="text-[#667085] text-[14px] sm:text-[18px] lg:text-[20px] leading-[20px] sm:leading-[22px] lg:leading-[24px] tracking-[-0.02em] font-poppins m-0">
+              Hungry, out of essentials, or need a pharmacy after hours? Nightcrawlers brings food, groceries, medicine and drinks to your door, any hour of the night. We work with trusted restaurants, supermarkets, pharmacies and drink stores, and fast local riders, so getting what you need is as easy as a few taps.
             </p>
           </div>
         </div>

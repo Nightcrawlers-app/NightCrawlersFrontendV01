@@ -17,7 +17,7 @@ const NotFound: React.FC = () => {
     return (
         <div className="min-h-screen bg-white flex flex-col items-center justify-center font-poppins px-6 py-12">
             <Link to="/" className="mb-6">
-                <img src={logo} alt="Night Crawlers" className="h-28 w-auto object-contain" />
+                <img src={logo} alt="Nightcrawlers" className="w-[200px] h-auto object-contain" />
             </Link>
 
             <div className="w-full max-w-md text-center">

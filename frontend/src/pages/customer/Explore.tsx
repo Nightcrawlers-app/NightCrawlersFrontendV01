@@ -22,7 +22,7 @@ import PhoneVerificationModal from '../../components/ui/PhoneVerificationModal';
 import { useAuth } from '@/context/AuthContext';
 
 // import emptyStateImage from '../../assets/empty-state.png';
-// import promoBanner from '../../assets/signin-image.png'; // Using placeholder for now, ideally would be specific promo image
+// import promoBanner from '../../assets/signin-image.webp'; // Using placeholder for now, ideally would be specific promo image
 
 interface CategoryItemProps {
   name: string;
@@ -294,7 +294,7 @@ const Explore: React.FC = () => {
               <input
                 type="text"
                 enterKeyHint="search"
-                placeholder="Search restaurants, dishes..."
+                placeholder="Search stores, food, products..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="flex-grow h-full px-[12px] md:px-[16px] text-[13px] md:text-[14px] text-[#101828] bg-transparent outline-none placeholder:text-[#98A2B3] min-w-0"

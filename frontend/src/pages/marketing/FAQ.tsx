@@ -16,8 +16,8 @@ interface FAQItem {
 const faqData: FAQItem[] = [
   {
     id: 0,
-    question: 'What is Night Crawlers?',
-    answer: 'Night Crawlers is a fast delivery platform connecting customers with restaurants, supermarkets, beauty stores and pharmacies.',
+    question: 'What is Nightcrawlers?',
+    answer: 'Nightcrawlers is a fast delivery platform connecting customers with restaurants, supermarkets, beauty stores and pharmacies.',
     category: 'General Information'
   },
   {

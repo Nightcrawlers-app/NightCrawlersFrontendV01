@@ -35,11 +35,11 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
           <div className="flex items-center justify-between h-16 lg:h-[96px]">
             {/* Logo */}
             <div className="relative flex items-center">
-              <Link to="/" className="block relative w-[160px] sm:w-[200px] lg:w-[240px] h-[72px] sm:h-[88px] lg:h-[96px] overflow-visible">
+              <Link to="/" className="flex items-center h-[72px] sm:h-[88px] lg:h-[96px]">
                 <img
                   src={logo}
-                  alt="Night Crawlers"
-                  className="absolute left-0 top-1/2 -translate-y-1/2 w-[160px] sm:w-[200px] lg:w-[240px] h-[160px] sm:h-[200px] lg:h-[240px] object-contain select-none drop-shadow-sm"
+                  alt="Nightcrawlers"
+                  className="w-[150px] sm:w-[175px] lg:w-[200px] h-auto object-contain select-none"
                 />
               </Link>
             </div>
@@ -53,7 +53,7 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
                       return 'nav-link-home';
                     case 'Contact Us':
                       return 'nav-link-contact';
-                    case 'Partners':
+                    case 'Vendors':
                       return 'nav-link-vendors';
                     case 'FAQs':
                       return 'nav-link-faq';

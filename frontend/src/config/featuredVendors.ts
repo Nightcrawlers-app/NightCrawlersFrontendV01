@@ -1,14 +1,21 @@
 /**
- * The brand tiles on the homepage ("Order Tasty Meals through us").
+ * Hand-picked brand tiles for the home page's "Popular on Nightcrawlers"
+ * section — one list, split into tabs by `category`. This is also the ad slot:
+ * to promote a paying store, add or reorder entries here.
  *
- * This is also the future ad slot: to promote a paying store, add or reorder
- * entries here. Clicking a tile opens the real store on Night Crawlers:
+ *   category — which tab it appears under (Food, Groceries, Pharmacy, Drinks, Clubs/Lounges)
+ *   storeId  — open exactly this store (use this for paid placements)
+ *   search   — otherwise, open the first store whose name matches this text
+ *   image    — logo or photo; put the file in src/assets/brands/ and import it below
  *
- *   storeId — open exactly this store (use this for paid placements)
- *   search  — otherwise, open the first store whose name matches this text
+ * Tabs with fewer than 6 hand-picked entries are topped up automatically with
+ * real stores from that category (nearest first), so a tab is never empty
+ * once you have stores in it. If nothing matches, a tile opens Explore
+ * filtered to that name, so it never leads nowhere.
  *
- * If nothing matches yet, the tile opens Explore filtered to that name, so it
- * never leads nowhere.
+ * EXAMPLE — adding a pharmacy (after saving its logo as src/assets/brands/medplus.webp):
+ *   import medplusImg from '../assets/brands/medplus.webp';
+ *   { name: 'MedPlus', image: medplusImg, search: 'MedPlus', category: 'Pharmacy' },
  */
 import type { BusinessType } from '../types/models';
 
@@ -23,7 +30,7 @@ export type FeaturedVendor = {
     image: string;
     storeId?: string;
     search: string;
-    category?: BusinessType;
+    category: BusinessType;
 };
 
 export const FEATURED_VENDORS: FeaturedVendor[] = [

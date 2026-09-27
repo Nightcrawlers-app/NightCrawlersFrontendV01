@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import HeroSection from '../../components/home/HeroSection';
+import CategoryStrip from '../../components/home/CategoryStrip';
 import IntroSection from '../../components/home/IntroSection';
 import VendorShowcase from '../../components/home/VendorShowcase';
 import FeaturesSection from '../../components/home/FeaturesSection';
@@ -22,6 +23,7 @@ const Home: React.FC = () => {
 
       <main>
         <HeroSection />
+        <CategoryStrip />
         <IntroSection />
         <VendorShowcase />
         <FeaturesSection />

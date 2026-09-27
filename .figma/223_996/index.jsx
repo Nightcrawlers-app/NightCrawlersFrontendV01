@@ -14,7 +14,7 @@ const Component = () => {
           <div className={styles.menuNav}>
             <p className={styles.home}>Home</p>
             <p className={styles.home}>Contact Us</p>
-            <p className={styles.home}>Vendors</p>
+            <p className={styles.home}>Partners</p>
             <p className={styles.home}>FAQs</p>
           </div>
           <div className={styles.navButtons}>
@@ -40,7 +40,7 @@ const Component = () => {
           <div className={styles.heroSection2Inner1}>
             <div className={styles.heroSection2Inner2}>
               <p className={styles.partnerWithUsAndBeco}>
-                Partner with us and Become a Vendor
+                Earn with Night Crawlers! Become a partner
               </p>
               <p className={styles.joinThousandsOfResta}>
                 Join thousands of restaurants, supermarkets, beauty stores and
@@ -48,7 +48,7 @@ const Component = () => {
               </p>
               <div className={styles.checkOutContainer}>
                 <div className={styles.buttonCheckOut}>
-                  <p className={styles.signUpAsAVendor}>Sign up as a Vendor</p>
+                  <p className={styles.signUpAsPartner}>Sign up as a Partner</p>
                 </div>
                 <div className={styles.buttonContinueDhoppi}>
                   <p className={styles.logIn}>Log In</p>

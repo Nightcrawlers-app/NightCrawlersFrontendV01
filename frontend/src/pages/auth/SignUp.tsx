@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import PageNav from '../../components/ui/PageNav';
 import PasswordInput, { PasswordMatchHint } from '../../components/ui/PasswordInput';
 import { Link, useNavigate } from 'react-router-dom';
 import { SignUpForm } from '../../types';
 import Input from '../../components/ui/Input';
-import signupImage from '../../assets/signup-image.png';
+import signupImage from '../../assets/signup-image.webp';
 import signupLogo from '../../assets/signup-logo.png';
 import mailIcon from '../../assets/mail.svg';
 import { useAuth } from '../../context/AuthContext';
@@ -64,6 +65,7 @@ const SignUp: React.FC = () => {
 
   return (
     <div className="h-screen w-full overflow-hidden bg-white">
+      <PageNav />
       <div className="flex h-full">
         {/* Left Side - Image (Hidden on mobile) */}
         <div className="hidden lg:block lg:w-1/2 xl:w-[60%] h-full">
@@ -77,13 +79,13 @@ const SignUp: React.FC = () => {
               {/* Header Section */}
               <div className="flex flex-col items-center text-center mb-2 sm:mb-3">
                 <Link to="/" className="block p-0 m-0 mb-6">
-                  <img src={signupLogo} alt="Night Crawlers" className="block w-[160px] sm:w-[160px] md:w-[160px] h-auto object-contain" />
+                  <img src={signupLogo} alt="Nightcrawlers" className="block w-[160px] sm:w-[160px] md:w-[160px] h-auto object-contain" />
                 </Link>
                 <h1 className="text-sm sm:text-base font-bold text-[#222222] mb-1 leading-tight">
-                  Start Your Night Crawlers Journey
+                  Start Your Nightcrawlers Journey
                 </h1>
                 <p className="text-[#667085] text-xs leading-tight max-w-sm">
-                  Sign up to enjoy fast delivery, exclusive offers, and a personalized Night Crawlers experience!
+                  Sign up to enjoy fast delivery, exclusive offers, and a personalized Nightcrawlers experience!
                 </p>
               </div>
 
@@ -184,7 +186,7 @@ const SignUp: React.FC = () => {
             </div>
           </div>
           <div className="w-full flex items-center justify-between text-xs text-[#667085] px-1">
-            <span>© Night Crawlers 2026, inc</span>
+            <span>© Nightcrawlers 2026, inc</span>
             <a href="mailto:help@nightcrawlers.com" className="flex items-center gap-2 hover:text-[#C62222]">
               <img src={mailIcon} alt="" className="w-3.5 h-3.5" />
               help@nightcrawlers.com

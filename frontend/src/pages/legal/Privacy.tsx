@@ -36,7 +36,7 @@ const Privacy: React.FC = () => {
         },
         {
             title: "8. Children's Privacy",
-            content: `Night Crawlers is not intended for users under the age of 16. We do not knowingly collect personal information from children. If we learn that we have collected information from a child under 16, we will take immediate steps to delete that information. If you believe a child has provided us with personal data, please contact us immediately.`
+            content: `Nightcrawlers is not intended for users under the age of 16. We do not knowingly collect personal information from children. If we learn that we have collected information from a child under 16, we will take immediate steps to delete that information. If you believe a child has provided us with personal data, please contact us immediately.`
         },
         {
             title: '9. Third-Party Links',
@@ -44,7 +44,7 @@ const Privacy: React.FC = () => {
         },
         {
             title: '10. Changes to This Policy',
-            content: `We may update this Privacy Policy from time to time to reflect changes in our practices or for legal reasons. We will notify you of material changes through the Platform or via email. Your continued use of Night Crawlers after any changes constitutes acceptance of the updated policy. We encourage you to review this policy periodically.`
+            content: `We may update this Privacy Policy from time to time to reflect changes in our practices or for legal reasons. We will notify you of material changes through the Platform or via email. Your continued use of Nightcrawlers after any changes constitutes acceptance of the updated policy. We encourage you to review this policy periodically.`
         },
         {
             title: '11. Location Data',
@@ -52,7 +52,7 @@ const Privacy: React.FC = () => {
         },
         {
             title: '12. Contact Us',
-            content: `If you have any questions, concerns, or requests regarding this Privacy Policy or your personal data, please contact our Data Protection team at privacy@nightcrawlers.ng, or write to us at Night Crawlers Inc., Victoria Island, Lagos, Nigeria.`
+            content: `If you have any questions, concerns, or requests regarding this Privacy Policy or your personal data, please contact our Data Protection team at privacy@nightcrawlers.ng, or write to us at Nightcrawlers Limited, Lekki phase one estate, Lekki, Lagos, Nigeria.`
         },
     ];
 
@@ -79,7 +79,7 @@ const Privacy: React.FC = () => {
                     {/* Intro */}
                     <div className="bg-[rgba(234,236,240,0.42)] rounded-[10px] p-5 sm:p-6 mb-8">
                         <p className="text-[#667085] text-[14px] sm:text-[15px] leading-[24px]">
-                            At Night Crawlers, your privacy is important to us. This Privacy Policy explains how we collect, use, share, and protect your personal information when you use our platform. By using Night Crawlers, you consent to the practices described in this policy.
+                            At Nightcrawlers, your privacy is important to us. This Privacy Policy explains how we collect, use, share, and protect your personal information when you use our platform. By using Nightcrawlers, you consent to the practices described in this policy.
                         </p>
                     </div>
 

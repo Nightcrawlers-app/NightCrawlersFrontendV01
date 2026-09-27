@@ -1,5 +1,5 @@
 /**
- * Night Crawlers — API Service Layer
+ * Nightcrawlers — API Service Layer
  *
  * Every function here is a real HTTP call to the backend. They are all async
  * and return Promises — callers must `await` them and handle failures.
@@ -49,6 +49,7 @@ import type {
     OrderQuote,
     AppConfig,
     PaymentStatus,
+    OrderTracking,
 } from '../types/models';
 
 // Re-export types so existing imports keep working
@@ -88,6 +89,7 @@ export type {
     OrderQuote,
     AppConfig,
     PaymentStatus,
+    OrderTracking,
 };
 
 // Re-export the constants
@@ -626,13 +628,17 @@ export const promotionAppliesToStore = (promo: Promotion, store: Pick<VendorStor
     (promo.scope === 'stores' && promo.storeIds.includes(store.id));
 
 /** "50% off (max ₦2,000)", "₦500 off", "Free delivery" */
-export const describeDiscount = (p: Pick<Promotion, 'discountType' | 'discountValue' | 'maxDiscount' | 'minOrderAmount'>): string => {
-    const main =
+export const describeDiscount = (
+    p: Pick<Promotion, 'discountType' | 'discountValue' | 'maxDiscount' | 'minOrderAmount'> & { itemKeywords?: string[] },
+): string => {
+    const onItems = p.itemKeywords?.length ? ` on ${p.itemKeywords.join(', ')}` : '';
+    const main0 =
         p.discountType === 'percent'
             ? `${p.discountValue}% off${p.maxDiscount ? ` (up to ₦${p.maxDiscount.toLocaleString()})` : ''}`
             : p.discountType === 'fixed'
                 ? `₦${p.discountValue.toLocaleString()} off`
                 : 'Free delivery';
+    const main = p.discountType === 'free_delivery' ? main0 + (onItems ? ` with any ${p.itemKeywords!.join(', ')} item` : '') : main0 + onItems;
     return p.minOrderAmount ? `${main} on orders over ₦${p.minOrderAmount.toLocaleString()}` : main;
 };
 
@@ -757,6 +763,10 @@ export const getAllOrders = (): Promise<Order[]> => apiFetch<Order[]>('/api/admi
  * `customerId` is NOT sent by the frontend — the backend must read it from the
  * authenticated session so a client can't place an order as somebody else.
  */
+/** GET /api/orders/:id/track — status timeline, arrival window and rider for one order. */
+export const getOrderTracking = (orderId: string): Promise<OrderTracking> =>
+    apiFetch<OrderTracking>(`/api/orders/${orderId}/track`);
+
 /**
  * POST /api/orders/quote — what the server will charge for this cart:
  * menu prices, delivery fee, service fee and any promo discount.

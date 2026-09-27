@@ -709,6 +709,17 @@ const UserProfile: React.FC = () => {
                                                                 </div>
 
                                                                 {/* Actions */}
+                                                                {txn.status !== 'delivered' && txn.status !== 'cancelled' && txn.status !== 'refunded' && (
+                                                                    <div className="mt-3">
+                                                                        <button
+                                                                            onClick={() => navigate(`/orders/${txn.id}`)}
+                                                                            className="flex items-center gap-1.5 px-3 py-2 bg-[#C62222] text-white text-xs font-semibold rounded-lg hover:bg-[#A01B1B] transition-colors"
+                                                                        >
+                                                                            <Truck size={12} />
+                                                                            Track order
+                                                                        </button>
+                                                                    </div>
+                                                                )}
                                                                 {txn.status === 'delivered' && (
                                                                     <div className="mt-3 flex items-center gap-2">
                                                                         <button className="flex items-center gap-1.5 px-3 py-2 bg-[#C62222] text-white text-xs font-semibold rounded-lg hover:bg-[#A01B1B] transition-colors">

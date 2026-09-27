@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
+import PageNav from '../../components/ui/PageNav';
 import { useNavigate } from 'react-router-dom';
 import { CheckCircle, Circle, Clock, ChevronRight, Upload } from 'lucide-react';
-import { apiFetch } from '../../lib/apiClient';
-import { toErrorMessage } from '../../services/api';
+import { apiFetch, toErrorMessage } from '../../lib/apiClient';
 import SmileIDVerification from '../../components/kyc/SmileIDVerification';
 
 type Role = 'vendor' | 'rider';
@@ -199,6 +199,9 @@ export const KycOnboarding: React.FC<KycOnboardingProps> = ({ role, userId, firs
   return (
     <div className="min-h-screen bg-gray-50 font-poppins">
       <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="mb-4">
+          <PageNav variant="inline" />
+        </div>
         <div className="mb-8">
           <h1 className="text-2xl font-bold text-gray-900">Identity Verification</h1>
           <p className="text-sm text-gray-500 mt-1">

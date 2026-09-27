@@ -135,9 +135,14 @@ const OrderSummary: React.FC = () => {
 
     // True after the customer taps "Remove" — then we stop auto-applying.
     const [promoDeclined, setPromoDeclined] = useState(false);
+    // Only whole-order promos are applied automatically; item-specific ones
+    // ("20% off pizza") wait until the customer picks them, since the cart may
+    // not contain those items.
     const activePromo = promoDeclined
         ? null
-        : storePromos.find((p) => p.id === selectedPromotion?.id) ?? storePromos[0] ?? null;
+        : storePromos.find((p) => p.id === selectedPromotion?.id)
+            ?? storePromos.find((p) => !(p.itemKeywords?.length))
+            ?? null;
 
     // Every figure on this page comes from the server (menu prices, delivery
     // fee, service fee, promo) — the same calculation used to place the order.
@@ -325,18 +330,24 @@ const OrderSummary: React.FC = () => {
                             <CheckCircle className="w-10 h-10 text-green-600" />
                         </div>
                         <h1 className="text-2xl font-bold text-[#222222] mb-2">Order Placed!</h1>
-                        <p className="text-[#667085] mb-2">Your order has been sent to nearby riders.</p>
+                        <p className="text-[#667085] mb-2">Your order has been sent to the store.</p>
                         <p className="text-sm text-gray-500 mb-6">Order ID: <span className="font-mono font-bold">{orderId.slice(-8).toUpperCase()}</span></p>
 
                         <div className="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-6">
                             <p className="text-sm text-orange-800 font-medium">
-                                🚴 A rider will accept your order soon. You'll be able to track your delivery once accepted.
+                                Follow every step, see your arrival time, and call your rider once one is on the way.
                             </p>
                         </div>
 
                         <button
+                            onClick={() => navigate(`/orders/${orderId}`)}
+                            className="w-full py-3 bg-[#C62222] text-white font-semibold rounded-lg hover:bg-[#A01B1B] transition-colors mb-3"
+                        >
+                            Track your order
+                        </button>
+                        <button
                             onClick={() => navigate('/explore')}
-                            className="w-full py-3 bg-[#C62222] text-white font-medium rounded-lg hover:bg-[#A01B1B] transition-colors"
+                            className="w-full py-3 bg-gray-100 text-gray-700 font-medium rounded-lg hover:bg-gray-200 transition-colors"
                         >
                             Continue Shopping
                         </button>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
+import PageNav from '../../components/ui/PageNav';
 import { Link, useNavigate } from 'react-router-dom';
-import signinImage from '../../assets/signin-image.png';
+import signinImage from '../../assets/signin-image.webp';
 import signupLogo from '../../assets/signup-logo.png';
 import mailIcon from '../../assets/mail.svg';
 import { forgotPassword, toErrorMessage } from '../../services/api';
@@ -30,6 +31,7 @@ const ForgotPassword: React.FC = () => {
 
   return (
     <div className="h-screen w-full overflow-hidden bg-white">
+      <PageNav fallback="/signin" />
       <div className="flex h-full">
         {/* Left Side - Image */}
         <div className="hidden lg:block lg:w-1/2 xl:w-[60%] min-h-screen">
@@ -42,7 +44,7 @@ const ForgotPassword: React.FC = () => {
             <div className="w-full max-w-[320px] sm:max-w-[340px] mx-auto">
 
               <div className="flex flex-col items-center text-center mb-6">
-                <img src={signupLogo} alt="Night Crawlers" className="h-10 w-auto mb-4" />
+                <img src={signupLogo} alt="Nightcrawlers" className="h-10 w-auto mb-4" />
                 <h1 className="text-lg font-bold text-[#101828]">Forgot your password?</h1>
                 <p className="text-xs text-[#667085] mt-1 max-w-[260px]">
                   No worries — enter your email and we'll send you a reset code.
@@ -94,10 +96,10 @@ const ForgotPassword: React.FC = () => {
           </div>
 
           <div className="w-full flex items-center justify-between text-xs text-[#667085] px-1">
-            <span>© Night Crawlers 2026, inc</span>
-            <a href="mailto:support@nightcrawlers.app" className="flex items-center gap-2 hover:text-[#C62222]">
+            <span>© Nightcrawlers 2026, inc</span>
+            <a href="mailto:help@nightcrawlers.app" className="flex items-center gap-2 hover:text-[#C62222]">
               <img src={mailIcon} alt="" className="w-3.5 h-3.5" />
-              support@nightcrawlers.app
+              help@nightcrawlers.app
             </a>
           </div>
         </div>

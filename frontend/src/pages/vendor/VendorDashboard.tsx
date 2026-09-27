@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import PageNav from '../../components/ui/PageNav';
 import LocationField from '../../components/map/LocationField';
 import type { Coordinates } from '../../types/models';
 import ApprovalChecklist from '../../components/ui/ApprovalChecklist';
@@ -172,6 +173,7 @@ const VendorDashboard: React.FC = () => {
   if (!vendor.verified) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white flex flex-col items-center justify-center font-poppins p-6">
+        <PageNav showBack={false} />
         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 max-w-md w-full text-center">
           <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
             <Clock className="w-10 h-10 text-orange-500" />
@@ -383,6 +385,9 @@ const VendorDashboard: React.FC = () => {
   return (
     <div className="min-h-screen bg-white flex flex-col font-poppins">
       <main className="flex-grow w-full max-w-[1280px] mx-auto px-4 sm:px-6 md:px-8">
+        <div className="pt-4 -mb-6">
+          <PageNav variant="inline" showBack={false} />
+        </div>
         {/* Dashboard Header */}
         <div className="pt-10 pb-10">
           <div className="flex items-start justify-between">

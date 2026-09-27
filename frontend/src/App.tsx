@@ -35,6 +35,7 @@ const UserProfile = lazy(() => import('./pages/customer/UserProfile'));
 const Explore = lazy(() => import('./pages/customer/Explore'));
 const OrderSummary = lazy(() => import('./pages/customer/OrderSummary'));
 const PaymentCallback = lazy(() => import('./pages/customer/PaymentCallback'));
+const OrderTracking = lazy(() => import('./pages/customer/OrderTracking'));
 
 // Marketing pages
 const Home = lazy(() => import('./pages/marketing/Home'));
@@ -91,6 +92,8 @@ function App() {
             <Route path="/order-summary" element={<OrderSummary />} />
             {/* Paystack sends customers back here after paying */}
             <Route path="/payment/callback" element={<PaymentCallback />} />
+            {/* Live status, arrival window and rider for one order */}
+            <Route path="/orders/:id" element={<OrderTracking />} />
             <Route path="/overview" element={<Overview />} />
             <Route path="/features" element={<Features />} />
             <Route path="/about" element={<About />} />

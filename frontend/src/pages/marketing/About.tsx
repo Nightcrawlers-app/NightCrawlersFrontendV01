@@ -47,7 +47,7 @@ const About: React.FC = () => {
                                 Born from a Simple Question
                             </h2>
                             <p className="text-[#667085] text-[14px] sm:text-[15px] leading-[24px]">
-                                Founded in Lagos in 2025, Night Crawlers started with one question: why is delivery still so unreliable? Today we connect hundreds of local vendors with thousands of customers, through a fleet of verified riders.
+                                Founded in Lagos in 2025, Nightcrawlers started with one question: why is delivery still so unreliable? Today we connect hundreds of local vendors with thousands of customers, through a fleet of verified riders.
                             </p>
                         </div>
                         <div className="flex-1 w-full">
@@ -99,7 +99,7 @@ const About: React.FC = () => {
                     </div>
 
                     <div className="flex flex-col items-center text-center gap-5">
-                        <h2 className="text-[#222222] text-[24px] sm:text-[32px] font-semibold leading-tight">Join the Night Crawlers Family</h2>
+                        <h2 className="text-[#222222] text-[24px] sm:text-[32px] font-semibold leading-tight">Join the Nightcrawlers Family</h2>
                         <p className="text-[#667085] text-[15px] sm:text-[17px] max-w-[500px]">Whether you're a customer, vendor, or rider — there's a place for you.</p>
                         <div className="flex flex-col sm:flex-row gap-3">
                             <Link to="/signup" className="inline-flex items-center justify-center gap-2 bg-[#C62222] text-white text-[15px] font-semibold rounded-[6px] px-6 py-3 hover:bg-[#A01B1B] transition-colors shadow-sm">

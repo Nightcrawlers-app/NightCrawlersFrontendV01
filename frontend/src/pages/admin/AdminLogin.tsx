@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PageNav from '../../components/ui/PageNav';
 import PasswordInput from '../../components/ui/PasswordInput';
 import { useNavigate, Link } from 'react-router-dom';
 import Input from '../../components/ui/Input';
@@ -40,6 +41,7 @@ const AdminLogin: React.FC = () => {
 
     return (
         <div className="min-h-screen flex bg-white relative font-poppins overflow-hidden">
+            <PageNav />
             {/* Background Effects */}
             <div className="absolute top-[-20%] right-[-10%] w-[600px] h-[600px] bg-gray-50 opacity-60 rounded-full blur-[120px]" />
             <div className="absolute bottom-[-10%] left-[-10%] w-[500px] h-[500px] bg-red-50 opacity-40 rounded-full blur-[100px]" />
@@ -48,11 +50,11 @@ const AdminLogin: React.FC = () => {
                 <div className="w-full max-w-[420px] bg-white border border-gray-100 rounded-3xl p-8 sm:p-10 shadow-[0_8px_40px_-12px_rgba(0,0,0,0.08)]">
 
                     <div className="flex flex-col items-center mb-10 pt-4">
-                        <Link to="/" className="-mb-3 group">
+                        <Link to="/" className="mb-6 group">
                             <img
                                 src={logo}
-                                alt="Night Crawlers"
-                                className="h-44 w-auto object-contain drop-shadow-md transition-transform duration-300 group-hover:scale-105"
+                                alt="Nightcrawlers"
+                                className="w-[220px] h-auto object-contain transition-transform duration-300 group-hover:scale-105"
                             />
                         </Link>
                         <div className="flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-full border border-gray-100 mb-3">

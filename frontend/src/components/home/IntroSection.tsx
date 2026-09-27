@@ -1,5 +1,5 @@
 import React from 'react';
-import hero2Image from '../../../../.figma/image/mje7na9d-ei1m5xv.png';
+import hero2Image from '../../assets/home-intro.webp';
 
 const stats = [
   { value: '500+', label: 'Vendors' },
@@ -16,7 +16,7 @@ const IntroSection: React.FC = () => {
             Redefining convenience, one delivery at a time.
           </h2>
           <p className="text-[#667085] text-[14px] sm:text-[16px] leading-[20px] sm:leading-[24px] tracking-[-0.02em] font-poppins m-0">
-            Trusted vendors, fast riders, and an app built around late-night cravings and everyday needs.
+            Restaurants, supermarkets, pharmacies and drink stores, with trusted vendors and fast riders, all in one app built for the hours when everything else is closed.
           </p>
           <div className="flex items-center gap-6 sm:gap-10 pt-2">
             {stats.map((stat) => (
@@ -29,7 +29,7 @@ const IntroSection: React.FC = () => {
         </div>
         <img
           src={hero2Image}
-          alt="Delicious meal plate"
+          alt=""
           className="w-full max-w-[320px] lg:w-[420px] h-auto object-contain flex-shrink-0"
         />
       </div>

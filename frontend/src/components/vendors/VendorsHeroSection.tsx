@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import vendorsHeroImage from '../../assets/vendors-hero.png';
+import vendorsHeroImage from '../../assets/vendors-hero.webp';
 
 const VendorsHeroSection: React.FC = () => {
   const navigate = useNavigate();
@@ -37,7 +37,7 @@ const VendorsHeroSection: React.FC = () => {
 
           {/* Description */}
           <p className="font-poppins font-normal text-[16px] sm:text-[18px] md:text-[20px] leading-[120%] tracking-[-0.02em] text-[#222222] max-w-[570px]">
-            Join thousands of restaurants, supermarkets, beauty stores and pharmacies reaching millions of customers daily on Night Crawlers.
+            Join thousands of restaurants, supermarkets, beauty stores and pharmacies reaching millions of customers daily on Nightcrawlers.
           </p>
 
           {/* CTA Buttons */}

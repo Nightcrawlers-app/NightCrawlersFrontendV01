@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import PageNav from '../../components/ui/PageNav';
 import PasswordInput, { PasswordMatchHint } from '../../components/ui/PasswordInput';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ChevronDown, MapPin, CheckCircle2 } from 'lucide-react';
@@ -6,7 +7,7 @@ import MapPicker from '../../components/map/MapPicker';
 import type { PickedLocation } from '../../components/map/MapPicker';
 import type { Coordinates } from '../../types/models';
 import logo from '../../assets/logo.png';
-import vendorSignUpImage from '../../assets/signin-image.png';
+import vendorSignUpImage from '../../assets/signin-image.webp';
 import { BUSINESS_TYPES, createVendorAccount, createRiderAccount, getBusinessTypeMeta, toErrorMessage } from '../../services/api';
 import type { BusinessType } from '../../services/api';
 
@@ -148,13 +149,15 @@ const VendorSignUp: React.FC = () => {
 
   return (
     <div className="min-h-screen bg-white font-poppins flex flex-col">
+      <div className="w-full max-w-[1400px] mx-auto px-3 sm:px-5 md:px-6 pt-4">
+        <PageNav variant="inline" fallback="/vendors" />
+      </div>
       <header className="w-full max-w-[1400px] mx-auto flex items-center justify-between px-3 sm:px-5 md:px-6 pt-6 pb-4">
         <Link to="/" className="block">
           <img
             src={logo}
-            alt="Night Crawlers"
-            className="h-16 sm:h-20 w-auto object-contain"
-            style={{ transform: 'scale(2.5)', transformOrigin: 'left center' }}
+            alt="Nightcrawlers"
+            className="w-[160px] sm:w-[190px] h-auto object-contain"
           />
         </Link>
         <p className="text-sm text-night-gray-700">

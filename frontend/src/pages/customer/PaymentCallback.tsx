@@ -73,8 +73,11 @@ const PaymentCallback: React.FC = () => {
                                     Order ID: <span className="font-mono font-bold">{orderId.slice(-8).toUpperCase()}</span>
                                 </p>
                             )}
-                            <button onClick={() => navigate('/user-profile')} className="w-full py-3 bg-[#C62222] text-white font-semibold rounded-lg hover:bg-[#A01B1B]">
-                                View my orders
+                            <button
+                                onClick={() => navigate(orderId ? `/orders/${orderId}` : '/user-profile')}
+                                className="w-full py-3 bg-[#C62222] text-white font-semibold rounded-lg hover:bg-[#A01B1B]"
+                            >
+                                Track your order
                             </button>
                         </>
                     )}

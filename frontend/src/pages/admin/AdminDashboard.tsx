@@ -212,7 +212,7 @@ const AdminDashboard: React.FC = () => {
                         </div>
                         <div>
                             <h1 className="font-bold text-gray-900 leading-none text-xs md:text-base">Admin Console</h1>
-                            <span className="text-[7px] md:text-[10px] font-semibold text-[#C62222] uppercase tracking-widest">Night Crawlers</span>
+                            <span className="text-[7px] md:text-[10px] font-semibold text-[#C62222] uppercase tracking-widest">Nightcrawlers</span>
                         </div>
                     </div>
 

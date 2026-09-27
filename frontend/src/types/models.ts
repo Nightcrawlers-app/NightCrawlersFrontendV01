@@ -1,5 +1,5 @@
 /**
- * Night Crawlers — Domain Models & Types
+ * Nightcrawlers — Domain Models & Types
  *
  * These types define the data contract between the frontend and backend.
  * The backend engineer should implement API endpoints that return data
@@ -434,6 +434,8 @@ export type Promotion = {
     scope: PromotionScope;
     businessType: BusinessType | null;
     storeIds: string[];
+    /** Only items whose name/category contains one of these get the discount. Empty = whole order. */
+    itemKeywords: string[];
     fundedBy: 'platform' | 'vendor';
     startsAt: string | null;
     endsAt: string | null;
@@ -472,4 +474,33 @@ export type AppConfig = {
     /** Delivery pricing: base fee, plus perKm for every km after includedKm. */
     delivery: { baseFee: number; perKm: number; includedKm: number; minFee: number; maxFee: number; maxKm: number };
     serviceFeePercent: number;
+};
+
+/** GET /api/orders/:id/track — the customer's live view of an order. */
+export type OrderTracking = {
+    id: string;
+    status: OrderStatus;
+    paymentMethod: PaymentMethod;
+    paymentStatus: PaymentStatus;
+    placedAt: string;
+    steps: {
+        placed: string;
+        confirmed: string | null;
+        ready: string | null;
+        pickedUp: string | null;
+        delivered: string | null;
+        cancelled: string | null;
+    };
+    /** Arrival window; null once delivered or cancelled. */
+    eta: { earliest: string; latest: string } | null;
+    store: { name: string; address: string; businessType: BusinessType } | null;
+    rider: { firstName: string; vehicleType: string; phoneNumber: string | null; distanceKm: number | null } | null;
+    deliveryAddress: string;
+    items: { name: string; quantity: number; price: number }[];
+    subtotal: number;
+    deliveryFee: number;
+    serviceFee: number;
+    discount: number;
+    total: number;
+    serverTime: string;
 };

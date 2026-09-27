@@ -1,5 +1,5 @@
 /**
- * Night Crawlers — HTTP client
+ * Nightcrawlers — HTTP client
  *
  * Authentication: the backend returns a JWT from every login/signup endpoint
  * and reads it ONLY from the `Authorization: Bearer <token>` header — it does

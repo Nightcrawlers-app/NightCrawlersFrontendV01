@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
+import PageNav from '../../components/ui/PageNav';
 import PasswordInput, { PasswordMatchHint } from '../../components/ui/PasswordInput';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import signinImage from '../../assets/signin-image.png';
+import signinImage from '../../assets/signin-image.webp';
 import signupLogo from '../../assets/signup-logo.png';
 import mailIcon from '../../assets/mail.svg';
 import helpCircle from '../../assets/help-circle.svg';
@@ -47,6 +48,7 @@ const ResetPassword: React.FC = () => {
 
   return (
     <div className="h-screen w-full overflow-hidden bg-white">
+      <PageNav fallback="/signin" />
       <div className="flex h-full">
         <div className="hidden lg:block lg:w-1/2 xl:w-[60%] min-h-screen">
           <img src={signinImage} alt="Reset Password" className="w-full h-full object-cover" />
@@ -57,7 +59,7 @@ const ResetPassword: React.FC = () => {
             <div className="w-full max-w-[320px] sm:max-w-[340px] mx-auto">
 
               <div className="flex flex-col items-center text-center mb-6">
-                <img src={signupLogo} alt="Night Crawlers" className="h-10 w-auto mb-4" />
+                <img src={signupLogo} alt="Nightcrawlers" className="h-10 w-auto mb-4" />
                 <h1 className="text-lg font-bold text-[#101828]">Reset your password</h1>
                 <p className="text-xs text-[#667085] mt-1 max-w-[260px]">
                   Enter the 6-digit code we sent to your email along with your new password.
@@ -151,7 +153,7 @@ const ResetPassword: React.FC = () => {
           </div>
 
           <div className="w-full flex items-center justify-between text-xs text-[#667085] px-1">
-            <span>© Night Crawlers 2026, inc</span>
+            <span>© Nightcrawlers 2026, inc</span>
             <a href="mailto:help@nightcrawlers.app" className="flex items-center gap-2 hover:text-[#C62222]">
               <img src={mailIcon} alt="" className="w-3.5 h-3.5" />
               help@nightcrawlers.app

@@ -1,8 +1,9 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import PageNav from '../../components/ui/PageNav';
 import ApprovalChecklist from '../../components/ui/ApprovalChecklist';
-import { useNavigate } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useGlobalLoader } from '../../context/GlobalLoaderContext';
-import { MapPin, Package, DollarSign, Clock, Navigation, Power, Bell, CheckCircle, Truck, Phone, ExternalLink, LogOut, ShieldCheck } from 'lucide-react';
+import { MapPin, Package, DollarSign, Clock, Navigation, Power, Bell, CheckCircle, Truck, Phone, ExternalLink, LogOut, ShieldCheck, Home } from 'lucide-react';
 import {
     getCurrentRider,
     RiderAccount,
@@ -228,6 +229,7 @@ const RiderDashboard: React.FC = () => {
     if (!rider.verified) {
         return (
             <div className="min-h-screen bg-gradient-to-br from-orange-50 to-white flex flex-col items-center justify-center font-poppins p-6">
+                <PageNav showBack={false} />
                 <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 max-w-md w-full text-center">
                     <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center mx-auto mb-6">
                         <Clock className="w-10 h-10 text-orange-500" />
@@ -322,6 +324,14 @@ const RiderDashboard: React.FC = () => {
                         )}
                         <Bell size={20} className="text-gray-400 group-hover:text-[#C62222] transition-colors" />
                     </div>
+                    <Link
+                        to="/"
+                        className="p-2 bg-gray-50 hover:bg-gray-100 rounded-full text-gray-600 transition-colors border border-gray-100"
+                        title="Home"
+                        aria-label="Home"
+                    >
+                        <Home size={20} />
+                    </Link>
                     <button
                         onClick={async () => {
                             showLoaderWithDelay(600);

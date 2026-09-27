@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
+import PageNav from '../../components/ui/PageNav';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import signupImage from '../../assets/signup-image.png';
+import signupImage from '../../assets/signup-image.webp';
 import signupLogo from '../../assets/signup-logo.png';
 import mailIcon from '../../assets/mail.svg';
 import { useAuth } from '../../context/AuthContext';
@@ -109,6 +110,7 @@ const VerifyEmail: React.FC = () => {
 
   return (
     <div className="h-screen w-full overflow-hidden bg-white">
+      <PageNav fallback="/signup" />
       <div className="flex h-full">
         {/* Left Side - Image (Hidden on mobile) */}
         <div className="hidden lg:block lg:w-1/2 xl:w-[60%] h-full">
@@ -122,7 +124,7 @@ const VerifyEmail: React.FC = () => {
               {/* Header Section */}
               <div className="flex flex-col items-center text-center mb-4 sm:mb-6">
                 <Link to="/" className="block p-0 m-0 mb-6">
-                  <img src={signupLogo} alt="Night Crawlers" className="block w-[160px] sm:w-[160px] md:w-[160px] h-auto object-contain" />
+                  <img src={signupLogo} alt="Nightcrawlers" className="block w-[160px] sm:w-[160px] md:w-[160px] h-auto object-contain" />
                 </Link>
                 <h1 className="text-sm sm:text-base font-bold text-[#222222] mb-1 leading-tight">
                   Check your email
@@ -202,10 +204,10 @@ const VerifyEmail: React.FC = () => {
             </div>
           </div>
           <div className="w-full flex items-center justify-between text-xs text-[#667085] px-1">
-            <span>© Night Crawlers 2026, inc</span>
-            <a href="mailto:support@nightcrawlers.app" className="flex items-center gap-2 hover:text-[#C62222]">
+            <span>© Nightcrawlers 2026, inc</span>
+            <a href="mailto:help@nightcrawlers.com" className="flex items-center gap-2 hover:text-[#C62222]">
               <img src={mailIcon} alt="" className="w-3.5 h-3.5" />
-              support@nightcrawlers.app
+              help@nightcrawlers.com
             </a>
           </div>
         </div>

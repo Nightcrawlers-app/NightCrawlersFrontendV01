@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import PageNav from '../../components/ui/PageNav';
 import PasswordInput from '../../components/ui/PasswordInput';
 import { Link, useNavigate } from 'react-router-dom';
 import { SignInForm } from '../../types';
 import Input from '../../components/ui/Input';
-import signinImage from '../../assets/signin-image.png';
+import signinImage from '../../assets/signin-image.webp';
 import signupLogo from '../../assets/signup-logo.png';
 import helpCircle from '../../assets/help-circle.svg';
 import mailIcon from '../../assets/mail.svg';
@@ -62,6 +63,7 @@ const SignIn: React.FC = () => {
 
   return (
     <div className="h-screen w-full overflow-hidden bg-white">
+      <PageNav />
       <div className="flex h-full">
         {/* Left Side - Image (Hidden on mobile) */}
         <div className="hidden lg:block lg:w-1/2 xl:w-[60%] min-h-screen">
@@ -77,7 +79,7 @@ const SignIn: React.FC = () => {
                 <Link to="/" className="block p-0 m-0 mb-6">
                   <img
                     src={signupLogo}
-                    alt="Night Crawlers"
+                    alt="Nightcrawlers"
                     className="block w-[160px] sm:w-[160px] md:w-[160px] h-auto object-contain"
                   />
                 </Link>
@@ -196,7 +198,7 @@ const SignIn: React.FC = () => {
             </div>
           </div>
           <div className="w-full flex items-center justify-between text-xs text-[#667085] px-1">
-            <span>© Night Crawlers 2026, inc</span>
+            <span>© Nightcrawlers 2026, inc</span>
             <a href="mailto:help@nightcrawlers.com" className="flex items-center gap-2 hover:text-[#C62222]">
               <img src={mailIcon} alt="" className="w-3.5 h-3.5" />
               help@nightcrawlers.com

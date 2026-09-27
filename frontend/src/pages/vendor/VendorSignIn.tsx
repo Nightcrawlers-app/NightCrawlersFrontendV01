@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
+import PageNav from '../../components/ui/PageNav';
 import PasswordInput from '../../components/ui/PasswordInput';
 import { useNavigate, Link } from 'react-router-dom';
 import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
-import partnerLogo from '../../assets/vendor-partner-logo.svg';
+import partnerLogo from '../../assets/logo.png';
 import { signInVendor, signInRider, toErrorMessage } from '../../services/api';
 
 type LoginType = 'partner' | 'rider';
@@ -56,15 +57,17 @@ const VendorSignIn: React.FC = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-white relative font-poppins">
+      <PageNav fallback="/vendors" />
       <main className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-[560px]">
           <div className="bg-[#f7f7f7] border border-[#e8e8e8] rounded-2xl shadow-[0_12px_36px_rgba(0,0,0,0.05)] px-8 py-10 md:px-10 md:py-12">
             <div className="flex flex-col items-center gap-2 mb-6">
               <img
                 src={partnerLogo}
-                alt="Our Partners"
-                className="h-14 sm:h-16 w-auto"
+                alt="Nightcrawlers"
+                className="w-[190px] h-auto object-contain"
               />
+              <span className="text-xs font-semibold uppercase tracking-[0.2em] text-[#667085]">Partners &amp; Riders</span>
               <div className="flex p-1 bg-white border border-gray-200 rounded-lg mt-4 w-full max-w-[300px] mx-auto">
                 <button
                   type="button"
