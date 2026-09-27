@@ -48,8 +48,8 @@ interface AuthContextType {
      * { codeRequired, email } when the backend emailed a new-location code —
      * then call `verifyLogin` with that code.
      */
-    login: (email: string, password: string) => Promise<boolean | { codeRequired: true; email: string; message: string }>;
-    verifyLogin: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
+    login: (email: string, password: string, remember?: boolean) => Promise<boolean | { codeRequired: true; email: string; message: string }>;
+    verifyLogin: (email: string, code: string, remember?: boolean) => Promise<{ success: boolean; error?: string }>;
     /** Re-fetch the signed-in customer from the server (e.g. after phone verification). */
     refreshUser: () => Promise<void>;
     /**
@@ -136,11 +136,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const login = useCallback(async (
         email: string,
         password: string,
+        remember = true,
     ): Promise<boolean | { codeRequired: true; email: string; message: string }> => {
         setIsLoading(true);
         setError('');
         try {
-            const loggedIn = await signInCustomer(email, password);
+            const loggedIn = await signInCustomer(email, password, remember);
             if (!loggedIn) return false;
 
             setUser(loggedIn);
@@ -160,11 +161,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const verifyLogin = useCallback(async (
         email: string,
         code: string,
+        remember = true,
     ): Promise<{ success: boolean; error?: string }> => {
         setIsLoading(true);
         setError('');
         try {
-            setUser(await verifyCustomerLogin(email, code));
+            setUser(await verifyCustomerLogin(email, code, remember));
             await loadTransactions();
             return { success: true };
         } catch (err) {

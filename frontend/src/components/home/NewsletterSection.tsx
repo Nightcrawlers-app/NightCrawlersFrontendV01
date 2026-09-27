@@ -24,9 +24,10 @@ const NewsletterSection: React.FC = () => {
     setMessage('');
     setIsError(false);
     try {
-      await subscribeToNewsletter(formData.email);
+      const result = await subscribeToNewsletter(formData.email);
       setFormData({ email: '' });
-      setMessage("Thanks, you're on the list.");
+      // The server says whether this email was already subscribed
+      setMessage(result?.message || "Thanks, you're on the list.");
     } catch (error) {
       setIsError(true);
       setMessage(toErrorMessage(error, "Couldn't subscribe you just now. Please try again."));

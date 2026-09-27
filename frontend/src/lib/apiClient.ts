@@ -15,11 +15,18 @@ const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 
 const TOKEN_KEY = 'nc_token';
 
-/** Save (or clear, with null) the session token returned by a login endpoint. */
-export function setAuthToken(token: string | null | undefined): void {
+/**
+ * Save (or clear, with null) the session token returned by a login endpoint.
+ *   remember = true  → localStorage: stays signed in after the browser closes
+ *                      (the server makes the token last 30 days)
+ *   remember = false → sessionStorage: signed out when the browser closes
+ *                      (and the server makes the token last 1 day)
+ */
+export function setAuthToken(token: string | null | undefined, remember = true): void {
     try {
-        if (token) localStorage.setItem(TOKEN_KEY, token);
-        else localStorage.removeItem(TOKEN_KEY);
+        localStorage.removeItem(TOKEN_KEY);
+        sessionStorage.removeItem(TOKEN_KEY);
+        if (token) (remember ? localStorage : sessionStorage).setItem(TOKEN_KEY, token);
     } catch {
         // Storage blocked (private mode) — the session just won't survive a refresh.
     }
@@ -27,7 +34,7 @@ export function setAuthToken(token: string | null | undefined): void {
 
 export function getAuthToken(): string | null {
     try {
-        return localStorage.getItem(TOKEN_KEY);
+        return sessionStorage.getItem(TOKEN_KEY) ?? localStorage.getItem(TOKEN_KEY);
     } catch {
         return null;
     }

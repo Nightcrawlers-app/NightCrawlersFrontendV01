@@ -16,6 +16,7 @@ const SignIn: React.FC = () => {
     email: '',
     password: ''
   });
+  // Unticked: signed out when the browser closes. Ticked: stays signed in for 30 days.
   const [rememberMe, setRememberMe] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
@@ -38,13 +39,13 @@ const SignIn: React.FC = () => {
 
     try {
       if (codeStep) {
-        const result = await verifyLogin(codeStep.email, loginCode.trim());
+        const result = await verifyLogin(codeStep.email, loginCode.trim(), rememberMe);
         if (result.success) navigate('/user-profile');
         else setError(result.error || "That code didn't work. Please try again.");
         return;
       }
 
-      const result = await login(formData.email, formData.password);
+      const result = await login(formData.email, formData.password, rememberMe);
       if (result === true) {
         navigate('/user-profile');
       } else if (result === false) {

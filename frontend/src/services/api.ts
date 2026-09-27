@@ -196,13 +196,13 @@ export const createVendorAccount = async (input: CreateVendorInput): Promise<{ t
 };
 
 /** POST /api/vendors/login — Sign in a vendor. Resolves to null on bad credentials. */
-export const signInVendor = async (email: string, password: string): Promise<{ token: string; vendor: VendorAccount } | null> => {
+export const signInVendor = async (email: string, password: string, remember = true): Promise<{ token: string; vendor: VendorAccount } | null> => {
     const res = await apiFetchOrNull<{ token: string; vendor: VendorAccount }>('/api/vendors/login', {
         method: 'POST',
-        body: { email, password },
+        body: { email, password, remember },
     });
     if (!res) return null;
-    setAuthToken(res.token);
+    setAuthToken(res.token, remember);
     return { ...res, vendor: withId(res.vendor) };
 };
 
@@ -300,13 +300,13 @@ export const createRiderAccount = async (input: CreateRiderInput): Promise<{ tok
 };
 
 /** POST /api/riders/login — Sign in a rider. Resolves to null on bad credentials. */
-export const signInRider = async (email: string, password: string): Promise<{ token: string; rider: RiderAccount } | null> => {
+export const signInRider = async (email: string, password: string, remember = true): Promise<{ token: string; rider: RiderAccount } | null> => {
     const res = await apiFetchOrNull<{ token: string; rider: RiderAccount }>('/api/riders/login', {
         method: 'POST',
-        body: { email, password },
+        body: { email, password, remember },
     });
     if (!res) return null;
-    setAuthToken(res.token);
+    setAuthToken(res.token, remember);
     return { ...res, rider: withId(res.rider) };
 };
 
@@ -430,6 +430,7 @@ export const verifyCustomerSignup = async (
 export const signInCustomer = async (
     email: string,
     password: string,
+    remember = true,
 ): Promise<CustomerProfile | null> => {
     type LoginResponse =
         | { token: string; user: RawCustomer }
@@ -437,7 +438,7 @@ export const signInCustomer = async (
 
     let result: LoginResponse | null;
     try {
-        result = await apiFetch<LoginResponse>('/api/auth/login', { method: 'POST', body: { email, password } });
+        result = await apiFetch<LoginResponse>('/api/auth/login', { method: 'POST', body: { email, password, remember } });
     } catch (err) {
         // 401 = wrong email/password. (403 = unverified email: let that
         // message through so the user knows what to do.)
@@ -448,17 +449,17 @@ export const signInCustomer = async (
     if ('needsLocationVerification' in result) {
         throw new LoginCodeRequiredError(result.message, result.email);
     }
-    setAuthToken(result.token);
+    setAuthToken(result.token, remember);
     return mapCustomer(result.user);
 };
 
 /** POST /api/auth/verify-login — finish a new-location login with the emailed code. */
-export const verifyCustomerLogin = async (email: string, code: string): Promise<CustomerProfile> => {
+export const verifyCustomerLogin = async (email: string, code: string, remember = true): Promise<CustomerProfile> => {
     const { token, user } = await apiFetch<{ token: string; user: RawCustomer }>(
         '/api/auth/verify-login',
-        { method: 'POST', body: { email, code } },
+        { method: 'POST', body: { email, code, remember } },
     );
-    setAuthToken(token);
+    setAuthToken(token, remember);
     return mapCustomer(user);
 };
 
@@ -698,9 +699,9 @@ export const searchPlaces = (query: string, signal?: AbortSignal): Promise<Place
 export const sendContactMessage = (input: ContactMessageInput): Promise<void> =>
     apiFetch<void>('/api/contact', { method: 'POST', body: input });
 
-/** POST /api/newsletter — Subscribe an email to the marketing newsletter */
-export const subscribeToNewsletter = (email: string): Promise<void> =>
-    apiFetch<void>('/api/newsletter', { method: 'POST', body: { email } });
+/** POST /api/newsletter — subscribe. Tells you if they were already on the list. */
+export const subscribeToNewsletter = (email: string): Promise<{ message: string; alreadySubscribed: boolean }> =>
+    apiFetch<{ message: string; alreadySubscribed: boolean }>('/api/newsletter', { method: 'POST', body: { email } });
 
 // ─── Admin Actions ───────────────────────────────────────────────────────────
 
@@ -712,7 +713,8 @@ export const signInAdmin = async (email: string, password: string): Promise<Admi
         body: { email, password },
     });
     if (!res) return null;
-    setAuthToken(res.token);
+    // Admin sessions end when the browser closes (and after 8 hours on the server).
+    setAuthToken(res.token, false);
     return withId(res.admin);
 };
 

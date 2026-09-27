@@ -12,6 +12,8 @@ type LoginType = 'partner' | 'rider';
 const VendorSignIn: React.FC = () => {
   const navigate = useNavigate();
   const [loginType, setLoginType] = useState<LoginType>('partner');
+  // Unticked: signed out when the browser closes. Ticked: stays signed in for 30 days.
+  const [rememberMe, setRememberMe] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
@@ -34,14 +36,14 @@ const VendorSignIn: React.FC = () => {
     setLoading(true);
     try {
       if (loginType === 'partner') {
-        const vendor = await signInVendor(email, password);
+        const vendor = await signInVendor(email, password, rememberMe);
         if (!vendor) {
           setErrorMessage('Incorrect email or password.');
           return;
         }
         navigate('/vendor-dashboard');
       } else {
-        const rider = await signInRider(email, password);
+        const rider = await signInRider(email, password, rememberMe);
         if (!rider) {
           setErrorMessage('Incorrect email or password.');
           return;
@@ -77,7 +79,7 @@ const VendorSignIn: React.FC = () => {
                     : 'text-gray-500 hover:text-gray-900'
                     }`}
                 >
-                  Vendor
+                  Partner
                 </button>
                 <button
                   type="button"
@@ -94,7 +96,7 @@ const VendorSignIn: React.FC = () => {
 
             <div className="text-center mb-6">
               <h2 className="text-xl font-bold text-gray-900">
-                {loginType === 'partner' ? 'Vendor Login' : 'Rider Login'}
+                {loginType === 'partner' ? 'Partner Login' : 'Rider Login'}
               </h2>
               <p className="text-sm text-gray-500 mt-1">
                 Sign in to manage your {loginType === 'partner' ? 'restaurant/store' : 'deliveries'}
@@ -131,7 +133,12 @@ const VendorSignIn: React.FC = () => {
 
               <div className="flex items-center justify-between text-xs sm:text-sm text-night-gray-600">
                 <label className="flex items-center gap-2 whitespace-nowrap">
-                  <input type="checkbox" className="w-3.5 h-3.5 border border-[#d8d8d8] rounded-sm focus:ring-[#E00B0B]" />
+                  <input
+                    type="checkbox"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                    className="w-3.5 h-3.5 border border-[#d8d8d8] rounded-sm focus:ring-[#E00B0B] accent-[#E00B0B]"
+                  />
                   <span>Remember for 30 days</span>
                 </label>
                 <Link to="/forgot-password" className="text-night-red-600 hover:underline whitespace-nowrap">Forgot password?</Link>
@@ -147,7 +154,7 @@ const VendorSignIn: React.FC = () => {
             <p className="text-center text-sm text-night-gray-600 mt-7">
               Not a {loginType}?{' '}
               <Link to="/vendor-signup" className="text-night-red-600 font-semibold hover:underline">
-                Sign up as a {loginType === 'partner' ? 'Vendor' : 'Rider'}
+                Sign up as a {loginType === 'partner' ? 'Partner' : 'Rider'}
               </Link>
             </p>
           </div>

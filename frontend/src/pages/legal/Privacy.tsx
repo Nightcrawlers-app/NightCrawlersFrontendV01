@@ -52,7 +52,7 @@ const Privacy: React.FC = () => {
         },
         {
             title: '12. Contact Us',
-            content: `If you have any questions, concerns, or requests regarding this Privacy Policy or your personal data, please contact our Data Protection team at support@nightcrawlers.app, or write to us at Nightcrawlers Limited, Lekki Phase One Estate, Lekki, Lagos, Nigeria.`
+            content: `If you have any questions, concerns, or requests regarding this Privacy Policy or your personal data, please contact our Data Protection team at support@nightcrawlers.app, or write to us at Nightcrawlers Limited, Lekki Phase 1 estate, Lekki, Lagos, Nigeria.`
         },
     ];
 
