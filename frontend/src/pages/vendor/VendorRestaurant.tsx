@@ -1,4 +1,6 @@
 import React, { useEffect, useState } from 'react';
+import LocationField from '../../components/map/LocationField';
+import type { Coordinates } from '../../types/models';
 import { Link, useLocation, useParams } from 'react-router-dom';
 import Footer from '../../components/layout/Footer';
 import { Store, ChevronLeft, Upload, X, Trash2 } from 'lucide-react';
@@ -325,6 +327,10 @@ const VendorRestaurant: React.FC = () => {
     }
   };
 
+  // Map position for the store's address; starts at the saved pin, cleared if the address is retyped
+  const [editCoords, setEditCoords] = useState<Coordinates | null>(
+    store.latitude != null && store.longitude != null ? { latitude: store.latitude, longitude: store.longitude } : null,
+  );
   const [editForm, setEditForm] = useState({
     name: store.name,
     categoryInput: '',
@@ -341,6 +347,9 @@ const VendorRestaurant: React.FC = () => {
   const [editError, setEditError] = useState('');
 
   useEffect(() => {
+    setEditCoords(
+      store.latitude != null && store.longitude != null ? { latitude: store.latitude, longitude: store.longitude } : null,
+    );
     setEditForm({
       name: store.name,
       categoryInput: '',
@@ -354,7 +363,7 @@ const VendorRestaurant: React.FC = () => {
     setEditImageFile(null);
     setEditMessage('');
     setEditError('');
-  }, [store.id, store.name, store.address, store.description, store.imageUrl, store.openingTime, store.closingTime, store.categories]);
+  }, [store.id, store.name, store.address, store.description, store.imageUrl, store.openingTime, store.closingTime, store.categories, store.latitude, store.longitude]);
 
   const readFileAsDataUrl = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -463,6 +472,8 @@ const VendorRestaurant: React.FC = () => {
         name: editForm.name.trim(),
         categories: editCategories,
         address: editForm.address.trim(),
+        // Only send a pin when there is one; otherwise the server geocodes the address
+        ...(editCoords ? { lat: editCoords.latitude, lng: editCoords.longitude } : {}),
         description: editForm.description.trim(),
         imageUrl,
         openingTime: editForm.openingTime.trim() || store.openingTime,
@@ -954,12 +965,15 @@ const VendorRestaurant: React.FC = () => {
 
                 <div>
                   <label className="block text-gray-700 text-sm font-medium mb-1">Address *</label>
-                  <input
-                    name="address"
-                    value={editForm.address}
-                    onChange={handleEditChange}
-                    className="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-transparent"
-                    placeholder="123 Main Street, Downtown"
+                  <LocationField
+                    value={{ address: editForm.address, coords: editCoords }}
+                    onChange={({ address, coords }) => {
+                      setEditForm((prev) => ({ ...prev, address }));
+                      setEditCoords(coords);
+                    }}
+                    mapTitle="Where is this branch?"
+                    placeholder="e.g. 12 Aminu Kano Crescent, Wuse 2"
+                    inputClassName="w-full h-10 px-3 bg-[#F7F7F7] border border-[#EAECF0] rounded-md text-gray-700 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-[#C62222] focus:border-transparent"
                   />
                 </div>
 

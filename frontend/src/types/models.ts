@@ -108,6 +108,9 @@ export type CreateStoreInput = {
     imageUrl: string;
     openingTime?: string;
     closingTime?: string;
+    /** Exact position from the map (sent as lat/lng; the server geocodes the address otherwise). */
+    lat?: number | null;
+    lng?: number | null;
 };
 
 export type UpdateStoreInput = {
@@ -118,6 +121,9 @@ export type UpdateStoreInput = {
     imageUrl?: string;
     openingTime?: string;
     closingTime?: string;
+    /** Exact position from the map (sent as lat/lng; the server geocodes the address otherwise). */
+    lat?: number | null;
+    lng?: number | null;
 };
 
 // ─── Menu Items ──────────────────────────────────────────────────────────────

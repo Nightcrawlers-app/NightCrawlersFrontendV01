@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
+import LocationField from '../../components/map/LocationField';
+import type { Coordinates } from '../../types/models';
 import ApprovalChecklist from '../../components/ui/ApprovalChecklist';
 import { useNavigate } from 'react-router-dom';
 import { useGlobalLoader } from '../../context/GlobalLoaderContext';
@@ -38,6 +40,10 @@ const VendorDashboard: React.FC = () => {
   const [vendor, setVendor] = useState<VendorAccount | null>(null);
   const [stores, setStores] = useState<VendorStore[]>([]);
   const [earnings, setEarnings] = useState<EarningsPeriod | null>(null);
+  // Earnings stay hidden until the vendor's bank account is verified.
+  const [earningsLocked, setEarningsLocked] = useState(false);
+  // Map position for the store being added (null = let the server geocode the text)
+  const [storeCoords, setStoreCoords] = useState<Coordinates | null>(null);
   const [storeEarnings, setStoreEarnings] = useState<StoreEarnings[]>([]);
   const [todayOrderCount, setTodayOrderCount] = useState(0);
   const [activeOrdersCount, setActiveOrdersCount] = useState(0);
@@ -62,8 +68,11 @@ const VendorDashboard: React.FC = () => {
   const cancelledRef = useRef(false);
 
   const loadDashboard = useCallback(async (vendorId: string) => {
-    // Independent requests, so fire them together rather than in sequence.
-    const [vendorStores, vendorEarnings, perStoreEarnings, allOrders] = await Promise.all([
+    // Independent requests, fired together. allSettled (not all): earnings are
+    // locked until the bank account is verified, and with Promise.all that one
+    // refusal threw everything away — the vendor's stores vanished and the
+    // "Add Restaurant" form showed instead.
+    const [storesRes, earningsRes, perStoreRes, ordersRes] = await Promise.allSettled([
       getStoresForVendor(vendorId),
       getVendorEarnings(vendorId),
       getVendorStoreEarnings(vendorId),
@@ -72,9 +81,21 @@ const VendorDashboard: React.FC = () => {
 
     if (cancelledRef.current) return;
 
+    if (storesRes.status === 'rejected') {
+      // Without the store list the page can't work — say so instead of
+      // pretending they have no stores.
+      throw storesRes.reason;
+    }
+    const vendorStores = storesRes.value;
+    const allOrders = ordersRes.status === 'fulfilled' ? ordersRes.value : [];
+
     setStores(vendorStores);
-    setEarnings(vendorEarnings);
-    setStoreEarnings(perStoreEarnings);
+    setEarnings(earningsRes.status === 'fulfilled' ? earningsRes.value : null);
+    setEarningsLocked(
+      earningsRes.status === 'rejected' &&
+        Boolean((earningsRes.reason as { body?: { needsBankVerification?: boolean } })?.body?.needsBankVerification),
+    );
+    setStoreEarnings(perStoreRes.status === 'fulfilled' ? perStoreRes.value : []);
 
     // Count today's orders (all statuses)
     const todayStart = new Date();
@@ -329,6 +350,8 @@ const VendorDashboard: React.FC = () => {
         name: form.name,
         categories: categoryTags,
         address: form.address,
+        lat: storeCoords?.latitude ?? null,
+        lng: storeCoords?.longitude ?? null,
         description: form.description,
         imageUrl,
         openingTime: form.openingTime,
@@ -346,6 +369,7 @@ const VendorDashboard: React.FC = () => {
         imageUrl: '',
       });
       setCategoryTags([]);
+      setStoreCoords(null);
       setImageFile(null);
 
       navigate(`/vendor-dashboard/restaurant/${created.id}`, { state: created });
@@ -417,8 +441,17 @@ const VendorDashboard: React.FC = () => {
                 </div>
                 <span className="text-xs font-bold uppercase tracking-wider text-red-100">Today's Earnings</span>
               </div>
-              <p className="text-3xl font-bold tracking-tight">₦{(earnings?.today ?? 0).toLocaleString()}</p>
-              <p className="text-xs text-red-100 mt-1">From delivered orders today</p>
+              {earningsLocked ? (
+                <>
+                  <p className="text-lg font-bold tracking-tight">Locked</p>
+                  <p className="text-xs text-red-100 mt-1">Verify your bank account to see earnings</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-3xl font-bold tracking-tight">₦{(earnings?.today ?? 0).toLocaleString()}</p>
+                  <p className="text-xs text-red-100 mt-1">From delivered orders today</p>
+                </>
+              )}
             </div>
 
             {/* Orders Card */}
@@ -585,12 +618,15 @@ const VendorDashboard: React.FC = () => {
 
             <div>
               <label className="block text-xs font-medium text-[#374151] mb-1">Address *</label>
-              <input
-                name="address"
-                value={form.address}
-                onChange={handleChange}
-                className="w-full h-11 px-3 bg-[#F7F7F7] border border-[#E5E7EB] rounded-sm text-sm text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#C62222]"
-                placeholder="123 Main Street, Downtown"
+              <LocationField
+                value={{ address: form.address, coords: storeCoords }}
+                onChange={({ address, coords }) => {
+                  setForm((prev) => ({ ...prev, address }));
+                  setStoreCoords(coords);
+                }}
+                mapTitle="Where is this branch?"
+                placeholder="e.g. 12 Aminu Kano Crescent, Wuse 2"
+                inputClassName="w-full h-11 px-3 bg-[#F7F7F7] border border-[#E5E7EB] rounded-sm text-sm text-[#111827] focus:outline-none focus:ring-2 focus:ring-[#C62222]"
                 required
               />
             </div>
