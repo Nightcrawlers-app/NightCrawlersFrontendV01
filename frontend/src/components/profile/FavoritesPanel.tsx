@@ -64,7 +64,7 @@ const FavoriteOrderRow: React.FC<{ order: Order }> = ({ order }) => {
             </button>
             <button
                 type="button"
-                onClick={() => reorder(order.id, { storeId: order.storeId, items: order.items })}
+                onClick={() => reorder(order.id, { storeId: order.storeId, items: order.items, paymentMethod: order.paymentMethod })}
                 disabled={reorderingId === order.id}
                 className="flex items-center gap-1.5 px-3 py-2 rounded-lg bg-[#E00B0B] text-white text-xs font-semibold hover:bg-[#B80909] disabled:opacity-60 flex-shrink-0"
             >

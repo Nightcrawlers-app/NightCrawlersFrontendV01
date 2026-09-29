@@ -7,6 +7,8 @@ import { getMenuItemsForStore, getStoreById, toErrorMessage } from '../services/
 type PastOrder = {
     storeId?: string | null;
     items: { menuItemId?: string | null; name: string; quantity: number }[];
+    /** How it was paid, so checkout starts on the same method. */
+    paymentMethod?: string;
 };
 
 /**
@@ -67,7 +69,10 @@ export function useReorder() {
                         ...(previous.length && { action: { label: 'Undo', onClick: () => replaceCart(previous) } }),
                     },
                 );
-                navigate('/order-summary');
+                // Checkout starts on the same payment method as last time (it
+                // used to always start on cash, so a paid-online order placed
+                // again skipped Paystack without the customer noticing).
+                navigate('/order-summary', { state: { payWith: order.paymentMethod === 'online' ? 'online' : 'cash' } });
             } catch (err) {
                 toast.error(toErrorMessage(err, "Couldn't load that order. Please try again."), { id: 'reorder' });
             } finally {

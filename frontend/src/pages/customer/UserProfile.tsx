@@ -795,7 +795,7 @@ const UserProfile: React.FC = () => {
                                                                     <div className="mt-3 flex flex-wrap items-center gap-2">
                                                                         <button
                                                                             type="button"
-                                                                            onClick={() => reorder(txn.id, { storeId: txn.storeId, items: txn.items })}
+                                                                            onClick={() => reorder(txn.id, { storeId: txn.storeId, items: txn.items, paymentMethod: txn.paymentMethod })}
                                                                             disabled={!txn.storeId || reorderingId === txn.id}
                                                                             className="flex items-center gap-1.5 px-3 py-2 bg-[#E00B0B] text-white text-xs font-semibold rounded-lg hover:bg-[#B80909] transition-colors disabled:opacity-60"
                                                                         >

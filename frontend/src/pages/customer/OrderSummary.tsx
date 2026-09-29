@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { ChevronLeft, Trash2, Plus, Minus, CreditCard, MapPin, Clock, CheckCircle, Loader2, Tag, Banknote, Gift, MessageSquare, Lock } from 'lucide-react';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
@@ -35,6 +35,9 @@ import type { PickedLocation } from '../../components/map/MapPicker';
 // choice on this screen; see the Payments section of BACKEND_API_GUIDE.md.
 // (Online payment via Paystack is offered when the server has it switched on.)
 
+/** Remembers the payment option this customer last picked (this device only). */
+const LAST_PAY_KEY = 'nc_last_pay_choice';
+
 const OrderSummary: React.FC = () => {
     const navigate = useNavigate();
     const { cartItems, removeFromCart, updateQuantity, cartTotal, clearCart, replaceCart } = useCart();
@@ -45,8 +48,38 @@ const OrderSummary: React.FC = () => {
     // How they pay. 'card' = Paystack's card form in a popup, without leaving
     // the app. 'paystack' = Paystack's own page (card, transfer, USSD…).
     type PayChoice = 'cash' | 'card' | 'paystack';
-    const [payChoice, setPayChoice] = useState<PayChoice>('cash');
-    const paymentMethod: PaymentMethod = payChoice === 'cash' ? 'cash_on_delivery' : 'online';
+    // The customer always picks how to pay: nothing is selected when checkout
+    // opens, and the order button waits until they choose. (Pre-selecting led
+    // to paid-online orders being re-ordered as cash without anyone noticing.)
+    // We only *suggest*: "Order again" marks the method that order used, and
+    // otherwise the one they picked last time on this device gets a
+    // "Last used" tag.
+    const location = useLocation();
+    const [chosenPay, setPayChoiceState] = useState<PayChoice | null>(null);
+    const suggestedPay: { choice: PayChoice; label: string } | null = (() => {
+        const fromReorder = (location.state as { payWith?: string } | null)?.payWith;
+        if (fromReorder === 'online') return { choice: 'paystack', label: 'Used for this order' };
+        if (fromReorder === 'cash') return { choice: 'cash', label: 'Used for this order' };
+        try {
+            const saved = localStorage.getItem(LAST_PAY_KEY) as PayChoice | null;
+            if (saved === 'cash' || saved === 'card' || saved === 'paystack') return { choice: saved, label: 'Last used' };
+        } catch {
+            // storage blocked — no suggestion
+        }
+        return null;
+    })();
+    // With online payment switched off, cash is the only option, so there's
+    // nothing to choose — it's selected for them.
+    const payChoice: PayChoice | null = config.onlinePayments ? chosenPay : 'cash';
+    const setPayChoice = (c: PayChoice) => {
+        setPayChoiceState(c);
+        try {
+            localStorage.setItem(LAST_PAY_KEY, c);
+        } catch {
+            // storage blocked — the choice just won't be remembered
+        }
+    };
+    const paymentMethod: PaymentMethod | null = payChoice === null ? null : payChoice === 'cash' ? 'cash_on_delivery' : 'online';
     const [redirectingToPay, setRedirectingToPay] = useState(false);
     // What the full-screen payment message says
     const [payStage, setPayStage] = useState<'starting' | 'card' | 'redirect'>('starting');
@@ -285,6 +318,11 @@ const OrderSummary: React.FC = () => {
     };
 
     const handlePlaceOrder = async () => {
+        if (!paymentMethod) {
+            setSubmitError('Choose how you want to pay.');
+            document.getElementById('payment-options')?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            return;
+        }
         if (cartItems.length === 0 || isSubmitting) return;
 
         // An order belongs to exactly one store. The cart doesn't enforce that,
@@ -901,8 +939,10 @@ const OrderSummary: React.FC = () => {
                             </div>
 
                             {/* Payment method */}
-                            <div className="mb-6 space-y-2">
-                                <p className="text-[11px] font-semibold uppercase tracking-wider text-[#98A2B3]">Payment</p>
+                            <div id="payment-options" className="mb-6 space-y-2 scroll-mt-24" role="group" aria-labelledby="payment-label">
+                                <p id="payment-label" className="text-[11px] font-semibold uppercase tracking-wider text-[#98A2B3]">
+                                    How do you want to pay?{config.onlinePayments && !payChoice && <span className="normal-case tracking-normal font-normal text-[#E00B0B]"> Choose one</span>}
+                                </p>
                                 {([
                                     { value: 'cash', icon: Banknote, title: formatPaymentMethod('cash_on_delivery'), detail: 'Pay the rider when your order arrives.' },
                                     ...(config.onlinePayments
@@ -920,13 +960,18 @@ const OrderSummary: React.FC = () => {
                                         className={`w-full text-left p-3 rounded-lg border text-xs transition-all flex items-start gap-2.5 ${payChoice === opt.value ? 'border-[#E00B0B] bg-[#FFF5F5]' : 'border-gray-200 hover:border-[#E00B0B]/40'}`}
                                     >
                                         <opt.icon size={14} className={`mt-0.5 flex-shrink-0 ${payChoice === opt.value ? 'text-[#E00B0B]' : 'text-gray-400'}`} />
-                                        <span>
-                                            <span className="block font-semibold text-[#222222]">{opt.title}</span>
+                                        <span className="flex-1">
+                                            <span className="flex items-center gap-2 font-semibold text-[#222222]">
+                                                {opt.title}
+                                                {config.onlinePayments && suggestedPay?.choice === opt.value && (
+                                                    <span className="text-[10px] font-medium text-[#667085] bg-gray-100 rounded-full px-2 py-0.5">{suggestedPay.label}</span>
+                                                )}
+                                            </span>
                                             <span className="block text-[#667085]">{opt.detail}</span>
                                         </span>
                                     </button>
                                 ))}
-                                {config.onlinePayments && config.paystackTestMode && payChoice !== 'cash' && (
+                                {config.onlinePayments && config.paystackTestMode && payChoice && payChoice !== 'cash' && (
                                     <p className="text-[11px] text-amber-700">Test mode: no real money is charged.</p>
                                 )}
                             </div>
@@ -981,7 +1026,7 @@ const OrderSummary: React.FC = () => {
 
                             <button
                                 onClick={handlePlaceOrder}
-                                disabled={isSubmitting || redirectingToPay || quoting || !orderQuote || !user || !user.phone || user.addresses.length === 0}
+                                disabled={isSubmitting || redirectingToPay || quoting || !orderQuote || !user || !user.phone || user.addresses.length === 0 || !paymentMethod}
                                 className="w-full h-12 bg-[#222222] text-white font-semibold rounded-lg hover:bg-black transition-all shadow-md hover:shadow-lg flex items-center justify-center gap-2 mb-4 group disabled:opacity-70 disabled:cursor-not-allowed"
                             >
                                 {isSubmitting || redirectingToPay ? (
@@ -991,7 +1036,7 @@ const OrderSummary: React.FC = () => {
                                     </>
                                 ) : (
                                     <>
-                                        {paymentMethod === 'online' ? `Pay ₦${finalTotal.toLocaleString()}` : 'Place Order'}
+                                        {!paymentMethod ? 'Choose how to pay' : paymentMethod === 'online' ? `Pay ₦${finalTotal.toLocaleString()}` : 'Place Order'}
                                         <ChevronLeft size={16} className="rotate-180 group-hover:translate-x-1 transition-transform" />
                                     </>
                                 )}
