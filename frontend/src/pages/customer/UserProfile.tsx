@@ -16,6 +16,12 @@ import { formatPaymentMethod, toErrorMessage } from '../../services/api';
 import { compressImage } from '../../lib/imageUtils';
 import MapPicker from '../../components/map/MapPicker';
 import type { PickedLocation } from '../../components/map/MapPicker';
+import CurrentOrders, { activeOrdersOf } from '../../components/profile/CurrentOrders';
+import FavoritesPanel from '../../components/profile/FavoritesPanel';
+import RewardsPanel from '../../components/profile/RewardsPanel';
+import OrderFavoriteButton from '../../components/profile/OrderFavoriteButton';
+import { useReorder } from '../../hooks/useReorder';
+import { Gift, Loader2 } from 'lucide-react';
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; icon: React.ReactNode }> = {
     'delivered': { label: 'Delivered', color: 'text-emerald-700', bg: 'bg-emerald-50 border-emerald-200', icon: <CheckCircle2 size={14} /> },
@@ -25,14 +31,27 @@ const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string; 
     'refunded': { label: 'Refunded', color: 'text-purple-700', bg: 'bg-purple-50 border-purple-200', icon: <RotateCcw size={14} /> },
 };
 
-type TabType = 'profile' | 'transactions' | 'addresses' | 'settings';
+type TabType = 'profile' | 'transactions' | 'favorites' | 'rewards' | 'addresses' | 'settings';
+const TAB_IDS: TabType[] = ['profile', 'transactions', 'favorites', 'rewards', 'addresses', 'settings'];
 
 const UserProfile: React.FC = () => {
     const { user, transactions, isAuthenticated, isInitializing, logout, updateProfile,
         addAddress, updateAddress, deleteAddress, setDefaultAddress,
         changePassword, deleteAccount } = useAuth();
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<TabType>('profile');
+    // ?tab=rewards opens a tab directly (links from toasts, emails, the menu).
+    const [activeTab, setActiveTabState] = useState<TabType>(() => {
+        const t = new URLSearchParams(window.location.search).get('tab') as TabType | null;
+        return t && TAB_IDS.includes(t) ? t : 'profile';
+    });
+    const setActiveTab = (t: TabType) => {
+        setActiveTabState(t);
+        const url = new URL(window.location.href);
+        if (t === 'profile') url.searchParams.delete('tab');
+        else url.searchParams.set('tab', t);
+        window.history.replaceState(window.history.state, '', url.toString());
+    };
+    const { reorder, reorderingId } = useReorder();
     const { showLoaderWithDelay } = useGlobalLoader();
     const [expandedTxn, setExpandedTxn] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
@@ -88,6 +107,9 @@ const UserProfile: React.FC = () => {
     }, [user]);
 
     if (!user) return null;
+
+    const activeOrders = activeOrdersOf(transactions);
+    const favoritesCount = user.favoriteStores.length + user.favoriteOrders.length;
 
     const initials = getInitials(user.firstName, user.lastName);
 
@@ -269,7 +291,9 @@ const UserProfile: React.FC = () => {
 
     const SIDEBAR_TABS: { id: TabType; label: string; icon: React.ReactNode }[] = [
         { id: 'profile', label: 'My Profile', icon: <User size={18} /> },
-        { id: 'transactions', label: 'Transactions', icon: <CreditCard size={18} /> },
+        { id: 'transactions', label: 'Orders', icon: <CreditCard size={18} /> },
+        { id: 'favorites', label: 'Favourites', icon: <Heart size={18} /> },
+        { id: 'rewards', label: 'Rewards', icon: <Gift size={18} /> },
         { id: 'addresses', label: 'Addresses', icon: <MapPin size={18} /> },
         { id: 'settings', label: 'Settings', icon: <Bell size={18} /> },
     ];
@@ -309,17 +333,29 @@ const UserProfile: React.FC = () => {
                             </p>
                         </div>
                         <div className="grid grid-cols-3 gap-3 sm:gap-4 w-full sm:w-auto">
-                            <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 text-center border border-white/10">
-                                <p className="text-white/50 text-[10px] font-medium uppercase tracking-wider mb-0.5">Orders</p>
-                                <p className="text-white text-lg sm:text-xl font-bold">{transactions.length}</p>
-                            </div>
+                            {/* Orders: shows what's on its way right now when there is something */}
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    if (activeOrders.length) {
+                                        setActiveTab('profile');
+                                        window.setTimeout(() => document.getElementById('current-orders')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+                                    } else {
+                                        setActiveTab('transactions');
+                                    }
+                                }}
+                                className={`backdrop-blur-sm rounded-xl px-4 py-3 text-center border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-white ${activeOrders.length ? 'bg-[#E00B0B]/40 border-white/30 hover:bg-[#E00B0B]/60' : 'bg-white/10 border-white/10 hover:bg-white/20'}`}
+                            >
+                                <p className="text-white/70 text-[10px] font-medium uppercase tracking-wider mb-0.5">{activeOrders.length ? 'Current' : 'Orders'}</p>
+                                <p className="text-white text-lg sm:text-xl font-bold">{activeOrders.length || transactions.length}</p>
+                            </button>
                             <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 text-center border border-white/10">
                                 <p className="text-white/50 text-[10px] font-medium uppercase tracking-wider mb-0.5">Spent</p>
                                 <p className="text-white text-lg sm:text-xl font-bold">₦{(totalSpent / 1000).toFixed(1)}k</p>
                             </div>
                             <div className="bg-white/10 backdrop-blur-sm rounded-xl px-4 py-3 text-center border border-white/10">
-                                <p className="text-white/50 text-[10px] font-medium uppercase tracking-wider mb-0.5">Favorites</p>
-                                <p className="text-white text-lg sm:text-xl font-bold">{user.favoriteVendors.length}</p>
+                                <p className="text-white/50 text-[10px] font-medium uppercase tracking-wider mb-0.5">Favourites</p>
+                                <p className="text-white text-lg sm:text-xl font-bold">{favoritesCount}</p>
                             </div>
                         </div>
                     </div>
@@ -364,6 +400,9 @@ const UserProfile: React.FC = () => {
                         {/* ================= PROFILE TAB ================= */}
                         {activeTab === 'profile' && (
                             <div className="space-y-6 animate-[fadeIn_0.3s_ease-out]">
+                                {/* What's on its way right now */}
+                                <CurrentOrders orders={activeOrders} />
+
                                 {/* Avatar Upload Section */}
                                 <div className="bg-white rounded-2xl shadow-sm border border-gray-100/80 p-6 sm:p-8">
                                     <h2 className="text-lg font-bold text-gray-900 mb-1">Profile Picture</h2>
@@ -517,7 +556,9 @@ const UserProfile: React.FC = () => {
                                             <ShoppingBag size={16} className="text-[#E00B0B]" />
                                         </div>
                                         <p className="text-lg font-bold text-gray-900">{transactions.length}</p>
-                                        <p className="text-[11px] text-gray-400">Total Orders</p>
+                                        <p className="text-[11px] text-gray-400">
+                                            Total Orders{activeOrders.length ? ` (${activeOrders.length} in progress)` : ''}
+                                        </p>
                                     </div>
                                     <div className="bg-white rounded-xl p-4 border border-gray-100/80 shadow-sm hover:shadow-md transition-shadow duration-300">
                                         <div className="w-9 h-9 rounded-lg bg-emerald-50 flex items-center justify-center mb-3">
@@ -530,8 +571,8 @@ const UserProfile: React.FC = () => {
                                         <div className="w-9 h-9 rounded-lg bg-amber-50 flex items-center justify-center mb-3">
                                             <Heart size={16} className="text-amber-600" />
                                         </div>
-                                        <p className="text-lg font-bold text-gray-900">{user.favoriteVendors.length}</p>
-                                        <p className="text-[11px] text-gray-400">Favorite Vendors</p>
+                                        <p className="text-lg font-bold text-gray-900">{user.favoriteStores.length}</p>
+                                        <p className="text-[11px] text-gray-400">Favourite Stores</p>
                                     </div>
                                     <div className="bg-white rounded-xl p-4 border border-gray-100/80 shadow-sm hover:shadow-md transition-shadow duration-300">
                                         <div className="w-9 h-9 rounded-lg bg-blue-50 flex items-center justify-center mb-3">
@@ -542,22 +583,35 @@ const UserProfile: React.FC = () => {
                                     </div>
                                 </div>
 
-                                {/* Favorite Vendors */}
-                                {user.favoriteVendors.length > 0 && (
-                                    <div className="bg-white rounded-2xl shadow-sm border border-gray-100/80 p-6">
-                                        <h3 className="text-sm font-bold text-gray-900 mb-4 flex items-center gap-2">
-                                            <Heart size={16} className="text-[#E00B0B]" />
-                                            Favorite Vendors
-                                        </h3>
-                                        <div className="flex flex-wrap gap-2">
-                                            {user.favoriteVendors.map(vendor => (
-                                                <span key={vendor} className="px-3 py-1.5 bg-gray-50 border border-gray-100 rounded-full text-xs font-medium text-gray-700 hover:border-[#E00B0B] hover:text-[#E00B0B] transition-colors cursor-pointer">
-                                                    {vendor}
-                                                </span>
-                                            ))}
-                                        </div>
-                                    </div>
-                                )}
+                                {/* Shortcuts to favourites and rewards */}
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('favorites')}
+                                        className="text-left bg-white rounded-2xl shadow-sm border border-gray-100/80 p-5 hover:border-[#E00B0B]/40 transition-colors"
+                                    >
+                                        <Heart size={18} className="text-[#E00B0B] mb-2" />
+                                        <p className="text-sm font-bold text-gray-900">Favourites</p>
+                                        <p className="text-xs text-gray-400">
+                                            {favoritesCount
+                                                ? `${user.favoriteStores.length} ${user.favoriteStores.length === 1 ? 'store' : 'stores'} and ${user.favoriteOrders.length} ${user.favoriteOrders.length === 1 ? 'order' : 'orders'} saved`
+                                                : 'Save stores and orders you come back to'}
+                                        </p>
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={() => setActiveTab('rewards')}
+                                        className="text-left bg-white rounded-2xl shadow-sm border border-gray-100/80 p-5 hover:border-[#E00B0B]/40 transition-colors"
+                                    >
+                                        <Gift size={18} className="text-[#E00B0B] mb-2" />
+                                        <p className="text-sm font-bold text-gray-900">Rewards</p>
+                                        <p className="text-xs text-gray-400">
+                                            {user.rewards.points.toLocaleString()} points
+                                            {user.rewards.freeDeliveries ? `, ${user.rewards.freeDeliveries} free ${user.rewards.freeDeliveries === 1 ? 'delivery' : 'deliveries'}` : ''}
+                                            {user.rewards.deliveryCredit ? `, ₦${user.rewards.deliveryCredit.toLocaleString()} credit` : ''}
+                                        </p>
+                                    </button>
+                                </div>
                             </div>
                         )}
 
@@ -721,12 +775,22 @@ const UserProfile: React.FC = () => {
                                                                     </div>
                                                                 )}
                                                                 {txn.status === 'delivered' && (
-                                                                    <div className="mt-3 flex items-center gap-2">
-                                                                        <button className="flex items-center gap-1.5 px-3 py-2 bg-[#E00B0B] text-white text-xs font-semibold rounded-lg hover:bg-[#B80909] transition-colors">
-                                                                            <RotateCcw size={12} />
-                                                                            Reorder
+                                                                    <div className="mt-3 flex flex-wrap items-center gap-2">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => reorder(txn.id, { storeId: txn.storeId, items: txn.items })}
+                                                                            disabled={!txn.storeId || reorderingId === txn.id}
+                                                                            className="flex items-center gap-1.5 px-3 py-2 bg-[#E00B0B] text-white text-xs font-semibold rounded-lg hover:bg-[#B80909] transition-colors disabled:opacity-60"
+                                                                        >
+                                                                            {reorderingId === txn.id ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
+                                                                            Order again
                                                                         </button>
-                                                                        <button className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 text-gray-600 text-xs font-medium rounded-lg hover:bg-gray-100 transition-colors border border-gray-100">
+                                                                        <OrderFavoriteButton orderId={txn.id} />
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => navigate(`/orders/${txn.id}`)}
+                                                                            className="flex items-center gap-1.5 px-3 py-2 bg-gray-50 text-gray-600 text-xs font-medium rounded-lg hover:bg-gray-100 transition-colors border border-gray-100"
+                                                                        >
                                                                             <Eye size={12} />
                                                                             Receipt
                                                                         </button>
@@ -741,6 +805,14 @@ const UserProfile: React.FC = () => {
                                     )}
                                 </div>
                             </div>
+                        )}
+
+                        {activeTab === 'favorites' && (
+                            <div className="animate-[fadeIn_0.3s_ease-out]"><FavoritesPanel /></div>
+                        )}
+
+                        {activeTab === 'rewards' && (
+                            <div className="animate-[fadeIn_0.3s_ease-out]"><RewardsPanel /></div>
                         )}
 
                         {/* ================= ADDRESSES TAB ================= */}

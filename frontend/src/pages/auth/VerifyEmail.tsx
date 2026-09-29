@@ -5,6 +5,7 @@ import signupImage from '../../assets/signup-image.webp';
 import signupLogo from '../../assets/logo.svg';
 import mailIcon from '../../assets/mail.svg';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../../context/ToastContext';
 
 const CODE_LENGTH = 6;
 const RESEND_COOLDOWN_SECONDS = 30;
@@ -13,6 +14,7 @@ const VerifyEmail: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { verifySignup, resendSignupCode } = useAuth();
+  const toast = useToast();
 
   // The email comes from SignUp's navigate(..., { state: { email } }).
   // If someone lands here directly (refresh, back button, bookmarked link)
@@ -84,6 +86,7 @@ const VerifyEmail: React.FC = () => {
     try {
       const result = await verifySignup(email, code);
       if (result.success) {
+        toast.success("You're in. Welcome to Nightcrawlers!", { id: 'session' });
         navigate('/user-profile');
       } else {
         setError(result.error || 'That code didn\'t work. Please try again.');
@@ -204,7 +207,7 @@ const VerifyEmail: React.FC = () => {
             </div>
           </div>
           <div className="w-full flex items-center justify-between text-xs text-[#667085] px-1">
-            <span>© Nightcrawlers 2026, inc</span>
+            <span>© 2026 Nightcrawlers Limited</span>
             <a href="mailto:help@nightcrawlers.com" className="flex items-center gap-2 hover:text-[#E00B0B]">
               <img src={mailIcon} alt="" className="w-3.5 h-3.5" />
               help@nightcrawlers.com

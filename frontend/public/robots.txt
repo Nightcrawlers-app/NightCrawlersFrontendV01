@@ -1,0 +1,15 @@
+# Nightcrawlers — https://nightcrawlers.app
+User-agent: *
+Allow: /
+# Private pages (also marked noindex on the page itself)
+Disallow: /user-profile
+Disallow: /order-summary
+Disallow: /payment/
+Disallow: /orders/
+Disallow: /admin
+Disallow: /admin-dashboard
+Disallow: /admin-login
+Disallow: /vendor-dashboard
+Disallow: /rider-dashboard
+
+Sitemap: https://nightcrawlers.app/sitemap.xml

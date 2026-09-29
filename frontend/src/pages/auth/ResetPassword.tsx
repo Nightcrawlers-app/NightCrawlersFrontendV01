@@ -153,7 +153,7 @@ const ResetPassword: React.FC = () => {
           </div>
 
           <div className="w-full flex items-center justify-between text-xs text-[#667085] px-1">
-            <span>© Nightcrawlers 2026, inc</span>
+            <span>© 2026 Nightcrawlers Limited</span>
             <a href="mailto:help@nightcrawlers.app" className="flex items-center gap-2 hover:text-[#E00B0B]">
               <img src={mailIcon} alt="" className="w-3.5 h-3.5" />
               help@nightcrawlers.app

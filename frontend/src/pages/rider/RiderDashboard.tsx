@@ -492,7 +492,8 @@ const RiderDashboard: React.FC = () => {
                                             <h4 className="font-bold text-base">Order #{order.id.slice(-6)}</h4>
                                             <p className="text-xs text-red-100/80">{order.storeName} • {order.items.length} items</p>
                                         </div>
-                                        <span className="font-bold text-lg">₦{(order.totalAmount + order.deliveryFee).toLocaleString()}</span>
+                                        {/* What the customer pays — after any promo or reward. Collect this on cash orders. */}
+                                        <span className="font-bold text-lg" title="Customer pays">₦{(order.totalPaid ?? order.totalAmount + order.deliveryFee).toLocaleString()}</span>
                                     </div>
 
                                     <div className="bg-black/20 backdrop-blur-sm rounded-xl p-3 mb-3 border border-white/5">
@@ -504,6 +505,12 @@ const RiderDashboard: React.FC = () => {
                                             <Phone size={14} className="text-red-200" />
                                             <span>{order.customerPhone}</span>
                                         </div>
+                                        {order.noteForRider && (
+                                            <div className="mt-2 pt-2 border-t border-white/10 text-sm">
+                                                <p className="text-[11px] font-semibold text-red-100/80">Note from the customer</p>
+                                                <p className="whitespace-pre-line break-words">{order.noteForRider}</p>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {(() => {

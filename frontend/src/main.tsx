@@ -6,17 +6,20 @@ import { CartProvider } from './context/CartContext'
 import { AuthProvider } from './context/AuthContext'
 import { DeliveryLocationProvider } from './context/DeliveryLocationContext'
 import { PromotionProvider } from './context/PromotionContext'
+import { ToastProvider } from './context/ToastContext'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <AuthProvider>
-      <DeliveryLocationProvider>
-        <CartProvider>
-          <PromotionProvider>
-            <App />
-          </PromotionProvider>
-        </CartProvider>
-      </DeliveryLocationProvider>
-    </AuthProvider>
+    <ToastProvider>
+      <AuthProvider>
+        <DeliveryLocationProvider>
+          <CartProvider>
+            <PromotionProvider>
+              <App />
+            </PromotionProvider>
+          </CartProvider>
+        </DeliveryLocationProvider>
+      </AuthProvider>
+    </ToastProvider>
   </StrictMode>,
 )

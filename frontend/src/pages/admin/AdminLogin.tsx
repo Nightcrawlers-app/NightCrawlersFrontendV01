@@ -7,9 +7,11 @@ import Button from '../../components/ui/Button';
 import logo from '../../assets/logo.svg';
 import { signInAdmin, toErrorMessage } from '../../services/api';
 import { ShieldCheck, ArrowRight } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
 
 const AdminLogin: React.FC = () => {
     const navigate = useNavigate();
+    const toast = useToast();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -29,11 +31,15 @@ const AdminLogin: React.FC = () => {
             const admin = await signInAdmin(email, password);
             if (!admin) {
                 setErrorMessage('Access Denied: Invalid credentials.');
+                toast.error('Sign-in failed: wrong email or password.', { id: 'session' });
                 return;
             }
+            toast.success('Signed in.', { id: 'session' });
             navigate('/admin-dashboard');
         } catch (error) {
-            setErrorMessage(toErrorMessage(error, 'Could not sign in. Please try again.'));
+            const message = toErrorMessage(error, 'Could not sign in. Please try again.');
+            setErrorMessage(message);
+            toast.error(`Sign-in failed: ${message}`, { id: 'session' });
         } finally {
             setLoading(false);
         }

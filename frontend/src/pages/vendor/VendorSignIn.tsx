@@ -6,11 +6,13 @@ import Input from '../../components/ui/Input';
 import Button from '../../components/ui/Button';
 import partnerLogo from '../../assets/logo.svg';
 import { signInVendor, signInRider, toErrorMessage } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 
 type LoginType = 'partner' | 'rider';
 
 const VendorSignIn: React.FC = () => {
   const navigate = useNavigate();
+  const toast = useToast();
   const [loginType, setLoginType] = useState<LoginType>('partner');
   // Unticked: signed out when the browser closes. Ticked: stays signed in for 30 days.
   const [rememberMe, setRememberMe] = useState(false);
@@ -39,19 +41,25 @@ const VendorSignIn: React.FC = () => {
         const vendor = await signInVendor(email, password, rememberMe);
         if (!vendor) {
           setErrorMessage('Incorrect email or password.');
+          toast.error('Sign-in failed: wrong email or password.', { id: 'session' });
           return;
         }
+        toast.success('Signed in. Welcome back!', { id: 'session' });
         navigate('/vendor-dashboard');
       } else {
         const rider = await signInRider(email, password, rememberMe);
         if (!rider) {
           setErrorMessage('Incorrect email or password.');
+          toast.error('Sign-in failed: wrong email or password.', { id: 'session' });
           return;
         }
+        toast.success('Signed in. Ride safe tonight!', { id: 'session' });
         navigate('/rider-dashboard');
       }
     } catch (error) {
-      setErrorMessage(toErrorMessage(error, 'Could not sign in. Please try again.'));
+      const message = toErrorMessage(error, 'Could not sign in. Please try again.');
+      setErrorMessage(message);
+      toast.error(`Sign-in failed: ${message}`, { id: 'session' });
     } finally {
       setLoading(false);
     }

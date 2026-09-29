@@ -18,6 +18,8 @@ import {
     LoginCodeRequiredError,
     toErrorMessage,
 } from '../services/api';
+import { SESSION_EXPIRED_EVENT } from '../lib/apiClient';
+import { emitToast } from '../lib/toastBus';
 import type {
     CustomerProfile,
     UserAddress as UserAddressModel,
@@ -40,6 +42,10 @@ interface AuthContextType {
     isLoading: boolean;
     /** True until the initial "am I signed in?" check completes. Guard redirects on this. */
     isInitializing: boolean;
+    /** Patch the signed-in customer locally (e.g. after favouriting a store). */
+    patchUser: (updates: Partial<UserProfile>) => void;
+    /** Re-fetch order history (e.g. to refresh live order status). */
+    reloadTransactions: () => Promise<void>;
     /** Last error from a profile/address/password action, for the UI to surface. */
     error: string;
     clearError: () => void;
@@ -57,7 +63,7 @@ interface AuthContextType {
      * Does NOT log the user in — the backend requires verifying that code
      * (see `verifySignup`) before a session exists.
      */
-    signup: (data: { username: string; email: string; password: string }) => Promise<{ success: boolean; error?: string }>;
+    signup: (data: { username: string; email: string; password: string; referralCode?: string }) => Promise<{ success: boolean; error?: string }>;
     /** Step 2 of signup: submits the emailed code. Logs the user in on success. */
     verifySignup: (email: string, code: string) => Promise<{ success: boolean; error?: string }>;
     /** Re-sends the verification code, e.g. if the user didn't get the first one. */
@@ -105,6 +111,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             // user out or block the profile page from rendering.
             setTransactions([]);
         }
+    }, []);
+
+    // Session ran out (token expired, or the server rejected it): sign out
+    // here too and say so, whichever kind of account it was.
+    useEffect(() => {
+        const onExpired = () => {
+            setUser(null);
+            setTransactions([]);
+            emitToast('info', 'Your session timed out. Please sign in again.', 'session');
+        };
+        window.addEventListener(SESSION_EXPIRED_EVENT, onExpired);
+        return () => window.removeEventListener(SESSION_EXPIRED_EVENT, onExpired);
     }, []);
 
     // Restore the session on first load. apiClient already restored any saved
@@ -188,7 +206,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, []);
 
     const signup = useCallback(async (
-        data: { username: string; email: string; password: string },
+        data: { username: string; email: string; password: string; referralCode?: string },
     ): Promise<{ success: boolean; error?: string }> => {
         setIsLoading(true);
         setError('');
@@ -249,6 +267,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } catch {
             // Already signed out locally; a failed call here doesn't matter.
         }
+        emitToast('success', "You're signed out. See you tonight.", 'session');
+    }, []);
+
+    const patchUser = useCallback((updates: Partial<UserProfile>) => {
+        setUser(prev => (prev ? { ...prev, ...updates } : prev));
     }, []);
 
     const updateProfile = useCallback(async (updates: Partial<UserProfile>): Promise<string | null> => {
@@ -366,6 +389,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                 isInitializing,
                 error,
                 clearError,
+                patchUser,
+                reloadTransactions: loadTransactions,
                 login,
                 verifyLogin,
                 refreshUser,

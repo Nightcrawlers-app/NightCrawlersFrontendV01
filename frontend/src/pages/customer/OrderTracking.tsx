@@ -216,6 +216,12 @@ const OrderTrackingPage: React.FC = () => {
             <span className="text-[#667085] shrink-0">Deliver to</span>
             <span className="font-medium text-[#222222] text-right">{data.deliveryAddress}</span>
           </div>
+          {(data.noteForVendor || data.noteForRider) && (
+            <div className="border-t border-gray-100 pt-3 space-y-1 text-[#344054]">
+              {data.noteForVendor && <p><span className="text-[#667085]">Note for the store: </span>{data.noteForVendor}</p>}
+              {data.noteForRider && <p><span className="text-[#667085]">Note for the rider: </span>{data.noteForRider}</p>}
+            </div>
+          )}
           <div className="border-t border-gray-100 pt-3 space-y-1.5">
             {data.items.map((i, idx) => (
               <div key={idx} className="flex justify-between text-[#344054]">
@@ -228,6 +234,7 @@ const OrderTrackingPage: React.FC = () => {
             <div className="flex justify-between"><span>Delivery</span><span>₦{data.deliveryFee.toLocaleString()}</span></div>
             {data.serviceFee > 0 && <div className="flex justify-between"><span>Service fee</span><span>₦{data.serviceFee.toLocaleString()}</span></div>}
             {data.discount > 0 && <div className="flex justify-between text-green-700"><span>Discount</span><span>− ₦{data.discount.toLocaleString()}</span></div>}
+            {(data.rewardDiscount ?? 0) > 0 && <div className="flex justify-between text-green-700"><span>Rewards</span><span>− ₦{(data.rewardDiscount ?? 0).toLocaleString()}</span></div>}
             <div className="flex justify-between font-semibold text-[#222222] pt-1"><span>Total</span><span>₦{data.total.toLocaleString()}</span></div>
             <p className="text-xs pt-1">
               {data.paymentMethod === 'online'

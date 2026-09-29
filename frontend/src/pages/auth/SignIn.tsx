@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import PageNav from '../../components/ui/PageNav';
 import PasswordInput from '../../components/ui/PasswordInput';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { SignInForm } from '../../types';
 import Input from '../../components/ui/Input';
 import signinImage from '../../assets/signin-image.webp';
@@ -10,6 +10,7 @@ import helpCircle from '../../assets/help-circle.svg';
 import mailIcon from '../../assets/mail.svg';
 import { useAuth } from '../../context/AuthContext';
 import { toErrorMessage } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
 
 const SignIn: React.FC = () => {
   const [formData, setFormData] = useState<SignInForm>({
@@ -25,6 +26,12 @@ const SignIn: React.FC = () => {
   const [codeStep, setCodeStep] = useState<{ email: string; message: string } | null>(null);
   const [loginCode, setLoginCode] = useState('');
   const navigate = useNavigate();
+  const toast = useToast();
+  // ?next=/order-summary sends them back to checkout after signing in.
+  // Only same-site paths, so the link can't be used to bounce people elsewhere.
+  const [searchParams] = useSearchParams();
+  const nextParam = searchParams.get('next') || '';
+  const afterSignIn = nextParam.startsWith('/') && !nextParam.startsWith('//') ? nextParam : '/user-profile';
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -40,23 +47,32 @@ const SignIn: React.FC = () => {
     try {
       if (codeStep) {
         const result = await verifyLogin(codeStep.email, loginCode.trim(), rememberMe);
-        if (result.success) navigate('/user-profile');
-        else setError(result.error || "That code didn't work. Please try again.");
+        if (result.success) {
+          toast.success('Signed in. Welcome back!', { id: 'session' });
+          navigate(afterSignIn);
+        } else {
+          setError(result.error || "That code didn't work. Please try again.");
+          toast.error("Sign-in failed: that code didn't work.", { id: 'session' });
+        }
         return;
       }
 
       const result = await login(formData.email, formData.password, rememberMe);
       if (result === true) {
-        navigate('/user-profile');
+        toast.success('Signed in. Welcome back!', { id: 'session' });
+        navigate(afterSignIn);
       } else if (result === false) {
         setError('Invalid credentials. Please try again.');
+        toast.error('Sign-in failed: wrong email or password.', { id: 'session' });
       } else {
         // Signing in from a new network: the backend emailed a 6-digit code.
         setCodeStep({ email: result.email, message: result.message });
         setLoginCode('');
       }
     } catch (err) {
-      setError(toErrorMessage(err, 'Something went wrong. Please try again.'));
+      const message = toErrorMessage(err, 'Something went wrong. Please try again.');
+      setError(message);
+      toast.error(`Sign-in failed: ${message}`, { id: 'session' });
     } finally {
       setIsSubmitting(false);
     }
@@ -199,7 +215,7 @@ const SignIn: React.FC = () => {
             </div>
           </div>
           <div className="w-full flex items-center justify-between text-xs text-[#667085] px-1">
-            <span>© Nightcrawlers 2026, inc</span>
+            <span>© 2026 Nightcrawlers Limited</span>
             <a href="mailto:help@nightcrawlers.com" className="flex items-center gap-2 hover:text-[#E00B0B]">
               <img src={mailIcon} alt="" className="w-3.5 h-3.5" />
               help@nightcrawlers.com

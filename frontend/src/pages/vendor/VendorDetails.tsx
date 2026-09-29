@@ -1,6 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Search, ChevronDown, Clock, Plus, Trash2, ShoppingBasket, Minus, ChevronLeft, X, UtensilsCrossed, Tag } from 'lucide-react';
+import { Search, ChevronDown, Clock, Plus, Trash2, ShoppingBasket, Minus, ChevronLeft, X, UtensilsCrossed, Tag, Heart, Loader2 } from 'lucide-react';
 import { usePromotion } from '../../context/PromotionContext';
 import AddressModal from '../../components/modals/AddressModal';
 import { useDeliveryLocation } from '../../context/DeliveryLocationContext';
@@ -8,7 +8,10 @@ import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import { useCart } from '../../context/CartContext';
 import pinIcon from '../../assets/location-pin-red.svg';
-import { VendorStore, getMenuItemsForStore, MenuItem, toErrorMessage, promotionAppliesToStore, describeDiscount } from '../../services/api';
+import { VendorStore, getMenuItemsForStore, MenuItem, toErrorMessage, promotionAppliesToStore, describeDiscount, getDeliveryEstimate, getStoreById } from '../../services/api';
+import type { DeliveryEstimate } from '../../services/api';
+import { useFavorite } from '../../hooks/useFavorites';
+import { usePageMeta } from '../../lib/seo';
 
 
 
@@ -22,15 +25,40 @@ const VendorDetails: React.FC = () => {
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   // Shared with the Explore page so the chosen delivery address follows the
   // customer around instead of resetting on every navigation.
-  const { label: selectedAddress, setLocation } = useDeliveryLocation();
+  const { label: selectedAddress, setLocation, coords: deliveryCoords } = useDeliveryLocation();
   const storeState = location.state as VendorStore | undefined;
+
+  // Links like /vendor-details?store=<id> (shared, bookmarked, refreshed, or
+  // from favourites) load the store from the server instead of router state.
+  const storeIdParam = new URLSearchParams(location.search).get('store');
+  const [fetchedStore, setFetchedStore] = useState<VendorStore | null>(null);
+  const [loadingStore, setLoadingStore] = useState(!storeState && Boolean(storeIdParam));
+  useEffect(() => {
+    if (storeState || !storeIdParam) return;
+    let cancelled = false;
+    setLoadingStore(true);
+    getStoreById(storeIdParam)
+      .then((s) => !cancelled && setFetchedStore(s))
+      .catch(() => !cancelled && setFetchedStore(null))
+      .finally(() => !cancelled && setLoadingStore(false));
+    return () => {
+      cancelled = true;
+    };
+  }, [storeState, storeIdParam]);
+
+  // Put the store id in the address bar so refreshing or sharing this page works.
+  useEffect(() => {
+    if (storeState?.id && storeIdParam !== storeState.id) {
+      navigate(`/vendor-details?store=${storeState.id}`, { replace: true, state: storeState });
+    }
+  }, [storeState, storeIdParam, navigate]);
   const { selectedPromotion } = usePromotion();
 
   // This page is reached by clicking a store on Explore, which passes the store
   // through router state. Landing here directly (bookmark, refresh, pasted URL)
   // means there's nothing to show — previously it invented a fake restaurant,
   // which let customers try to order from a store that doesn't exist.
-  const store: VendorStore = storeState || {
+  const store: VendorStore = storeState || fetchedStore || {
     id: '',
     vendorId: '',
     name: '',
@@ -44,12 +72,39 @@ const VendorDetails: React.FC = () => {
     closingTime: '',
   };
 
+  usePageMeta(
+    store.name
+      ? {
+          title: `${store.name} — order late-night delivery in Abuja`,
+          description: `Order from ${store.name}${store.address ? ` (${store.address})` : ''} on Nightcrawlers. Delivered to your door, any hour of the night.`,
+          image: store.imageUrl && /^https:/.test(store.imageUrl) ? store.imageUrl : undefined,
+        }
+      : {},
+  );
+
+  const favorite = useFavorite('store', store.id, store.name);
+
+  // The delivery ("ride") fee from this store to where they're ordering to —
+  // worked out by the server with the same formula checkout uses.
+  const [deliveryEstimate, setDeliveryEstimate] = useState<DeliveryEstimate | null>(null);
+  useEffect(() => {
+    if (!store.id) return;
+    let cancelled = false;
+    getDeliveryEstimate(store.id, deliveryCoords)
+      .then((e) => !cancelled && setDeliveryEstimate(e))
+      .catch(() => !cancelled && setDeliveryEstimate(null));
+    return () => {
+      cancelled = true;
+    };
+  }, [store.id, deliveryCoords?.latitude, deliveryCoords?.longitude]); // eslint-disable-line react-hooks/exhaustive-deps
+
   // Fetch real menu items for this store
   const [menuItems, setMenuItems] = useState<MenuItem[]>([]);
   const [menuLoading, setMenuLoading] = useState(true);
   const [menuError, setMenuError] = useState('');
 
   useEffect(() => {
+    if (!store.id) return;
     let cancelled = false;
 
     const loadMenu = async () => {
@@ -124,6 +179,18 @@ const VendorDetails: React.FC = () => {
       updateQuantity(id, item.quantity - 1);
     }
   };
+
+  if (loadingStore) {
+    return (
+      <div className="min-h-screen bg-white flex flex-col font-poppins">
+        <Header onCartClick={() => setIsMobileCartOpen(true)} />
+        <main className="flex-grow flex items-center justify-center">
+          <Loader2 className="w-8 h-8 text-[#E00B0B] animate-spin" aria-label="Loading store" />
+        </main>
+        <Footer />
+      </div>
+    );
+  }
 
   if (!store.id) {
     return (
@@ -218,6 +285,16 @@ const VendorDetails: React.FC = () => {
                 alt={store.name}
                 className="w-full h-full object-cover"
               />
+              <button
+                type="button"
+                onClick={favorite.toggle}
+                disabled={favorite.busy}
+                aria-pressed={favorite.isFavorite}
+                aria-label={favorite.isFavorite ? `Remove ${store.name} from favourites` : `Save ${store.name} to favourites`}
+                className="absolute top-3 right-3 sm:top-4 sm:right-4 w-10 h-10 rounded-full bg-white/95 shadow-md flex items-center justify-center hover:scale-105 active:scale-95 transition-transform focus:outline-none focus-visible:ring-2 focus-visible:ring-[#E00B0B]"
+              >
+                <Heart size={20} className={favorite.isFavorite ? 'fill-[#E00B0B] text-[#E00B0B]' : 'text-[#222222]'} />
+              </button>
             </div>
 
             {/* Vendor Info */}
@@ -268,7 +345,15 @@ const VendorDetails: React.FC = () => {
                       <path d="M2.5 14.5H5" />
                     </svg>
                   </div>
-                  <span className="text-[#667085] text-[10px] sm:text-[12px]">₦ 800</span>
+                  <span className="text-[#667085] text-[10px] sm:text-[12px]" title="Delivery fee">
+                    {!deliveryEstimate
+                      ? 'Delivery'
+                      : deliveryEstimate.tooFar
+                        ? `Over ${deliveryEstimate.maxKm} km away`
+                        : deliveryEstimate.estimated
+                          ? `≈ ₦ ${deliveryEstimate.fee.toLocaleString()}`
+                          : `₦ ${deliveryEstimate.fee.toLocaleString()}${deliveryEstimate.distanceKm != null ? ` · ${deliveryEstimate.distanceKm} km` : ''}`}
+                  </span>
                 </div>
               </div>
             </div>

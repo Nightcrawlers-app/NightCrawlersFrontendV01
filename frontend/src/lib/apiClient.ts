@@ -16,6 +16,51 @@ const BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? '').replace(/\/$/, '');
 const TOKEN_KEY = 'nc_token';
 
 /**
+ * Fired (on window) when a signed-in session ends without the person signing
+ * out: the token expired, or the server rejected it. AuthContext listens and
+ * shows "Your session timed out".
+ */
+export const SESSION_EXPIRED_EVENT = 'nc:session-expired';
+
+/** When a JWT expires (ms since epoch), or null if it can't be read. */
+function tokenExpiry(token: string): number | null {
+    try {
+        const payload = JSON.parse(atob(token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/')));
+        return typeof payload.exp === 'number' ? payload.exp * 1000 : null;
+    } catch {
+        return null;
+    }
+}
+
+let expiryTimer: number | undefined;
+let expiredNoticeSent = false;
+
+function sessionExpired(): void {
+    setAuthToken(null);
+    if (expiredNoticeSent) return;
+    expiredNoticeSent = true;
+    window.dispatchEvent(new CustomEvent(SESSION_EXPIRED_EVENT));
+}
+
+/** Sign the person out the moment their token runs out, rather than on the next failed request. */
+function scheduleExpiry(token: string | null): void {
+    if (typeof window === 'undefined') return;
+    window.clearTimeout(expiryTimer);
+    if (!token) return;
+    const exp = tokenExpiry(token);
+    if (!exp) return;
+    const ms = exp - Date.now();
+    // setTimeout can't wait longer than ~24.8 days; re-check later if needed.
+    if (ms > 2 ** 31 - 1) {
+        expiryTimer = window.setTimeout(() => scheduleExpiry(getAuthToken()), 2 ** 31 - 1);
+        return;
+    }
+    expiryTimer = window.setTimeout(() => {
+        if (getAuthToken() === token) sessionExpired();
+    }, Math.max(0, ms));
+}
+
+/**
  * Save (or clear, with null) the session token returned by a login endpoint.
  *   remember = true  → localStorage: stays signed in after the browser closes
  *                      (the server makes the token last 30 days)
@@ -30,6 +75,8 @@ export function setAuthToken(token: string | null | undefined, remember = true):
     } catch {
         // Storage blocked (private mode) — the session just won't survive a refresh.
     }
+    if (token) expiredNoticeSent = false; // a fresh session can time out again later
+    scheduleExpiry(token ?? null);
 }
 
 export function getAuthToken(): string | null {
@@ -38,6 +85,15 @@ export function getAuthToken(): string | null {
     } catch {
         return null;
     }
+}
+
+// A session saved from an earlier visit: time it out on schedule too. If it
+// already ran out while they were away, tell them once the app has loaded.
+if (typeof window !== 'undefined') {
+    const saved = getAuthToken();
+    const exp = saved ? tokenExpiry(saved) : null;
+    if (saved && exp && exp <= Date.now()) window.setTimeout(sessionExpired, 800);
+    else scheduleExpiry(saved);
 }
 
 export class ApiError extends Error {
@@ -89,24 +145,56 @@ function buildHeaders(hasBody: boolean): Record<string, string> {
     return headers;
 }
 
+const wait = (ms: number, signal?: AbortSignal) =>
+    new Promise<void>((resolve, reject) => {
+        const timer = setTimeout(resolve, ms);
+        signal?.addEventListener('abort', () => {
+            clearTimeout(timer);
+            reject(new DOMException('Aborted', 'AbortError'));
+        }, { once: true });
+    });
+
+// Statuses that mean "the server is restarting or overloaded — try again".
+const TRANSIENT = new Set([502, 503, 504]);
+
 export async function apiFetch<T>(path: string, options: RequestOptions = {}): Promise<T> {
     const { method = 'GET', body, params, signal } = options;
 
-    let response: Response;
-    try {
-        response = await fetch(buildUrl(path, params), {
-            method,
-            headers: buildHeaders(body !== undefined),
-            body: body === undefined ? undefined : JSON.stringify(body),
-            signal,
-        });
-    } catch (error) {
-        if (error instanceof DOMException && error.name === 'AbortError') throw error;
-        throw new ApiError(
-            'Could not reach the server. Check your connection and try again.',
-            0,
-            error,
-        );
+    // Reading data (GET) is safe to repeat, so a brief blip — a deploy, the
+    // phone switching networks — is retried quietly (after ~0.8s, then ~2s)
+    // before the customer sees an error. Anything that changes data (placing
+    // an order, paying) is never retried automatically.
+    const attempts = method === 'GET' ? 3 : 1;
+
+    let response!: Response;
+    for (let attempt = 1; attempt <= attempts; attempt++) {
+        try {
+            response = await fetch(buildUrl(path, params), {
+                method,
+                headers: buildHeaders(body !== undefined),
+                body: body === undefined ? undefined : JSON.stringify(body),
+                signal,
+            });
+        } catch (error) {
+            if (error instanceof DOMException && error.name === 'AbortError') throw error;
+            if (attempt < attempts && !(typeof navigator !== 'undefined' && navigator.onLine === false)) {
+                await wait(attempt === 1 ? 800 : 2000, signal);
+                continue;
+            }
+            const offline = typeof navigator !== 'undefined' && navigator.onLine === false;
+            throw new ApiError(
+                offline
+                    ? "You're offline. Check your internet connection and try again."
+                    : 'Could not reach the server. Check your connection and try again.',
+                0,
+                error,
+            );
+        }
+        if (TRANSIENT.has(response.status) && attempt < attempts) {
+            await wait(attempt === 1 ? 800 : 2000, signal);
+            continue;
+        }
+        break;
     }
 
     if (response.status === 204) return undefined as T;
@@ -122,8 +210,14 @@ export async function apiFetch<T>(path: string, options: RequestOptions = {}): P
     }
 
     // An expired/invalid token is useless — drop it so the app treats the
-    // user as signed out instead of retrying with it forever.
-    if (response.status === 401) setAuthToken(null);
+    // user as signed out instead of retrying with it forever. If they WERE
+    // signed in (and this isn't a sign-in attempt), tell them it timed out.
+    if (response.status === 401) {
+        const hadSession = Boolean(getAuthToken());
+        const isSignInAttempt = /\/(login|verify|verify-login|signup)$/.test(path.split('?')[0]);
+        if (hadSession && !isSignInAttempt) sessionExpired();
+        else setAuthToken(null);
+    }
 
     if (!response.ok) {
         const message =

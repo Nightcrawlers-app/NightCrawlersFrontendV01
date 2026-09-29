@@ -105,7 +105,7 @@ const PaymentCallback: React.FC = () => {
                                         disabled={retrying}
                                         className="w-full py-3 bg-[#E00B0B] text-white font-semibold rounded-lg hover:bg-[#B80909] disabled:opacity-60"
                                     >
-                                        {retrying ? 'Opening payment…' : 'Try paying again'}
+                                        {retrying ? 'Redirecting to Paystack…' : 'Try paying again'}
                                     </button>
                                 )}
                                 <button onClick={() => navigate('/explore')} className="w-full py-3 text-sm text-gray-500 hover:text-gray-800">

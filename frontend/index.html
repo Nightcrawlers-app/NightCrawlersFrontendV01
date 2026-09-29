@@ -2,25 +2,80 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="icon" type="image/png" href="/favicon.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Nightcrawlers — Late-night delivery of food, groceries, pharmaceuticalsS &amp; drinks in Abuja</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <title>Nightcrawlers — Late-night delivery of food, groceries, pharmaceuticals &amp; drinks in Abuja</title>
     <meta name="description" content="Order food, groceries, medicine and drinks from trusted stores in Abuja, delivered to your door any hour of the night." />
-    <meta name="theme-color" content="#E00B0B" />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://nightcrawlers.app/" />
 
-    <!-- Link previews (WhatsApp, Facebook, X, LinkedIn) -->
+    <!-- App icons. The ?v=2 makes phones and browsers fetch the new icon
+         instead of a copy they saved earlier — bump it whenever the icon changes. -->
+    <link rel="icon" href="/favicon.ico?v=2" sizes="48x48" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg?v=2" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/icon-192.png?v=2" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png?v=2" />
+    <link rel="manifest" href="/site.webmanifest?v=2" />
+    <meta name="theme-color" content="#E00B0B" />
+    <meta name="apple-mobile-web-app-title" content="Nightcrawlers" />
+    <meta name="application-name" content="Nightcrawlers" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="format-detection" content="telephone=no" />
+
+    <!-- Link previews (WhatsApp, Facebook, X, LinkedIn). These crawlers don't run
+         JavaScript, so what's here is what they show for every link to the site. -->
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Nightcrawlers" />
+    <meta property="og:locale" content="en_NG" />
+    <meta property="og:url" content="https://nightcrawlers.app/" />
     <meta property="og:title" content="Nightcrawlers — Late-night delivery in Abuja" />
     <meta property="og:description" content="Food, groceries, pharmaceuticals and drinks, delivered to your door any hour of the night." />
-    <!-- Add a 1200×630 image at public/og-image.jpg, then uncomment these two lines
-         and replace the address with your live site's address:
-    <meta property="og:image" content="https://nightcrawlers.app/og-image.jpg" />
-    <meta name="twitter:image" content="https://nightcrawlers.app/og-image.jpg" />
-    -->
+    <meta property="og:image" content="https://nightcrawlers.app/og-image.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Nightcrawlers — red shopping bag with a crescent moon" />
     <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Nightcrawlers — Late-night delivery in Abuja" />
+    <meta name="twitter:description" content="Food, groceries, pharmaceuticals and drinks, delivered to your door any hour of the night." />
+    <meta name="twitter:image" content="https://nightcrawlers.app/og-image.png" />
+
+    <!-- Tells Google who we are and where we deliver (shown in search results). -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": "https://nightcrawlers.app/#organization",
+          "name": "Nightcrawlers",
+          "legalName": "Nightcrawlers Limited",
+          "url": "https://nightcrawlers.app/",
+          "logo": "https://nightcrawlers.app/icon-512.png"
+        },
+        {
+          "@type": "WebSite",
+          "@id": "https://nightcrawlers.app/#website",
+          "name": "Nightcrawlers",
+          "url": "https://nightcrawlers.app/",
+          "publisher": { "@id": "https://nightcrawlers.app/#organization" },
+          "potentialAction": {
+            "@type": "SearchAction",
+            "target": "https://nightcrawlers.app/explore?search={search_term_string}",
+            "query-input": "required name=search_term_string"
+          }
+        },
+        {
+          "@type": "OnlineBusiness",
+          "name": "Nightcrawlers",
+          "url": "https://nightcrawlers.app/",
+          "description": "Late-night delivery of food, groceries, pharmaceuticals and drinks in Abuja.",
+          "areaServed": { "@type": "City", "name": "Abuja", "addressCountry": "NG" },
+          "parentOrganization": { "@id": "https://nightcrawlers.app/#organization" }
+        }
+      ]
+    }
+    </script>
     <script type="module">
       if (import.meta.hot?.on) {
         import.meta.hot.on('vite:error', (error) => {

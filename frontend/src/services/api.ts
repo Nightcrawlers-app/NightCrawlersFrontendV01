@@ -13,6 +13,7 @@
  */
 
 import { apiFetch, apiFetchOrNull, setAuthToken, ApiError } from '../lib/apiClient';
+import { emitToast } from '../lib/toastBus';
 import type {
     BusinessType,
     BusinessTypeMeta,
@@ -51,6 +52,14 @@ import type {
     PaymentStatus,
     OrderTracking,
     RiderTrip,
+    RewardsSummary,
+    Placement,
+    PlacementInput,
+    DeliveryEstimate,
+    MyCode,
+    CustomerLookup,
+    CampaignCode,
+    IssueCodesInput,
 } from '../types/models';
 
 // Re-export types so existing imports keep working
@@ -92,6 +101,14 @@ export type {
     PaymentStatus,
     OrderTracking,
     RiderTrip,
+    RewardsSummary,
+    Placement,
+    PlacementInput,
+    DeliveryEstimate,
+    MyCode,
+    CustomerLookup,
+    CampaignCode,
+    IssueCodesInput,
 };
 
 // Re-export the constants
@@ -222,6 +239,7 @@ export const getBusinessTypes = (): Promise<BusinessType[]> =>
  */
 export const clearCurrentVendor = async (): Promise<void> => {
     setAuthToken(null);
+    emitToast('success', "You're signed out.", 'session');
 };
 
 // ─── Store Actions ───────────────────────────────────────────────────────────
@@ -319,6 +337,7 @@ export const getCurrentRider = async (): Promise<RiderAccount | null> => {
 /** Log out the current rider (stateless JWT — just drop the token). */
 export const logoutRider = async (): Promise<void> => {
     setAuthToken(null);
+    emitToast('success', "You're signed out. Ride safe.", 'session');
 };
 
 /** PATCH /api/riders/:id/status — Set rider online/offline status */
@@ -375,6 +394,12 @@ function mapCustomer(raw: RawCustomer): CustomerProfile {
         ...rest,
         id: _id,
         addresses: (rest.addresses ?? []).map((a: RawAddress) => ({ ...a, id: a.id ?? a._id ?? '' })),
+        // Older servers don't send these — default them so pages never crash.
+        favoriteVendors: rest.favoriteVendors ?? [],
+        favoriteStores: rest.favoriteStores ?? [],
+        favoriteOrders: rest.favoriteOrders ?? [],
+        rewards: rest.rewards ?? { points: 0, deliveryCredit: 0, freeDeliveries: 0 },
+        referralCode: rest.referralCode ?? null,
     };
 }
 
@@ -547,9 +572,7 @@ export const deleteCustomerAccount = (): Promise<void> =>
 export const getCustomerTransactions = async (): Promise<Transaction[]> => {
     // The old path (/api/customers/me/transactions) never existed, so order
     // history was always empty. The real one returns orders; shape them for the profile.
-    const orders = await apiFetch<(Order & { _id?: string; items: { name: string; quantity: number; price: number }[] })[]>(
-        '/api/orders/customer/me',
-    );
+    const orders = await apiFetch<(Order & { _id?: string })[]>('/api/orders/customer/me');
     const statusFor = (s: string): Transaction['status'] =>
         s === 'delivered' ? 'delivered'
             : s === 'cancelled' ? 'cancelled'
@@ -562,7 +585,10 @@ export const getCustomerTransactions = async (): Promise<Transaction[]> => {
             orderId: `#NC-${id.slice(-6).toUpperCase()}`,
             date: o.createdAt,
             status: statusFor(o.status),
-            items: o.items.map((i) => ({ name: i.name, quantity: i.quantity, price: i.price, image: '' })),
+            rawStatus: o.status,
+            awaitingPayment: o.paymentMethod === 'online' && o.paymentStatus !== 'paid' && o.status !== 'cancelled',
+            storeId: o.storeId ? String(o.storeId) : undefined,
+            items: o.items.map((i) => ({ menuItemId: i.menuItemId ? String(i.menuItemId) : null, name: i.name, quantity: i.quantity, price: i.price, image: '' })),
             subtotal: o.totalAmount,
             deliveryFee: o.deliveryFee,
             total: o.totalPaid ?? o.totalAmount + o.deliveryFee,
@@ -607,7 +633,94 @@ export const setDefaultCustomerAddress = async (addressId: string): Promise<Cust
         }),
     );
 
+// ─── Rewards, referrals & favourites ─────────────────────────────────────────
+
+/** GET /api/users/me/rewards — points, credit, free deliveries, referral code. */
+export const getMyRewards = (): Promise<RewardsSummary> => apiFetch<RewardsSummary>('/api/users/me/rewards');
+
+/** POST /api/users/me/rewards/redeem — swap points for delivery credit. */
+export const redeemPoints = (
+    blocks?: number,
+): Promise<{ message: string; points: number; deliveryCredit: number; freeDeliveries: number }> =>
+    apiFetch('/api/users/me/rewards/redeem', { method: 'POST', body: blocks === undefined ? {} : { blocks } });
+
+/** GET /api/users/me/favorites — favourite stores and favourite past orders. */
+export const getMyFavorites = async (): Promise<{ stores: VendorStore[]; orders: Order[] }> => {
+    const raw = await apiFetch<{ stores: (VendorStore & { _id?: string })[]; orders: (Order & { _id?: string })[] }>(
+        '/api/users/me/favorites',
+    );
+    return {
+        stores: raw.stores.map((s) => ({ ...s, id: s.id ?? s._id ?? '' })),
+        orders: raw.orders.map((o) => ({ ...o, id: o.id ?? o._id ?? '' })),
+    };
+};
+
+/** Add (true) or remove (false) a favourite store. Returns the new list of ids. */
+export const setFavoriteStore = async (storeId: string, favorite: boolean): Promise<string[]> =>
+    (await apiFetch<{ favoriteStores: string[] }>(`/api/users/me/favorites/stores/${storeId}`, {
+        method: favorite ? 'PUT' : 'DELETE',
+    })).favoriteStores;
+
+/** Add (true) or remove (false) a favourite order. Returns the new list of ids. */
+export const setFavoriteOrder = async (orderId: string, favorite: boolean): Promise<string[]> =>
+    (await apiFetch<{ favoriteOrders: string[] }>(`/api/users/me/favorites/orders/${orderId}`, {
+        method: favorite ? 'PUT' : 'DELETE',
+    })).favoriteOrders;
+
+// ─── Sponsored tiles (ads in "Popular on Nightcrawlers") ─────────────────────
+
+/** GET /api/placements?category=… — live ads for one tab, each with its store. */
+export const getPlacements = async (category: BusinessType): Promise<(Placement & { store: VendorStore })[]> => {
+    const list = await apiFetch<(Placement & { store: VendorStore & { _id?: string } })[]>('/api/placements', {
+        params: { category },
+    });
+    return list.map((p) => ({ ...p, store: { ...p.store, id: p.store.id ?? p.store._id ?? '' } }));
+};
+
+/** Count a tap on an ad. Never throws. */
+export const recordPlacementClick = (id: string): void => {
+    apiFetch<void>(`/api/placements/${id}/click`, { method: 'POST' }).catch(() => undefined);
+};
+
+export const getAllPlacementsForAdmin = (): Promise<Placement[]> => apiFetch<Placement[]>('/api/admin/placements');
+export const createPlacement = (input: PlacementInput): Promise<Placement> =>
+    apiFetch<Placement>('/api/admin/placements', { method: 'POST', body: input });
+export const updatePlacement = (id: string, input: PlacementInput): Promise<Placement> =>
+    apiFetch<Placement>(`/api/admin/placements/${id}`, { method: 'PATCH', body: input });
+export const deletePlacement = (id: string): Promise<void> =>
+    apiFetch<void>(`/api/admin/placements/${id}`, { method: 'DELETE' });
+
 // ─── Promotions ──────────────────────────────────────────────────────────────
+
+/** GET /api/users/me/codes — codes tied to the signed-in customer's account. */
+export const getMyCodes = (): Promise<MyCode[]> => apiFetch<MyCode[]>('/api/users/me/codes');
+
+/** Admin: find customers by name, email or phone (2+ characters). */
+export const searchCustomersForAdmin = (search: string, signal?: AbortSignal): Promise<CustomerLookup[]> =>
+    apiFetch<CustomerLookup[]>('/api/admin/promotions/customers', { params: { search }, signal });
+
+/** Admin: names/emails for customer ids already on a promo. */
+export const getCustomersForAdmin = (ids: string[]): Promise<CustomerLookup[]> =>
+    ids.length ? apiFetch<CustomerLookup[]>('/api/admin/promotions/customers', { params: { ids: ids.join(',') } }) : Promise.resolve([]);
+
+/** Admin: every personal code in a campaign. */
+export const getCampaignCodes = (promotionId: string): Promise<CampaignCode[]> =>
+    apiFetch<CampaignCode[]>(`/api/admin/promotions/${promotionId}/codes`);
+
+/** Admin: give customers their own code in a campaign. */
+export const issueCampaignCodes = (
+    promotionId: string,
+    input: IssueCodesInput,
+): Promise<{ created: number; skipped: number; notFound: string[]; emailing: boolean }> =>
+    apiFetch(`/api/admin/promotions/${promotionId}/codes`, { method: 'POST', body: input });
+
+/** Admin: take back an unused personal code. */
+export const revokeCampaignCode = (promotionId: string, codeId: string): Promise<void> =>
+    apiFetch<void>(`/api/admin/promotions/${promotionId}/codes/${codeId}`, { method: 'DELETE' });
+
+/** POST /api/promotions/code — the promo a typed code unlocks (404/400 with a reason if not). */
+export const lookupPromoCode = (code: string, storeId?: string): Promise<Promotion> =>
+    apiFetch<Promotion>('/api/promotions/code', { method: 'POST', body: { code, storeId } });
 
 /** GET /api/promotions — live promos for the banner carousel. */
 export const getLivePromotions = (): Promise<Promotion[]> => apiFetch<Promotion[]>('/api/promotions');
@@ -662,9 +775,16 @@ export const describeDiscount = (
 /** GET /api/config — fees and feature switches set on the server. */
 export const getAppConfig = (): Promise<AppConfig> => apiFetch<AppConfig>('/api/config');
 
-/** POST /api/payments/paystack/initialize — returns the Paystack checkout URL. */
-export const initializePayment = (orderId: string): Promise<{ authorizationUrl: string; reference: string }> =>
-    apiFetch('/api/payments/paystack/initialize', { method: 'POST', body: { orderId } });
+/**
+ * POST /api/payments/paystack/initialize.
+ *   channel 'card' → card-only, for Paystack's in-app popup (use accessCode)
+ *   otherwise      → every method, on Paystack's own page (go to authorizationUrl)
+ */
+export const initializePayment = (
+    orderId: string,
+    channel?: 'card',
+): Promise<{ authorizationUrl: string; accessCode: string; reference: string }> =>
+    apiFetch('/api/payments/paystack/initialize', { method: 'POST', body: { orderId, ...(channel && { channel }) } });
 
 /** GET /api/payments/paystack/verify — did the payment go through? */
 export const verifyPayment = (
@@ -725,6 +845,7 @@ export const getCurrentAdmin = (): Promise<AdminAccount | null> =>
 /** Clear the current admin session (stateless JWT — just drop the token). */
 export const logoutAdmin = async (): Promise<void> => {
     setAuthToken(null);
+    emitToast('success', "You're signed out.", 'session');
 };
 
 // ─── Admin Stats & Activity ──────────────────────────────────────────────────
@@ -791,11 +912,19 @@ export const quoteOrder = (input: {
     storeId: string;
     items: { menuItemId: string; quantity: number }[];
     promotionId?: string | null;
+    promoCode?: string | null;
+    useRewards?: boolean;
     customerLatitude?: number | null;
     customerLongitude?: number | null;
     customerAddress?: string;
 }, signal?: AbortSignal): Promise<OrderQuote> =>
     apiFetch<OrderQuote>('/api/orders/quote', { method: 'POST', body: input, signal });
+
+/** GET /api/orders/delivery-estimate — delivery fee from a store to a point (flat fee without one). */
+export const getDeliveryEstimate = (storeId: string, coords?: Coordinates | null): Promise<DeliveryEstimate> =>
+    apiFetch<DeliveryEstimate>('/api/orders/delivery-estimate', {
+        params: { storeId, lat: coords?.latitude ?? null, lng: coords?.longitude ?? null },
+    });
 
 export const createOrder = async (input: CreateOrderInput): Promise<Order> =>
     // The backend returns `_id`; without mapping, order.id was undefined and

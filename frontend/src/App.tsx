@@ -1,5 +1,6 @@
 import React, { Suspense, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { usePageMeta, metaForPath } from './lib/seo';
 import Loader from './components/ui/Loader';
 import ScrollToTop from './components/ScrollToTop';
 import { GlobalLoaderProvider } from './context/GlobalLoaderContext';
@@ -52,11 +53,19 @@ const Privacy = lazy(() => import('./pages/legal/Privacy'));
 // Fallback for unmatched URLs
 const NotFound = lazy(() => import('./pages/NotFound'));
 
+/** Title, description and indexing rules for whichever page is open. */
+function RouteMeta() {
+  const { pathname } = useLocation();
+  usePageMeta(metaForPath(pathname));
+  return null;
+}
+
 function App() {
   return (
     <Router basename={import.meta.env.BASE_URL}>
       <GlobalLoaderProvider>
         <ScrollToTop />
+        <RouteMeta />
         <Suspense fallback={<Loader fullScreen />}>
           <Routes>
             <Route path="/" element={<Home />} />

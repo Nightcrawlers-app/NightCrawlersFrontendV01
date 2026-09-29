@@ -6,6 +6,8 @@ import Footer from '../../components/layout/Footer';
 
 import Loader from '../../components/ui/Loader';
 import PromotionsManager from '../../components/admin/PromotionsManager';
+import PlacementsManager from '../../components/admin/PlacementsManager';
+import { Megaphone } from 'lucide-react';
 
 const formatCurrency = (amount: number): string => {
     if (amount >= 1000000) {
@@ -33,6 +35,7 @@ const AdminDashboard: React.FC = () => {
     // Earnings State
     const [showEarningsModal, setShowEarningsModal] = useState(false);
     const [showPromotions, setShowPromotions] = useState(false);
+    const [showAds, setShowAds] = useState(false);
     const [allEarnings, setAllEarnings] = useState<EntityEarnings[]>([]);
     const [allStoreEarnings, setAllStoreEarnings] = useState<StoreEarnings[]>([]);
     const [earningsTab, setEarningsTab] = useState<'vendors' | 'stores' | 'riders'>('vendors');
@@ -289,7 +292,13 @@ const AdminDashboard: React.FC = () => {
                 )}
 
                 {/* Promotions entry point */}
-                <div className="flex justify-end mb-4">
+                <div className="flex flex-wrap justify-end gap-2 mb-4">
+                    <button
+                        onClick={() => setShowAds(true)}
+                        className="inline-flex items-center gap-2 bg-white text-[#222222] border border-gray-200 text-sm font-semibold px-4 py-2.5 rounded-xl hover:border-[#E00B0B] shadow-sm"
+                    >
+                        <Megaphone size={16} /> Manage ads
+                    </button>
                     <button
                         onClick={() => setShowPromotions(true)}
                         className="inline-flex items-center gap-2 bg-[#E00B0B] text-white text-sm font-semibold px-4 py-2.5 rounded-xl hover:bg-[#B80909] shadow-sm"
@@ -1004,6 +1013,7 @@ const AdminDashboard: React.FC = () => {
 
             <Footer />
             {showPromotions && <PromotionsManager onClose={() => setShowPromotions(false)} />}
+            {showAds && <PlacementsManager onClose={() => setShowAds(false)} />}
         </div>
     );
 };

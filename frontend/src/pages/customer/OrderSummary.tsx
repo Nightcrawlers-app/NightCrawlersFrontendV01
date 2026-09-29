@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { ChevronLeft, Trash2, Plus, Minus, CreditCard, MapPin, Clock, CheckCircle, Loader2, Tag } from 'lucide-react';
+import { ChevronLeft, Trash2, Plus, Minus, CreditCard, MapPin, Clock, CheckCircle, Loader2, Tag, Banknote, Gift, MessageSquare, Lock } from 'lucide-react';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
 import { useCart } from '../../context/CartContext';
@@ -16,7 +16,12 @@ import {
     initializePayment,
     promotionAppliesToStore,
     describeDiscount,
+    lookupPromoCode,
+    getMyCodes,
 } from '../../services/api';
+import type { MyCode, VendorStore } from '../../services/api';
+import { useToast } from '../../context/ToastContext';
+import { payWithCardPopup } from '../../lib/paystack';
 import type { PaymentMethod, Promotion, OrderQuote } from '../../services/api';
 import { usePromotion } from '../../context/PromotionContext';
 import { useAppConfig } from '../../lib/appConfig';
@@ -32,12 +37,26 @@ import type { PickedLocation } from '../../components/map/MapPicker';
 
 const OrderSummary: React.FC = () => {
     const navigate = useNavigate();
-    const { cartItems, removeFromCart, updateQuantity, cartTotal, clearCart } = useCart();
-    const { user, isAuthenticated, addTransaction, addAddress } = useAuth();
+    const { cartItems, removeFromCart, updateQuantity, cartTotal, clearCart, replaceCart } = useCart();
+    const { user, isAuthenticated, addTransaction, addAddress, refreshUser } = useAuth();
+    const toast = useToast();
     const [showMap, setShowMap] = useState(false);
     const config = useAppConfig();
-    const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash_on_delivery');
+    // How they pay. 'card' = Paystack's card form in a popup, without leaving
+    // the app. 'paystack' = Paystack's own page (card, transfer, USSD…).
+    type PayChoice = 'cash' | 'card' | 'paystack';
+    const [payChoice, setPayChoice] = useState<PayChoice>('cash');
+    const paymentMethod: PaymentMethod = payChoice === 'cash' ? 'cash_on_delivery' : 'online';
     const [redirectingToPay, setRedirectingToPay] = useState(false);
+    // What the full-screen payment message says
+    const [payStage, setPayStage] = useState<'starting' | 'card' | 'redirect'>('starting');
+    // Notes the store and the rider will see with the order
+    const [noteForVendor, setNoteForVendor] = useState('');
+    const [noteForRider, setNoteForRider] = useState('');
+    // Spend free deliveries / delivery credit (they can switch it off to save them)
+    const [useRewards, setUseRewards] = useState(true);
+    // Bumped to ask the server for a fresh total (e.g. after rewards changed)
+    const [quoteNonce, setQuoteNonce] = useState(0);
     // The server asks for a verified phone before ordering (when that's switched on).
     const [showPhoneModal, setShowPhoneModal] = useState(false);
     const [savingPin, setSavingPin] = useState(false);
@@ -113,6 +132,20 @@ const OrderSummary: React.FC = () => {
     const { selectedPromotion, selectPromotion } = usePromotion();
     const cartStoreId = cartItems[0]?.storeId;
     const [storePromos, setStorePromos] = useState<Promotion[]>([]);
+    const [cartStore, setCartStore] = useState<VendorStore | null>(null);
+    // Codes tied to this customer's account, offered as one-tap chips
+    const [myCodes, setMyCodes] = useState<MyCode[]>([]);
+    useEffect(() => {
+        if (!user) {
+            setMyCodes([]);
+            return;
+        }
+        let cancelled = false;
+        getMyCodes().then((c) => !cancelled && setMyCodes(c)).catch(() => !cancelled && setMyCodes([]));
+        return () => {
+            cancelled = true;
+        };
+    }, [user?.id]); // eslint-disable-line react-hooks/exhaustive-deps
     const [orderQuote, setOrderQuote] = useState<OrderQuote | null>(null);
     const [quoting, setQuoting] = useState(false);
 
@@ -125,6 +158,7 @@ const OrderSummary: React.FC = () => {
         Promise.all([getLivePromotions(), getStoreById(String(cartStoreId))])
             .then(([promos, store]) => {
                 if (cancelled || !store) return;
+                setCartStore(store);
                 setStorePromos(promos.filter((p) => promotionAppliesToStore(p, store)));
             })
             .catch(() => !cancelled && setStorePromos([]));
@@ -135,14 +169,48 @@ const OrderSummary: React.FC = () => {
 
     // True after the customer taps "Remove" — then we stop auto-applying.
     const [promoDeclined, setPromoDeclined] = useState(false);
-    // Only whole-order promos are applied automatically; item-specific ones
-    // ("20% off pizza") wait until the customer picks them, since the cart may
-    // not contain those items.
-    const activePromo = promoDeclined
-        ? null
-        : storePromos.find((p) => p.id === selectedPromotion?.id)
-            ?? storePromos.find((p) => !(p.itemKeywords?.length))
-            ?? null;
+
+    // ── Promo codes ──────────────────────────────────────────────────────────
+    const [codeInput, setCodeInput] = useState('');
+    const [codePromo, setCodePromo] = useState<Promotion | null>(null);
+    const [codeError, setCodeError] = useState('');
+    const [checkingCode, setCheckingCode] = useState(false);
+
+    const applyCode = async (raw: string) => {
+        const code = raw.trim().toUpperCase();
+        if (!code || checkingCode) return;
+        setCheckingCode(true);
+        setCodeError('');
+        try {
+            const promo = await lookupPromoCode(code, cartStoreId ? String(cartStoreId) : undefined);
+            setCodePromo(promo);
+            setCodeInput(promo.code || code);
+            setPromoDeclined(false);
+            toast.success(`Code ${promo.code || code} applied: ${describeDiscount(promo)}`, { id: 'promo' });
+        } catch (err) {
+            setCodeError(toErrorMessage(err, "That code didn't work."));
+        } finally {
+            setCheckingCode(false);
+        }
+    };
+
+    const removeCode = () => {
+        setCodePromo(null);
+        setCodeInput('');
+        setCodeError('');
+        setPromoDeclined(true);
+    };
+
+    // A typed code wins. Otherwise only whole-order promos without a code are
+    // applied automatically; item-specific ones ("20% off pizza") wait until
+    // the customer picks them, since the cart may not contain those items.
+    const activePromo = codePromo
+        ?? (promoDeclined
+            ? null
+            : storePromos.find((p) => p.id === selectedPromotion?.id && !p.requiresCode)
+                ?? storePromos.find((p) => !(p.itemKeywords?.length) && !p.requiresCode)
+                ?? null);
+    const activePromoCode = activePromo?.requiresCode ? activePromo.code ?? codeInput : null;
 
     // Every figure on this page comes from the server (menu prices, delivery
     // fee, service fee, promo) — the same calculation used to place the order.
@@ -160,6 +228,8 @@ const OrderSummary: React.FC = () => {
                     storeId: String(cartStoreId),
                     items: cartItems.map((i) => ({ menuItemId: String(i.id), quantity: i.quantity })),
                     promotionId: activePromo?.id ?? null,
+                    promoCode: activePromoCode,
+                    useRewards,
                     // Where it's going — the delivery fee depends on the distance
                     customerLatitude: chosenCoords?.latitude ?? null,
                     customerLongitude: chosenCoords?.longitude ?? null,
@@ -182,13 +252,25 @@ const OrderSummary: React.FC = () => {
             window.clearTimeout(timer);
             controller.abort();
         };
-    }, [cartKey, cartStoreId, activePromo?.id, chosenCoords?.latitude, chosenCoords?.longitude, deliveryAddress]); // eslint-disable-line react-hooks/exhaustive-deps
+    }, [cartKey, cartStoreId, activePromo?.id, activePromoCode, useRewards, quoteNonce, user?.id, chosenCoords?.latitude, chosenCoords?.longitude, deliveryAddress]); // eslint-disable-line react-hooks/exhaustive-deps
 
     const quote = orderQuote?.promotion ?? null; // the promo part of the quote
     const deliveryFee = orderQuote?.deliveryFee ?? 0;
     const serviceFee = orderQuote?.serviceFee ?? 0;
     const discount = orderQuote?.discount ?? 0;
+    const rewardDiscount = orderQuote?.rewardDiscount ?? 0;
+    const rewardsAvailable = orderQuote?.rewards?.available ?? null;
+    const hasRewards = Boolean(rewardsAvailable && (rewardsAvailable.freeDeliveries > 0 || rewardsAvailable.deliveryCredit > 0));
     const finalTotal = orderQuote?.total ?? cartTotal;
+
+    // In-app card popup, unless it failed to open and we fell back to Paystack's page
+    const cardInApp = payChoice === 'card' && payStage !== 'redirect';
+
+    const handleClearCart = () => {
+        const saved = cartItems;
+        clearCart();
+        toast.info('Cart cleared', { id: 'cart', duration: 5000, action: { label: 'Undo', onClick: () => replaceCart(saved) } });
+    };
 
     const incrementItem = (id: string | number) => {
         const item = cartItems.find(i => i.id === id);
@@ -252,6 +334,10 @@ const OrderSummary: React.FC = () => {
                 })),
                 paymentMethod,
                 promotionId: quote?.eligible && activePromo ? activePromo.id : null,
+                promoCode: quote?.eligible && activePromo ? activePromoCode : null,
+                useRewards,
+                noteForVendor: noteForVendor.trim(),
+                noteForRider: noteForRider.trim(),
             });
 
             // Mirror the order into the profile's history so it shows immediately.
@@ -282,14 +368,41 @@ const OrderSummary: React.FC = () => {
 
             clearCart();
             selectPromotion(null); // used up for this order
+            setCodePromo(null);
+            // Rewards may have been spent — pull the new balances.
+            if (orderQuote?.rewardDiscount) refreshUser();
 
             if (paymentMethod === 'online') {
-                // Off to Paystack's secure checkout; it sends them back to
-                // /payment/callback, which confirms the payment with our server.
+                setPayStage('starting');
                 setRedirectingToPay(true);
                 try {
-                    const { authorizationUrl } = await initializePayment(order.id);
-                    window.location.href = authorizationUrl;
+                    const init = await initializePayment(order.id, payChoice === 'card' ? 'card' : undefined);
+
+                    // In-app card form (Paystack popup). If it can't open,
+                    // we fall through to Paystack's page below.
+                    if (payChoice === 'card') {
+                        try {
+                            setPayStage('card');
+                            const result = await payWithCardPopup(init.accessCode);
+                            if (result.outcome === 'success') {
+                                navigate(`/payment/callback?reference=${encodeURIComponent(result.reference)}`);
+                                return;
+                            }
+                            setRedirectingToPay(false);
+                            const why = result.outcome === 'cancelled'
+                                ? 'You closed the card form before paying. Your order is saved — pay now to send it to the store.'
+                                : result.message;
+                            navigate(`/payment/callback?order=${order.id}&error=${encodeURIComponent(why)}`);
+                            return;
+                        } catch {
+                            // Popup script blocked or offline — use the hosted page instead.
+                        }
+                    }
+
+                    // Off to Paystack's secure checkout; it sends them back to
+                    // /payment/callback, which confirms the payment with our server.
+                    setPayStage('redirect');
+                    window.location.href = init.authorizationUrl;
                     return;
                 } catch (payErr) {
                     setRedirectingToPay(false);
@@ -311,9 +424,17 @@ const OrderSummary: React.FC = () => {
             // so the next tap places the order at full price, visibly.
             if (error instanceof ApiError && (error.body as { promotionInvalid?: boolean })?.promotionInvalid) {
                 selectPromotion(null);
+                setCodePromo(null);
                 setStorePromos((list) => list.filter((p) => p.id !== activePromo?.id));
             }
-            setSubmitError(toErrorMessage(error, 'Could not place your order. Please try again.'));
+            // Rewards were spent elsewhere since this total was worked out — re-price.
+            if (error instanceof ApiError && (error.body as { rewardsChanged?: boolean })?.rewardsChanged) {
+                refreshUser();
+                setQuoteNonce((n) => n + 1);
+            }
+            const message = toErrorMessage(error, 'Could not place your order. Please try again.');
+            setSubmitError(message);
+            toast.error(message, { id: 'order' });
         } finally {
             setIsSubmitting(false);
         }
@@ -358,7 +479,9 @@ const OrderSummary: React.FC = () => {
         );
     }
 
-    if (cartItems.length === 0) {
+    // (Not while handing over to Paystack: the cart is already cleared by then,
+    // and the "Redirecting…" screen must stay up rather than "Your cart is empty".)
+    if (cartItems.length === 0 && !redirectingToPay) {
         return (
             <div className="min-h-screen bg-[#F9FAFB] flex flex-col font-poppins">
                 <Header />
@@ -406,7 +529,7 @@ const OrderSummary: React.FC = () => {
                             <div className="p-6 border-b border-[#EAECF0] flex justify-between items-center">
                                 <h2 className="text-lg font-semibold text-[#222222]">Items Details</h2>
                                 <button
-                                    onClick={clearCart}
+                                    onClick={handleClearCart}
                                     className="text-sm text-[#E00B0B] hover:text-[#B80909] font-medium"
                                 >
                                     Clear Order
@@ -487,7 +610,7 @@ const OrderSummary: React.FC = () => {
                                         <div className="text-center py-4">
                                             <p className="text-[#667085] text-sm mb-2">You need to sign in to set a delivery address</p>
                                             <button
-                                                onClick={() => navigate('/signin')}
+                                                onClick={() => navigate('/signin?next=/order-summary')}
                                                 className="text-[#E00B0B] text-xs font-semibold hover:underline"
                                             >
                                                 Sign In / Sign Up →
@@ -567,6 +690,36 @@ const OrderSummary: React.FC = () => {
                                         </p>
                                     </div>
                                 </div>
+
+                                {/* Notes for the store and the rider */}
+                                <div className="p-4 bg-[#F9FAFB] rounded-lg border border-[#EAECF0] space-y-4">
+                                    <div className="flex items-center gap-2">
+                                        <div className="w-8 h-8 bg-white rounded-full flex items-center justify-center shadow-sm text-[#E00B0B]">
+                                            <MessageSquare size={16} />
+                                        </div>
+                                        <p className="text-[#222222] font-medium text-sm">Notes (optional)</p>
+                                    </div>
+                                    {([
+                                        { id: 'note-vendor', label: `For ${cartItems[0]?.storeName || 'the store'}`, value: noteForVendor, set: setNoteForVendor, placeholder: 'e.g. No onions, extra pepper, pack the sauce separately' },
+                                        { id: 'note-rider', label: 'For your rider', value: noteForRider, set: setNoteForRider, placeholder: 'e.g. Blue gate opposite the pharmacy. Call when you arrive.' },
+                                    ]).map((n) => (
+                                        <div key={n.id}>
+                                            <div className="flex items-baseline justify-between mb-1">
+                                                <label htmlFor={n.id} className="text-xs font-semibold text-[#344054]">{n.label}</label>
+                                                <span className={`text-[10px] ${n.value.length > 270 ? 'text-amber-600' : 'text-[#98A2B3]'}`}>{n.value.length}/300</span>
+                                            </div>
+                                            <textarea
+                                                id={n.id}
+                                                rows={2}
+                                                maxLength={300}
+                                                value={n.value}
+                                                onChange={(e) => n.set(e.target.value)}
+                                                placeholder={n.placeholder}
+                                                className="w-full resize-none rounded-lg border border-[#D0D5DD] bg-white px-3 py-2 text-sm text-[#222222] placeholder:text-[#98A2B3] focus:outline-none focus:ring-2 focus:ring-[#E00B0B]/30 focus:border-[#E00B0B]"
+                                            />
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -593,10 +746,113 @@ const OrderSummary: React.FC = () => {
                                     <div className="flex justify-between text-green-700 text-sm">
                                         <span className="flex items-center gap-1.5 min-w-0">
                                             <Tag size={13} className="flex-shrink-0" />
-                                            <span className="truncate">{activePromo.badge || activePromo.title}</span>
+                                            <span className="truncate">{activePromoCode ? `Code ${activePromoCode}` : activePromo.badge || activePromo.title}</span>
                                         </span>
                                         <span className="font-semibold">− ₦ {discount.toLocaleString()}</span>
                                     </div>
+                                )}
+                                {rewardDiscount > 0 && (
+                                    <div className="flex justify-between text-green-700 text-sm">
+                                        <span className="flex items-center gap-1.5">
+                                            <Gift size={13} className="flex-shrink-0" />
+                                            {orderQuote?.rewards.freeDeliveryUsed ? 'Free delivery reward' : 'Delivery credit'}
+                                        </span>
+                                        <span className="font-semibold">− ₦ {rewardDiscount.toLocaleString()}</span>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Rewards switch — only when they have something to spend */}
+                            {hasRewards && rewardsAvailable && (
+                                <label className="mb-6 flex items-start gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:border-[#E00B0B]/40">
+                                    <input
+                                        type="checkbox"
+                                        checked={useRewards}
+                                        onChange={(e) => setUseRewards(e.target.checked)}
+                                        className="mt-0.5 h-4 w-4 accent-[#E00B0B]"
+                                    />
+                                    <span className="text-xs">
+                                        <span className="block font-semibold text-[#222222]">Use my rewards on delivery</span>
+                                        <span className="block text-[#667085]">
+                                            {[
+                                                rewardsAvailable.freeDeliveries > 0 && `${rewardsAvailable.freeDeliveries} free ${rewardsAvailable.freeDeliveries === 1 ? 'delivery' : 'deliveries'}`,
+                                                rewardsAvailable.deliveryCredit > 0 && `₦${rewardsAvailable.deliveryCredit.toLocaleString()} delivery credit`,
+                                            ].filter(Boolean).join(' and ')} available
+                                        </span>
+                                    </span>
+                                </label>
+                            )}
+
+                            {/* Promo code */}
+                            <div className="mb-6">
+                                <label htmlFor="promo-code" className="block text-[11px] font-semibold text-[#667085] mb-1.5">Promo code</label>
+                                {codePromo ? (
+                                    <div className="flex items-center justify-between gap-2 p-3 rounded-lg border border-[#E00B0B] bg-[#FFF5F5] text-xs">
+                                        <span className="min-w-0">
+                                            <span className="block font-semibold text-[#222222]">{codePromo.code} applied</span>
+                                            <span className="block text-[#667085] truncate">{describeDiscount(codePromo)}</span>
+                                            {quote && !quote.eligible && quote.reason && (
+                                                <span className="block text-amber-700 mt-1">{quote.reason}</span>
+                                            )}
+                                        </span>
+                                        <button type="button" onClick={removeCode} className="font-semibold text-[#E00B0B] hover:underline flex-shrink-0">
+                                            Remove
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <>
+                                        <form
+                                            className="flex gap-2"
+                                            onSubmit={(e) => { e.preventDefault(); applyCode(codeInput); }}
+                                        >
+                                            <input
+                                                id="promo-code"
+                                                value={codeInput}
+                                                onChange={(e) => { setCodeInput(e.target.value.toUpperCase().replace(/\s/g, '').slice(0, 20)); setCodeError(''); }}
+                                                placeholder="Enter code"
+                                                autoCapitalize="characters"
+                                                autoComplete="off"
+                                                aria-invalid={Boolean(codeError)}
+                                                aria-describedby={codeError ? 'promo-code-error' : undefined}
+                                                className="flex-1 min-w-0 rounded-lg border border-[#D0D5DD] px-3 py-2 text-sm uppercase tracking-wide focus:outline-none focus:ring-2 focus:ring-[#E00B0B]/30 focus:border-[#E00B0B]"
+                                            />
+                                            <button
+                                                type="submit"
+                                                disabled={!codeInput.trim() || checkingCode}
+                                                className="px-4 rounded-lg bg-[#222222] text-white text-xs font-semibold hover:bg-black disabled:opacity-50"
+                                            >
+                                                {checkingCode ? <Loader2 size={14} className="animate-spin" /> : 'Apply'}
+                                            </button>
+                                        </form>
+                                        {codeError && <p id="promo-code-error" className="mt-1.5 text-[11px] text-[#B42318]">{codeError}</p>}
+                                        {/* Their own codes that work at this store: tap to apply */}
+                                        {(() => {
+                                            const usable = cartStore
+                                                ? myCodes.filter((c) => promotionAppliesToStore({ ...c, id: c.promotionId } as unknown as Promotion, cartStore))
+                                                : [];
+                                            return usable.length ? (
+                                                <div className="mt-2.5">
+                                                    <p className="text-[11px] text-[#667085] mb-1.5">Your codes</p>
+                                                    <div className="flex flex-wrap gap-2">
+                                                        {usable.map((c) => (
+                                                            <button
+                                                                key={c.code}
+                                                                type="button"
+                                                                onClick={() => applyCode(c.code)}
+                                                                disabled={checkingCode}
+                                                                title={`${c.title}: ${describeDiscount(c)}`}
+                                                                className="inline-flex items-center gap-1.5 rounded-full border border-dashed border-[#E00B0B]/50 bg-[#FFF8F8] px-3 py-1 text-[11px] hover:border-[#E00B0B] disabled:opacity-60"
+                                                            >
+                                                                <Tag size={11} className="text-[#E00B0B]" />
+                                                                <span className="font-mono font-bold text-[#E00B0B]">{c.code}</span>
+                                                                <span className="text-[#667085]">{describeDiscount(c)}</span>
+                                                            </button>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            ) : null;
+                                        })()}
+                                    </>
                                 )}
                             </div>
 
@@ -611,6 +867,12 @@ const OrderSummary: React.FC = () => {
                                                 key={p.id}
                                                 type="button"
                                                 onClick={() => {
+                                                    if (p.requiresCode) {
+                                                        if (applied) removeCode();
+                                                        else if (p.code) applyCode(p.code);
+                                                        return;
+                                                    }
+                                                    setCodePromo(null);
                                                     setPromoDeclined(applied);
                                                     selectPromotion(applied ? null : p);
                                                 }}
@@ -619,7 +881,7 @@ const OrderSummary: React.FC = () => {
                                                 <Tag size={14} className={`mt-0.5 flex-shrink-0 ${applied ? 'text-[#E00B0B]' : 'text-gray-400'}`} />
                                                 <span className="flex-1 min-w-0">
                                                     <span className="block font-semibold text-[#222222]">{p.title}</span>
-                                                    <span className="block text-[#667085]">{describeDiscount(p)}</span>
+                                                    <span className="block text-[#667085]">{describeDiscount(p)}{p.requiresCode && p.code ? ` with code ${p.code}` : ''}</span>
                                                     {applied && quote && !quote.eligible && quote.reason && (
                                                         <span className="block text-amber-700 mt-1">{quote.reason}</span>
                                                     )}
@@ -642,24 +904,31 @@ const OrderSummary: React.FC = () => {
                             <div className="mb-6 space-y-2">
                                 <p className="text-[11px] font-semibold uppercase tracking-wider text-[#98A2B3]">Payment</p>
                                 {([
-                                    { value: 'cash_on_delivery', title: formatPaymentMethod('cash_on_delivery'), detail: 'Pay the rider when your order arrives.' },
+                                    { value: 'cash', icon: Banknote, title: formatPaymentMethod('cash_on_delivery'), detail: 'Pay the rider when your order arrives.' },
                                     ...(config.onlinePayments
-                                        ? [{ value: 'online', title: 'Pay now online', detail: `Card, bank transfer or USSD via Paystack.${config.paystackTestMode ? ' (Test mode — no real charge)' : ''}` }]
+                                        ? [
+                                            { value: 'card', icon: CreditCard, title: 'Pay with card', detail: 'Enter your card here without leaving the app. Secured by Paystack.' },
+                                            { value: 'paystack', icon: Lock, title: 'Pay with Paystack', detail: 'Card, bank transfer or USSD on Paystack’s secure page.' },
+                                        ]
                                         : []),
-                                ] as { value: PaymentMethod; title: string; detail: string }[]).map((opt) => (
+                                ] as { value: PayChoice; icon: typeof CreditCard; title: string; detail: string }[]).map((opt) => (
                                     <button
                                         key={opt.value}
                                         type="button"
-                                        onClick={() => setPaymentMethod(opt.value)}
-                                        className={`w-full text-left p-3 rounded-lg border text-xs transition-all flex items-start gap-2.5 ${paymentMethod === opt.value ? 'border-[#E00B0B] bg-[#FFF5F5]' : 'border-gray-200 hover:border-[#E00B0B]/40'}`}
+                                        onClick={() => setPayChoice(opt.value)}
+                                        aria-pressed={payChoice === opt.value}
+                                        className={`w-full text-left p-3 rounded-lg border text-xs transition-all flex items-start gap-2.5 ${payChoice === opt.value ? 'border-[#E00B0B] bg-[#FFF5F5]' : 'border-gray-200 hover:border-[#E00B0B]/40'}`}
                                     >
-                                        <CreditCard size={14} className={`mt-0.5 flex-shrink-0 ${paymentMethod === opt.value ? 'text-[#E00B0B]' : 'text-gray-400'}`} />
+                                        <opt.icon size={14} className={`mt-0.5 flex-shrink-0 ${payChoice === opt.value ? 'text-[#E00B0B]' : 'text-gray-400'}`} />
                                         <span>
                                             <span className="block font-semibold text-[#222222]">{opt.title}</span>
                                             <span className="block text-[#667085]">{opt.detail}</span>
                                         </span>
                                     </button>
                                 ))}
+                                {config.onlinePayments && config.paystackTestMode && payChoice !== 'cash' && (
+                                    <p className="text-[11px] text-amber-700">Test mode: no real money is charged.</p>
+                                )}
                             </div>
 
                             {/* Not logged in warning */}
@@ -668,7 +937,7 @@ const OrderSummary: React.FC = () => {
                                     <p className="text-xs text-blue-700 font-medium mb-1">👋 Sign in required</p>
                                     <p className="text-[11px] text-blue-600">Please sign in to complete your checkout securely.</p>
                                     <button
-                                        onClick={() => navigate('/signin')}
+                                        onClick={() => navigate('/signin?next=/order-summary')}
                                         className="text-[11px] text-blue-700 font-semibold mt-1 hover:underline"
                                     >
                                         Sign In / Sign Up →
@@ -718,7 +987,7 @@ const OrderSummary: React.FC = () => {
                                 {isSubmitting || redirectingToPay ? (
                                     <>
                                         <Loader2 size={18} className="animate-spin" />
-                                        {redirectingToPay ? 'Opening secure payment…' : 'Processing...'}
+                                        {redirectingToPay ? (cardInApp ? 'Opening secure payment…' : 'Redirecting to Paystack…') : 'Placing your order…'}
                                     </>
                                 ) : (
                                     <>
@@ -738,6 +1007,23 @@ const OrderSummary: React.FC = () => {
             </main>
 
             <Footer />
+
+            {/* Full-screen hand-off to Paystack, so nobody taps twice or leaves mid-payment */}
+            {redirectingToPay && (
+                <div role="alertdialog" aria-live="assertive" aria-label="Payment in progress" className="fixed inset-0 z-[9990] bg-white/[0.97] flex items-center justify-center p-6">
+                    <div className="text-center max-w-xs">
+                        <Loader2 className="w-10 h-10 text-[#E00B0B] animate-spin mx-auto mb-5" />
+                        <p className="text-lg font-bold text-[#222222] mb-2">
+                            {cardInApp ? 'Opening secure card payment…' : 'Redirecting to Paystack…'}
+                        </p>
+                        <p className="text-sm text-[#667085]">
+                            {cardInApp
+                                ? 'Your card details go straight to Paystack. We never see them.'
+                                : "Your order is saved. Don't close this page — you'll come back here once you've paid."}
+                        </p>
+                    </div>
+                </div>
+            )}
             {showPhoneModal && (
                 <PhoneVerificationModal
                     onClose={() => setShowPhoneModal(false)}

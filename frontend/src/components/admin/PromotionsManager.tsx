@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { X, Plus, Tag, Trash2, Pencil, Loader2, ImagePlus, Search } from 'lucide-react';
+import { X, Plus, Tag, Trash2, Pencil, Loader2, ImagePlus, Search, Ticket } from 'lucide-react';
 import {
     BUSINESS_TYPES,
     getAllPromotionsForAdmin,
@@ -9,8 +9,18 @@ import {
     getAllStores,
     describeDiscount,
     toErrorMessage,
+    getCustomersForAdmin,
 } from '../../services/api';
-import type { Promotion, PromotionInput, VendorStore, BusinessType, DiscountType, PromotionScope } from '../../types/models';
+import type { Promotion, PromotionInput, VendorStore, BusinessType, DiscountType, PromotionScope, CustomerLookup } from '../../types/models';
+import CustomerPicker from './CustomerPicker';
+import CampaignCodes from './CampaignCodes';
+
+/**
+ *   shared   — one code (or none) anyone can use
+ *   locked   — one code that only works for the customers picked
+ *   campaign — every chosen customer gets their own single-use code
+ */
+type CodeMode = 'shared' | 'locked' | 'campaign';
 import { compressImage } from '../../lib/imageUtils';
 
 interface PromotionsManagerProps {
@@ -35,6 +45,13 @@ type FormState = {
     endsAt: string;
     isActive: boolean;
     priority: string;
+    code: string;
+    audience: 'everyone' | 'new_customers';
+    usageLimit: string;
+    perCustomerLimit: string;
+    listed: boolean;
+    codeMode: CodeMode;
+    customers: CustomerLookup[];
 };
 
 const EMPTY: FormState = {
@@ -55,6 +72,13 @@ const EMPTY: FormState = {
     endsAt: '',
     isActive: true,
     priority: '0',
+    code: '',
+    audience: 'everyone',
+    usageLimit: '',
+    perCustomerLimit: '',
+    listed: true,
+    codeMode: 'shared',
+    customers: [],
 };
 
 // <input type="datetime-local"> wants "YYYY-MM-DDTHH:mm" in local time.
@@ -83,6 +107,13 @@ const fromPromotion = (p: Promotion): FormState => ({
     endsAt: toLocalInput(p.endsAt),
     isActive: p.isActive,
     priority: String(p.priority ?? 0),
+    code: p.code ?? '',
+    audience: p.audience ?? 'everyone',
+    usageLimit: p.usageLimit ? String(p.usageLimit) : '',
+    perCustomerLimit: p.perCustomerLimit ? String(p.perCustomerLimit) : '',
+    listed: p.listed !== false,
+    codeMode: p.isCampaign ? 'campaign' : (p.customerIds?.length ? 'locked' : 'shared'),
+    customers: (p.customerIds || []).map((id) => ({ id, name: '', email: '' })), // names filled in by openEdit
 });
 
 const toInput = (f: FormState): PromotionInput => ({
@@ -103,6 +134,15 @@ const toInput = (f: FormState): PromotionInput => ({
     endsAt: f.endsAt ? new Date(f.endsAt).toISOString() : null,
     isActive: f.isActive,
     priority: Number(f.priority) || 0,
+    code: f.codeMode === 'campaign' ? null : f.code.trim().toUpperCase() || null,
+    isCampaign: f.codeMode === 'campaign',
+    customerIds: f.codeMode === 'locked' ? f.customers.map((c) => c.id) : [],
+    audience: f.audience,
+    usageLimit: Number(f.usageLimit) > 0 ? Math.floor(Number(f.usageLimit)) : null,
+    perCustomerLimit: Number(f.perCustomerLimit) > 0 ? Math.floor(Number(f.perCustomerLimit)) : null,
+    // Only shared code promos can be hidden; without a code nobody could use it.
+    // Codes for particular people are never advertised.
+    listed: f.codeMode !== 'shared' ? false : f.code.trim() ? f.listed : true,
 });
 
 const statusOf = (p: Promotion) => {
@@ -130,6 +170,8 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
     const [saving, setSaving] = useState(false);
     const [formError, setFormError] = useState('');
     const [storeSearch, setStoreSearch] = useState('');
+    // Campaign whose personal codes are open
+    const [codesFor, setCodesFor] = useState<Promotion | null>(null);
 
     const load = async () => {
         setLoading(true);
@@ -158,6 +200,12 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
         setForm(fromPromotion(p));
         setFormError('');
         setEditing(p);
+        // Show names, not ids, for customers the code is locked to.
+        if (p.customerIds?.length) {
+            getCustomersForAdmin(p.customerIds)
+                .then((found) => setForm((f) => ({ ...f, customers: f.customers.map((c) => found.find((x) => x.id === c.id) ?? { ...c, name: '(deleted account)' }) })))
+                .catch(() => undefined);
+        }
     };
 
     const set = <K extends keyof FormState>(key: K, value: FormState[K]) => setForm((f) => ({ ...f, [key]: value }));
@@ -174,13 +222,16 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
     const save = async () => {
         setFormError('');
         if (!form.title.trim()) return setFormError('Give the promo a title.');
+        if (form.codeMode === 'locked' && !form.customers.length) return setFormError('Pick at least one customer.');
+        if (form.codeMode === 'locked' && !form.code.trim()) return setFormError('Give the promo a code.');
         setSaving(true);
         try {
             const data = toInput(form);
-            if (editing === 'new') await createPromotion(data);
-            else if (editing) await updatePromotion(editing.id, data);
+            const saved = editing === 'new' ? await createPromotion(data) : editing ? await updatePromotion(editing.id, data) : null;
             setEditing(null);
             await load();
+            // New campaign: go straight to handing out codes.
+            if (saved?.isCampaign && editing === 'new') setCodesFor(saved);
         } catch (err) {
             setFormError(toErrorMessage(err, "Couldn't save the promo."));
         } finally {
@@ -191,7 +242,7 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
     const toggleActive = async (p: Promotion) => {
         try {
             const updated = await updatePromotion(p.id, { isActive: !p.isActive });
-            setPromos((list) => list.map((x) => (x.id === p.id ? updated : x)));
+            setPromos((list) => list.map((x) => (x.id === p.id ? { ...x, ...updated } : x)));
         } catch (err) {
             setError(toErrorMessage(err, "Couldn't update the promo."));
         }
@@ -222,10 +273,10 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
                     <div className="flex items-center gap-2">
                         <Tag size={18} className="text-[#E00B0B]" />
                         <h2 className="text-lg font-bold text-gray-900">
-                            {editing ? (editing === 'new' ? 'New promotion' : 'Edit promotion') : 'Promotions'}
+                            {codesFor ? 'Personal codes' : editing ? (editing === 'new' ? 'New promotion' : 'Edit promotion') : 'Promotions'}
                         </h2>
                     </div>
-                    <button onClick={editing ? () => setEditing(null) : onClose} className="text-gray-400 hover:text-gray-700" aria-label="Close">
+                    <button onClick={codesFor ? () => setCodesFor(null) : editing ? () => setEditing(null) : onClose} className="text-gray-400 hover:text-gray-700" aria-label={codesFor || editing ? 'Back' : 'Close'}>
                         <X size={20} />
                     </button>
                 </div>
@@ -233,7 +284,9 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
                 <div className="flex-1 overflow-y-auto p-6">
                     {error && <p className="mb-4 text-sm text-[#991B1B] bg-[#FEECEC] rounded-lg px-3 py-2">{error}</p>}
 
-                    {!editing && (
+                    {codesFor && <CampaignCodes promo={codesFor} onChanged={load} />}
+
+                    {!editing && !codesFor && (
                         <>
                             <div className="flex items-center justify-between mb-4">
                                 <p className="text-sm text-gray-500">Live promos appear as banners on Explore and are applied at checkout.</p>
@@ -266,6 +319,16 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
                                                     <div className="flex items-center gap-2">
                                                         <p className="text-sm font-semibold text-gray-900 truncate">{p.title}</p>
                                                         <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${status.cls}`}>{status.label}</span>
+                                                        {p.code && (
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-900 text-white tracking-wide">
+                                                                {p.code}{p.customerIds?.length ? ` (${p.customerIds.length} ${p.customerIds.length === 1 ? 'account' : 'accounts'})` : p.listed === false ? ' (hidden)' : ''}
+                                                            </span>
+                                                        )}
+                                                        {p.isCampaign && (
+                                                            <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-900 text-white">
+                                                                Personal codes: {p.codesUsed ?? 0}/{p.codesIssued ?? 0} used
+                                                            </span>
+                                                        )}
                                                     </div>
                                                     <p className="text-xs text-gray-500 truncate">
                                                         {describeDiscount(p)} ·{' '}
@@ -274,8 +337,18 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
                                                             : p.scope === 'category'
                                                                 ? `All ${p.businessType}`
                                                                 : p.storeIds.map(storeName).join(', ')}
+                                                        {p.audience === 'new_customers' ? ' · First order only' : ''}
+                                                        {p.usageLimit ? ` · ${p.timesUsed ?? 0}/${p.usageLimit} used` : p.timesUsed ? ` · used ${p.timesUsed}×` : ''}
                                                     </p>
                                                 </div>
+                                                {p.isCampaign && (
+                                                    <button
+                                                        onClick={() => setCodesFor(p)}
+                                                        className="inline-flex items-center gap-1 text-xs font-semibold text-[#E00B0B] border border-[#F5C2C2] rounded-lg px-2.5 py-1.5 hover:bg-[#FFF5F5]"
+                                                    >
+                                                        <Ticket size={13} /> Codes
+                                                    </button>
+                                                )}
                                                 <button
                                                     onClick={() => toggleActive(p)}
                                                     className="text-xs font-semibold text-gray-600 border border-gray-200 rounded-lg px-2.5 py-1.5 hover:bg-gray-50"
@@ -412,6 +485,89 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
                                 )}
                             </div>
 
+                            {/* Promo code & who can use it */}
+                            <fieldset className="grid grid-cols-1 sm:grid-cols-2 gap-4 p-4 rounded-xl bg-gray-50 border border-gray-100">
+                                <div className="sm:col-span-2">
+                                    <span className={labelCls}>Code</span>
+                                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-2" role="radiogroup" aria-label="Code">
+                                        {([
+                                            { value: 'shared', title: 'Anyone', detail: 'One code (or none) that works for everyone' },
+                                            { value: 'locked', title: 'Specific accounts', detail: 'One code that only works for people you pick' },
+                                            { value: 'campaign', title: 'Personal codes', detail: 'Each person gets their own single-use code' },
+                                        ] as { value: CodeMode; title: string; detail: string }[]).map((m) => (
+                                            <label
+                                                key={m.value}
+                                                className={`flex items-start gap-2 p-3 rounded-lg border bg-white cursor-pointer text-sm ${form.codeMode === m.value ? 'border-[#E00B0B]' : 'border-gray-200'}`}
+                                            >
+                                                <input type="radio" name="code-mode" className="accent-[#E00B0B] mt-0.5" checked={form.codeMode === m.value} onChange={() => set('codeMode', m.value)} />
+                                                <span>
+                                                    <span className="block font-medium text-gray-900">{m.title}</span>
+                                                    <span className="block text-[11px] text-gray-500">{m.detail}</span>
+                                                </span>
+                                            </label>
+                                        ))}
+                                    </div>
+                                </div>
+                                {form.codeMode === 'campaign' ? (
+                                    <p className="sm:col-span-2 text-[12px] text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-2">
+                                        After you save, you'll choose who gets a code (people you pick, a list of emails, lapsed customers or everyone).
+                                        Codes look like <span className="font-mono font-semibold">ADA-7K2Q</span>, work once, only on that person's account, and show up in their Rewards tab.
+                                    </p>
+                                ) : (
+                                <div>
+                                    <label className={labelCls} htmlFor="promo-code-field">{form.codeMode === 'locked' ? 'Promo code' : 'Promo code (optional)'}</label>
+                                    <input
+                                        id="promo-code-field"
+                                        className={`${input} uppercase tracking-wide`}
+                                        value={form.code}
+                                        onChange={(e) => set('code', e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, '').slice(0, 20))}
+                                        placeholder="e.g. NIGHT10"
+                                    />
+                                    <p className="text-[11px] text-gray-500 mt-1">
+                                        {form.codeMode === 'locked'
+                                            ? 'Only the accounts you pick below can use it; anyone else is told it isn’t linked to their account.'
+                                            : 'With a code, the promo only applies when a customer types it at checkout. Leave empty to apply it automatically.'}
+                                    </p>
+                                </div>
+                                )}
+                                <div>
+                                    <label className={labelCls}>Who can use it</label>
+                                    <select className={input} value={form.audience} onChange={(e) => set('audience', e.target.value as FormState['audience'])}>
+                                        <option value="everyone">Everyone</option>
+                                        <option value="new_customers">First order only (new customers)</option>
+                                    </select>
+                                    <p className="text-[11px] text-gray-500 mt-1">
+                                        First-order promos need the customer to be signed in, and stop working once they've ordered.
+                                    </p>
+                                </div>
+                                <div>
+                                    <label className={labelCls}>Total uses (optional)</label>
+                                    <input className={input} type="number" min={1} value={form.usageLimit} onChange={(e) => set('usageLimit', e.target.value)} placeholder="No limit" />
+                                </div>
+                                <div>
+                                    <label className={labelCls}>Uses per customer (optional)</label>
+                                    <input className={input} type="number" min={1} value={form.perCustomerLimit} onChange={(e) => set('perCustomerLimit', e.target.value)} placeholder="No limit" />
+                                </div>
+                                {form.codeMode === 'locked' && (
+                                    <div className="sm:col-span-2">
+                                        <CustomerPicker
+                                            label="Accounts that can use it"
+                                            selected={form.customers}
+                                            onChange={(next) => set('customers', next)}
+                                        />
+                                    </div>
+                                )}
+                                {form.codeMode === 'shared' && form.code.trim() && (
+                                    <label className="sm:col-span-2 flex items-start gap-2 text-sm text-gray-700">
+                                        <input type="checkbox" checked={form.listed} onChange={(e) => set('listed', e.target.checked)} className="accent-[#E00B0B] w-4 h-4 mt-0.5" />
+                                        <span>
+                                            Show in the banner and on store cards
+                                            <span className="block text-[11px] text-gray-500">Untick for a secret code you share yourself (Instagram, flyers, influencers).</span>
+                                        </span>
+                                    </label>
+                                )}
+                            </fieldset>
+
                             <div>
                                 <label className={labelCls}>Only these items (optional)</label>
                                 <input
@@ -451,7 +607,7 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
                     )}
                 </div>
 
-                {editing && (
+                {editing && !codesFor && (
                     <div className="flex gap-3 px-6 py-4 border-t border-gray-100">
                         <button onClick={() => setEditing(null)} className="flex-1 py-2.5 border border-gray-200 rounded-lg text-sm font-medium text-gray-600 hover:bg-gray-50">
                             Cancel

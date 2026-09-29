@@ -230,10 +230,16 @@ export type Order = {
     customerLatitude?: number | null;
     customerLongitude?: number | null;
     riderId: string | null;
-    items: { name: string; quantity: number; price: number }[];
+    items: { menuItemId?: string | null; name: string; quantity: number; price: number }[];
     totalAmount: number;
     deliveryFee: number;
     serviceFee?: number;
+    /** Free delivery / delivery credit used on this order. */
+    rewardDiscount?: number;
+    promoCode?: string | null;
+    /** Notes from the customer. */
+    noteForVendor?: string;
+    noteForRider?: string;
     /** Everything the customer pays (food + delivery + service − discount). */
     totalPaid?: number | null;
     /** How the customer pays — see PaymentMethod. */
@@ -263,6 +269,12 @@ export type CreateOrderInput = {
     paymentMethod: PaymentMethod;
     /** Promo to apply. The backend recalculates the discount itself. */
     promotionId?: string | null;
+    /** The code typed, for promos that need one. */
+    promoCode?: string | null;
+    /** Spend free deliveries / delivery credit (default true). */
+    useRewards?: boolean;
+    noteForVendor?: string;
+    noteForRider?: string;
 };
 
 // ─── Admin ───────────────────────────────────────────────────────────────────
@@ -309,13 +321,44 @@ export type CustomerProfile = {
     joinedDate: string;
     addresses: UserAddress[];
     favoriteVendors: string[];
+    /** Favourite store ids and favourite (repeatable) order ids. */
+    favoriteStores: string[];
+    favoriteOrders: string[];
+    rewards: RewardBalances;
+    referralCode: string | null;
     notifications: NotificationPreferences;
+};
+
+export type RewardBalances = {
+    points: number;
+    /** ₦ that can only pay delivery fees. */
+    deliveryCredit: number;
+    /** Vouchers: one waives one order's delivery fee. */
+    freeDeliveries: number;
+};
+
+/** GET /api/users/me/rewards */
+export type RewardsSummary = RewardBalances & {
+    referralCode: string;
+    referralLink: string;
+    referrals: number;
+    rewardedReferrals: number;
+    rules: {
+        pointsPer100Naira: number;
+        redeemBlock: number;
+        redeemValue: number;
+        referralReward: 'free_delivery' | 'credit';
+        referralCreditAmount: number;
+        newUserFreeDeliveries: number;
+    };
 };
 
 export type CreateCustomerInput = {
     username: string;
     email: string;
     password: string;
+    /** A friend's referral code (optional). */
+    referralCode?: string;
 };
 
 /** Fields a customer is allowed to change on their own profile. */
@@ -324,6 +367,7 @@ export type UpdateCustomerInput = Partial<
 >;
 
 export type OrderItemSummary = {
+    menuItemId?: string | null;
     name: string;
     quantity: number;
     price: number;
@@ -339,6 +383,11 @@ export type Transaction = {
     orderId: string;
     date: string;
     status: 'delivered' | 'in-transit' | 'preparing' | 'cancelled' | 'refunded';
+    /** The raw order status, e.g. 'ready' or 'picked_up' (for the live-order card). */
+    rawStatus?: OrderStatus;
+    storeId?: string;
+    /** Online order not paid yet. */
+    awaitingPayment?: boolean;
     items: OrderItemSummary[];
     subtotal: number;
     deliveryFee: number;
@@ -442,9 +491,76 @@ export type Promotion = {
     isActive: boolean;
     isLive: boolean;
     priority: number;
+    /** Set → only applied when the customer types this code at checkout. */
+    code?: string | null;
+    requiresCode?: boolean;
+    audience?: 'everyone' | 'new_customers';
+    usageLimit?: number | null;
+    perCustomerLimit?: number | null;
+    timesUsed?: number;
+    /** false → hidden from the banner and store badges (secret code). */
+    listed?: boolean;
+    /** Set → the code only works for these customers' accounts. */
+    customerIds?: string[];
+    /** true → no shared code; each chosen customer gets their own single-use code. */
+    isCampaign?: boolean;
+    /** Admin list only, for campaigns. */
+    codesIssued?: number;
+    codesUsed?: number;
 };
 
-export type PromotionInput = Partial<Omit<Promotion, 'id' | 'isLive'>>;
+export type PromotionInput = Partial<Omit<Promotion, 'id' | 'isLive' | 'requiresCode' | 'timesUsed' | 'codesIssued' | 'codesUsed'>>;
+
+/** GET /api/users/me/codes — a code tied to the signed-in customer's account. */
+export type MyCode = Pick<
+    Promotion,
+    'title' | 'subtitle' | 'discountType' | 'discountValue' | 'maxDiscount' | 'minOrderAmount' | 'itemKeywords' | 'scope' | 'businessType' | 'storeIds' | 'endsAt'
+> & {
+    code: string;
+    /** 'personal' = single-use, just for them; 'account' = only their account can use it */
+    kind: 'personal' | 'account';
+    promotionId: string;
+};
+
+/** Admin: a customer found by name/email/phone. */
+export type CustomerLookup = { id: string; name: string; email: string; phone?: string };
+
+/** Admin: one personal code in a campaign. */
+export type CampaignCode = {
+    id: string;
+    code: string;
+    usedAt: string | null;
+    orderId: string | null;
+    emailedAt: string | null;
+    createdAt: string;
+    customer: { id: string; name: string; email: string } | null;
+};
+
+export type IssueCodesInput =
+    | { audience: 'customers'; customerIds: string[]; sendEmail?: boolean }
+    | { audience: 'emails'; emails: string[]; sendEmail?: boolean }
+    | { audience: 'inactive'; days: number; sendEmail?: boolean }
+    | { audience: 'all'; sendEmail?: boolean };
+
+/** A sponsored tile in "Popular on Nightcrawlers". */
+export type Placement = {
+    id: string;
+    storeId: string;
+    category: BusinessType;
+    label: string;
+    imageUrl: string;
+    advertiser: string;
+    startsAt: string | null;
+    endsAt: string | null;
+    isActive: boolean;
+    isLive: boolean;
+    priority: number;
+    impressions: number;
+    clicks: number;
+    storeName?: string;
+};
+
+export type PlacementInput = Partial<Pick<Placement, 'storeId' | 'category' | 'label' | 'imageUrl' | 'advertiser' | 'startsAt' | 'endsAt' | 'isActive' | 'priority'>>;
 
 export type PromotionQuote = {
     eligible: boolean;
@@ -462,8 +578,28 @@ export type OrderQuote = {
     serviceFee: number;
     serviceFeePercent: number;
     discount: number;
+    /** Covered by free-delivery vouchers / delivery credit. */
+    rewardDiscount: number;
+    rewards: {
+        discount: number;
+        freeDeliveryUsed: boolean;
+        deliveryCreditUsed: number;
+        /** null for guests */
+        available: { freeDeliveries: number; deliveryCredit: number } | null;
+        applied: boolean;
+    };
     total: number;
     promotion: (PromotionQuote & { id: string; title: string | null }) | null;
+};
+
+/** GET /api/orders/delivery-estimate */
+export type DeliveryEstimate = {
+    fee: number;
+    distanceKm: number | null;
+    tooFar: boolean;
+    maxKm: number;
+    /** true → no location to measure from, this is the flat fee */
+    estimated: boolean;
 };
 
 /** GET /api/config — public settings and feature switches from the server. */
@@ -513,6 +649,9 @@ export type OrderTracking = {
     deliveryFee: number;
     serviceFee: number;
     discount: number;
+    rewardDiscount?: number;
+    noteForVendor?: string;
+    noteForRider?: string;
     total: number;
     serverTime: string;
 };

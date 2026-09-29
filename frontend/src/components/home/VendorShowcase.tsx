@@ -4,20 +4,25 @@ import { ChevronRight, Loader2, Store as StoreIcon } from 'lucide-react';
 import { FEATURED_VENDORS } from '../../config/featuredVendors';
 import type { FeaturedVendor } from '../../config/featuredVendors';
 import { CATEGORY_DISPLAY } from '../../config/categories';
-import { getStoreById, searchStores, getStoresForExplore, getBusinessTypeMeta } from '../../services/api';
-import type { BusinessType, VendorStore } from '../../services/api';
+import { getStoreById, searchStores, getStoresForExplore, getBusinessTypeMeta, getPlacements, recordPlacementClick } from '../../services/api';
+import type { BusinessType, VendorStore, Placement } from '../../services/api';
 import { useDeliveryLocation } from '../../context/DeliveryLocationContext';
 
 const TILES_PER_TAB = 6;
 
 type Tile =
+  | { kind: 'ad'; key: string; name: string; image: string; store: VendorStore; placement: Placement }
   | { kind: 'featured'; key: string; name: string; image: string; vendor: FeaturedVendor }
   | { kind: 'store'; key: string; name: string; image: string; store: VendorStore };
 
+type Ad = Placement & { store: VendorStore };
+
 /**
  * "Popular on Nightcrawlers" — tabs for every category, not just food.
- * Each tab shows the hand-picked brands from config/featuredVendors.ts first,
- * then real stores in that category (nearest to the customer first).
+ * Each tab shows, in order:
+ *   1. paid "Sponsored" placements (managed in Admin → Ads)
+ *   2. the hand-picked brands from config/featuredVendors.ts
+ *   3. real stores in that category (nearest to the customer first)
  */
 const VendorShowcase: React.FC = () => {
   const navigate = useNavigate();
@@ -26,6 +31,19 @@ const VendorShowcase: React.FC = () => {
   const [storesByTab, setStoresByTab] = useState<Partial<Record<BusinessType, VendorStore[]>>>({});
   const [loadingTab, setLoadingTab] = useState<BusinessType | null>(null);
   const [opening, setOpening] = useState<string | null>(null);
+  const [adsByTab, setAdsByTab] = useState<Partial<Record<BusinessType, Ad[]>>>({});
+
+  // Sponsored tiles for the open tab (fetched once per tab; never blocks the section)
+  useEffect(() => {
+    if (adsByTab[tab]) return;
+    let cancelled = false;
+    getPlacements(tab)
+      .then((ads) => !cancelled && setAdsByTab((prev) => ({ ...prev, [tab]: ads })))
+      .catch(() => !cancelled && setAdsByTab((prev) => ({ ...prev, [tab]: [] })));
+    return () => {
+      cancelled = true;
+    };
+  }, [tab, adsByTab]);
 
   // Real stores for the open tab (fetched once per tab)
   useEffect(() => {
@@ -43,7 +61,17 @@ const VendorShowcase: React.FC = () => {
   }, [tab, storesByTab, deliveryAddress, coords]);
 
   const tiles: Tile[] = useMemo(() => {
-    const featured: Tile[] = FEATURED_VENDORS.filter((v) => v.category === tab).map((v) => ({
+    const ads: Tile[] = (adsByTab[tab] || []).map((a) => ({
+      kind: 'ad',
+      key: `a-${a.id}`,
+      name: a.store.name,
+      image: a.imageUrl || a.store.imageUrl,
+      store: a.store,
+      placement: a,
+    }));
+    const adStoreIds = new Set(ads.map((a) => (a.kind === 'ad' ? a.store.id : '')));
+    const adNames = ads.map((a) => a.name.toLowerCase());
+    const featured: Tile[] = FEATURED_VENDORS.filter((v) => v.category === tab && !adNames.some((n) => n.includes(v.name.toLowerCase()))).map((v) => ({
       kind: 'featured',
       key: `f-${v.name}`,
       name: v.name,
@@ -52,10 +80,10 @@ const VendorShowcase: React.FC = () => {
     }));
     const taken = new Set(featured.map((f) => f.name.toLowerCase()));
     const real: Tile[] = (storesByTab[tab] || [])
-      .filter((s) => ![...taken].some((n) => s.name.toLowerCase().includes(n)))
+      .filter((s) => !adStoreIds.has(s.id) && ![...taken].some((n) => s.name.toLowerCase().includes(n)))
       .map((s) => ({ kind: 'store', key: `s-${s.id}`, name: s.name, image: s.imageUrl, store: s }));
-    return [...featured, ...real].slice(0, TILES_PER_TAB);
-  }, [tab, storesByTab]);
+    return [...ads, ...featured, ...real].slice(0, TILES_PER_TAB);
+  }, [tab, storesByTab, adsByTab]);
 
   const openFeatured = async (vendor: FeaturedVendor) => {
     if (opening) return;
@@ -135,12 +163,21 @@ const VendorShowcase: React.FC = () => {
               <li key={t.key}>
                 <button
                   type="button"
-                  onClick={() => (t.kind === 'featured' ? openFeatured(t.vendor) : navigate('/vendor-details', { state: t.store }))}
-                  aria-label={`Open ${t.name}`}
+                  onClick={() => {
+                    if (t.kind === 'featured') return openFeatured(t.vendor);
+                    if (t.kind === 'ad') recordPlacementClick(t.placement.id);
+                    navigate('/vendor-details', { state: t.store });
+                  }}
+                  aria-label={`Open ${t.name}${t.kind === 'ad' ? ` (${t.placement.label || 'Sponsored'})` : ''}`}
                   className="group w-full flex flex-col items-center gap-3 focus:outline-none"
                 >
                   <div className="relative w-full aspect-[158/167] overflow-hidden rounded-[10px] shadow-sm bg-[#F2F4F7] group-hover:shadow-md group-focus-visible:ring-2 group-focus-visible:ring-[#E00B0B] transition-all">
                     <img src={t.image} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                    {t.kind === 'ad' && (
+                      <span className="absolute top-2 left-2 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-semibold text-[#344054] shadow-sm">
+                        {t.placement.label || 'Sponsored'}
+                      </span>
+                    )}
                     {t.kind === 'featured' && opening === t.vendor.name && (
                       <div className="absolute inset-0 bg-white/60 flex items-center justify-center">
                         <Loader2 className="animate-spin text-[#E00B0B]" size={22} />

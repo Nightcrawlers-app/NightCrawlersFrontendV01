@@ -134,3 +134,7 @@ body {
     transform: translateY(0);
   }
 }
+/* Pop-up messages (context/ToastContext.tsx) */
+.nc-toast { animation: nc-toast-in 180ms ease-out; }
+@keyframes nc-toast-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .nc-toast { animation: none; } }
