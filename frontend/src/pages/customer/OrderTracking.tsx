@@ -5,7 +5,8 @@ import { CheckCircle2, Circle, Clock, Loader2, Phone, Store, Bike, MapPin, XCirc
 import { useToast } from '../../context/ToastContext';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
-import { getOrderTracking, formatPaymentMethod, toErrorMessage, ApiError, cancelMyOrder } from '../../services/api';
+import { getOrderTracking, formatPaymentMethod, toErrorMessage, ApiError, cancelMyOrder, rateOrder } from '../../services/api';
+import StarPicker from '../../components/ui/StarPicker';
 import type { OrderTracking } from '../../services/api';
 import TripMap from '../../components/map/TripMap';
 
@@ -58,6 +59,11 @@ const OrderTrackingPage: React.FC = () => {
   const toast = useToast();
   const [confirmingCancel, setConfirmingCancel] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  // Rating after delivery
+  const [storeStars, setStoreStars] = useState(0);
+  const [riderStars, setRiderStars] = useState(0);
+  const [comment, setComment] = useState('');
+  const [rating, setRating] = useState(false);
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -168,6 +174,52 @@ const OrderTrackingPage: React.FC = () => {
                   : "Your order is ready and we're finding a rider. We've alerted riders nearby.")}
               {data.delays.deliveryDelayed && "Your delivery is taking longer than expected. Our team is checking with your rider."}
             </p>
+          </section>
+        )}
+
+        {/* Rate the order once it's delivered */}
+        {data.status === 'delivered' && data.canRate && (
+          <section className="bg-white border-2 border-[#E00B0B]/20 rounded-2xl p-5 space-y-4">
+            <h2 className="text-base font-bold text-[#222222]">How was your order?</h2>
+            <StarPicker label={data.store?.name ?? 'The store'} value={storeStars} onChange={setStoreStars} />
+            {data.rider && <StarPicker label={`Your rider, ${data.rider.firstName}`} value={riderStars} onChange={setRiderStars} />}
+            <div>
+              <label htmlFor="rating-comment" className="block text-sm font-medium text-[#222222] mb-1.5">Anything to add? (optional)</label>
+              <textarea
+                id="rating-comment"
+                rows={2}
+                maxLength={500}
+                value={comment}
+                onChange={(e) => setComment(e.target.value)}
+                placeholder="What was great, or what could be better?"
+                className="w-full resize-none rounded-lg border border-[#D0D5DD] px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#E00B0B]/30 focus:border-[#E00B0B]"
+              />
+            </div>
+            <button
+              type="button"
+              disabled={!storeStars || rating}
+              onClick={async () => {
+                setRating(true);
+                try {
+                  await rateOrder(data.id, { storeStars, riderStars: riderStars || null, comment: comment.trim() });
+                  toast.success('Thanks for rating your order!', { id: 'rating' });
+                  await load();
+                } catch (e) {
+                  toast.error(toErrorMessage(e, "Couldn't save your rating."), { id: 'rating' });
+                } finally {
+                  setRating(false);
+                }
+              }}
+              className="w-full inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#E00B0B] text-white text-sm font-semibold hover:bg-[#B80909] disabled:opacity-50"
+            >
+              {rating && <Loader2 size={15} className="animate-spin" />} {storeStars ? 'Send rating' : 'Tap the stars to rate'}
+            </button>
+          </section>
+        )}
+        {data.status === 'delivered' && data.rating && (
+          <section className="bg-white border border-gray-100 rounded-2xl p-4 text-sm text-[#344054]">
+            You rated {data.store?.name ?? 'the store'} {'★'.repeat(data.rating.storeStars)}
+            {data.rating.riderStars ? ` and your rider ${'★'.repeat(data.rating.riderStars)}` : ''}. Thank you!
           </section>
         )}
 

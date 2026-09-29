@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Search, ChevronDown, Clock, Plus, Trash2, ShoppingBasket, Minus, ChevronLeft, X, UtensilsCrossed, Tag, Heart, Loader2 } from 'lucide-react';
+import { Search, ChevronDown, Clock, Plus, Trash2, ShoppingBasket, Minus, ChevronLeft, X, UtensilsCrossed, Tag, Heart, Loader2, Star } from 'lucide-react';
+import StoreRating, { etaLabel } from '../../components/ui/StoreRating';
 import { usePromotion } from '../../context/PromotionContext';
 import AddressModal from '../../components/modals/AddressModal';
 import { useDeliveryLocation } from '../../context/DeliveryLocationContext';
@@ -332,7 +333,13 @@ const VendorDetails: React.FC = () => {
               <div className="flex items-center gap-[32px] sm:gap-[40px]">
                 <div className="flex flex-col items-center gap-1">
                   <Clock size={20} className="text-[#E00B0B] stroke-[1.5]" />
-                  <span className="text-[#667085] text-[10px] sm:text-[12px]">30-45 mins</span>
+                  <span className="text-[#667085] text-[10px] sm:text-[12px]" title="Usual delivery time">
+                    {etaLabel(deliveryEstimate?.etaMinutes ?? store.etaMinutes) || 'Delivery time'}
+                  </span>
+                </div>
+                <div className="flex flex-col items-center gap-1">
+                  <Star size={20} className="text-[#E00B0B] stroke-[1.5]" />
+                  <StoreRating rating={store.rating} className="!text-[#667085] !text-[10px] sm:!text-[12px]" />
                 </div>
                 <div className="flex flex-col items-center gap-1">
                   {/* Using a custom SVG for the scooter if possible, or a Lucide icon as fallback */}

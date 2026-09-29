@@ -591,6 +591,11 @@ export const getCustomerTransactions = async (): Promise<Transaction[]> => {
             status: statusFor(o.status),
             rawStatus: o.status,
             awaitingPayment: o.paymentMethod === 'online' && o.paymentStatus !== 'paid' && o.status !== 'cancelled',
+            canRate:
+                o.status === 'delivered' &&
+                !(o as Order & { rating?: { at?: string | null } }).rating?.at &&
+                Boolean(o.deliveredAt) &&
+                Date.now() - new Date(o.deliveredAt as string).getTime() < 7 * 24 * 60 * 60 * 1000,
             storeId: o.storeId ? String(o.storeId) : undefined,
             items: o.items.map((i) => ({ menuItemId: i.menuItemId ? String(i.menuItemId) : null, name: i.name, quantity: i.quantity, price: i.price, image: '' })),
             subtotal: o.totalAmount,
@@ -697,6 +702,13 @@ export const deletePlacement = (id: string): Promise<void> =>
 // ─── Promotions ──────────────────────────────────────────────────────────────
 
 // ─── Running-late alerts ─────────────────────────────────────────────────────
+
+/** Customer rates a delivered order: store 1–5, rider 1–5 (optional), comment (optional). */
+export const rateOrder = (
+    orderId: string,
+    input: { storeStars: number; riderStars?: number | null; comment?: string },
+): Promise<{ rating: { storeStars: number; riderStars: number | null; comment: string } }> =>
+    apiFetch(`/api/orders/${orderId}/rate`, { method: 'POST', body: input });
 
 /** Customer cancels their own order (before the store accepts, or after a long rider search). */
 export const cancelMyOrder = (orderId: string): Promise<Order> =>

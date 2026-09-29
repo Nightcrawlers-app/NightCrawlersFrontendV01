@@ -69,6 +69,10 @@ export type VendorStore = {
     vendorId: string;
     name: string;
     businessType: BusinessType;
+    /** Customer ratings. average is null until the store has a few (count shown instead). */
+    rating?: { average: number | null; count: number };
+    /** Usual delivery time in minutes; for the customer's distance when the list knew it. */
+    etaMinutes?: { min: number; max: number; estimated: boolean };
     categories: string[];
     address: string;
     description: string;
@@ -398,6 +402,8 @@ export type Transaction = {
     storeId?: string;
     /** Online order not paid yet. */
     awaitingPayment?: boolean;
+    /** Delivered in the last 7 days and not rated yet. */
+    canRate?: boolean;
     items: OrderItemSummary[];
     subtotal: number;
     deliveryFee: number;
@@ -610,6 +616,8 @@ export type DeliveryEstimate = {
     maxKm: number;
     /** true → no location to measure from, this is the flat fee */
     estimated: boolean;
+    /** Usual delivery time for this distance (older servers don't send it) */
+    etaMinutes?: { min: number; max: number; estimated: boolean };
 };
 
 /** GET /api/config — public settings and feature switches from the server. */
@@ -671,6 +679,9 @@ export type OrderTracking = {
     acceptDeadline?: string | null;
     /** Running late, and whether the customer may cancel themselves. */
     delays?: { prepLate: boolean; findingRider: boolean; deliveryDelayed: boolean; canCancel: boolean };
+    /** What they rated (null if not yet), and whether they still can (7 days after delivery). */
+    rating?: { storeStars: number; riderStars: number | null; comment: string } | null;
+    canRate?: boolean;
     total: number;
     serverTime: string;
 };

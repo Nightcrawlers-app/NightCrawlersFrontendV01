@@ -1,4 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
+import StoreRating, { etaLabel } from '../../components/ui/StoreRating';
 import StoreFavoriteHeart from '../../components/ui/StoreFavoriteHeart';
 import { Search, ChevronDown, ShoppingBasket, X, Clock, Trash2, Tag } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
@@ -58,7 +59,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({ name, icon, imageSrc, bgCol
 interface StoreCardProps {
   storeId: string;
   name: string;
-  rating: number;
+  rating?: { average: number | null; count: number };
   time: string;
   image: string;
   /** e.g. "50% OFF" when a live promo covers this store */
@@ -87,15 +88,14 @@ const StoreCard: React.FC<StoreCardProps> = ({ storeId, name, rating, time, imag
       <div className="flex flex-col gap-[3px] sm:gap-[4px]">
         <div className="flex items-center justify-between">
           <h3 className="text-[#222222] text-[14px] sm:text-[15px] md:text-[16px] font-medium leading-[20px] sm:leading-[22px] md:leading-[24px]">{name}</h3>
-          <div className="flex items-center gap-[3px] sm:gap-[4px]">
-            <span className="text-[#222222] text-[11px] sm:text-[12px] font-medium">{rating}</span>
-            <div className="w-[10px] h-[10px] sm:w-[12px] sm:h-[12px] bg-[#FFD700] rounded-full"></div>
+          <StoreRating rating={rating} className="flex-shrink-0 ml-2" />
+        </div>
+        {time && (
+          <div className="flex items-center gap-[4px] sm:gap-[6px] text-[#667085]">
+            <Clock size={12} />
+            <span className="text-[11px] sm:text-[12px] leading-[16px] sm:leading-[18px]">{time}</span>
           </div>
-        </div>
-        <div className="flex items-center gap-[4px] sm:gap-[6px] text-[#667085]">
-          <Clock size={12} />
-          <span className="text-[11px] sm:text-[12px] leading-[16px] sm:leading-[18px]">{time}</span>
-        </div>
+        )}
         {matchedItems && matchedItems.length > 0 && (
           <p className="text-[11px] sm:text-[12px] text-[#E00B0B] truncate">Has: {matchedItems.join(', ')}</p>
         )}
@@ -469,8 +469,8 @@ const Explore: React.FC = () => {
                       key={store.id}
                       storeId={store.id}
                       name={store.name}
-                      rating={4.5}
-                      time="15-25 mins"
+                      rating={store.rating}
+                      time={etaLabel(store.etaMinutes)}
                       image={store.imageUrl}
                       badge={store.promotions?.[0]?.badge}
                       matchedItems={store.matchedItems}

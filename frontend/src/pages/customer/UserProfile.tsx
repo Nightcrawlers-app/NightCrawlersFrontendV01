@@ -803,6 +803,15 @@ const UserProfile: React.FC = () => {
                                                                             Order again
                                                                         </button>
                                                                         <OrderFavoriteButton orderId={txn.id} storeName={txn.vendorName} />
+                                                                        {txn.canRate && (
+                                                                            <button
+                                                                                type="button"
+                                                                                onClick={() => navigate(`/orders/${txn.id}`)}
+                                                                                className="flex items-center gap-1.5 px-3 py-2 bg-amber-50 text-amber-800 text-xs font-semibold rounded-lg hover:bg-amber-100 transition-colors border border-amber-200"
+                                                                            >
+                                                                                ★ Rate this order
+                                                                            </button>
+                                                                        )}
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => navigate(`/orders/${txn.id}`)}
