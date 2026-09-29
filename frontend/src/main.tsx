@@ -7,9 +7,12 @@ import { AuthProvider } from './context/AuthContext'
 import { DeliveryLocationProvider } from './context/DeliveryLocationContext'
 import { PromotionProvider } from './context/PromotionContext'
 import { ToastProvider } from './context/ToastContext'
+import { ThemeProvider } from './context/ThemeContext'
+import './styles/dark.css'
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
+    <ThemeProvider>
     <ToastProvider>
       <AuthProvider>
         <DeliveryLocationProvider>
@@ -21,5 +24,6 @@ createRoot(document.getElementById('root')!).render(
         </DeliveryLocationProvider>
       </AuthProvider>
     </ToastProvider>
+    </ThemeProvider>
   </StrictMode>,
 )

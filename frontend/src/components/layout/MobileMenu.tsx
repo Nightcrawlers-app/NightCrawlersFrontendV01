@@ -4,6 +4,7 @@ import { X, ShoppingCart, User, LogOut, Package } from 'lucide-react';
 import { NAVIGATION_LINKS } from '../../utils/constants';
 import { useAuth, getInitials } from '../../context/AuthContext';
 import { activeOrdersOf } from '../profile/CurrentOrders';
+import { ThemePicker } from '../ui/ThemeToggle';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -127,6 +128,7 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onCartClick })
           {/* Action Buttons */}
           <div className="p-4 border-t border-gray-100">
             <div className="space-y-3">
+              <ThemePicker />
               <button
                 className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-night-red-600 text-white rounded-lg hover:bg-night-red-700 transition-colors"
                 onClick={() => {

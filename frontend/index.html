@@ -2,6 +2,17 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <!-- Apply dark mode before anything paints, so there's no white flash.
+         Same rules as src/context/ThemeContext.tsx. -->
+    <script>
+      (function () {
+        try {
+          var c = localStorage.getItem('nc_theme');
+          var dark = c === 'dark' || (c !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
     <title>Nightcrawlers — Late-night delivery of food, groceries, pharmaceuticals &amp; drinks in Abuja</title>
     <meta name="description" content="Order food, groceries, medicine and drinks from trusted stores in Abuja, delivered to your door any hour of the night." />

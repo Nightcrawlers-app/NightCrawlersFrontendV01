@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { ThemeToggleButton } from '../ui/ThemeToggle';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Menu, X, Trash2, ShoppingBasket } from 'lucide-react';
 import { NAVIGATION_LINKS } from '../../utils/constants';
@@ -77,6 +78,7 @@ const Header: React.FC<HeaderProps> = ({ onCartClick }) => {
 
             {/* Desktop Action Buttons */}
             <div className="hidden md:flex items-center justify-end space-x-3 lg:space-x-4">
+              <ThemeToggleButton />
               <button
                 className="relative w-10 h-10 lg:w-[42px] lg:h-[42px] rounded-full bg-night-red-600 text-white flex items-center justify-center hover:bg-night-red-700 transition-colors"
                 onClick={handleCartClick}
