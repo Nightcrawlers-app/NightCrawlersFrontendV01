@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import PasswordInput, { PasswordMatchHint } from '../../components/ui/PasswordInput';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useLocation } from 'react-router-dom';
 import Footer from '../../components/layout/Footer';
 import Header from '../../components/layout/Header';
 import { useAuth, getInitials, UserAddress } from '../../context/AuthContext';
@@ -52,6 +52,17 @@ const UserProfile: React.FC = () => {
         window.history.replaceState(window.history.state, '', url.toString());
     };
     const { reorder, reorderingId } = useReorder();
+
+    // Follow links into this page while it's already open (e.g. the menu's
+    // "Orders" → ?tab=transactions, or #current-orders to jump to live orders).
+    const routeLocation = useLocation();
+    useEffect(() => {
+        const t = new URLSearchParams(routeLocation.search).get('tab') as TabType | null;
+        setActiveTabState(t && TAB_IDS.includes(t) ? t : 'profile');
+        if (routeLocation.hash === '#current-orders') {
+            window.setTimeout(() => document.getElementById('current-orders')?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 150);
+        }
+    }, [routeLocation.search, routeLocation.hash]);
     const { showLoaderWithDelay } = useGlobalLoader();
     const [expandedTxn, setExpandedTxn] = useState<string | null>(null);
     const [isEditing, setIsEditing] = useState(false);
@@ -667,10 +678,12 @@ const UserProfile: React.FC = () => {
                                                         className={`border rounded-xl overflow-hidden transition-all duration-300 ${isExpanded ? 'border-[#E00B0B]/20 shadow-md bg-[#FEFAFA]' : 'border-gray-100 hover:border-gray-200 bg-white'
                                                             }`}
                                                     >
-                                                        {/* Transaction Header */}
+                                                        {/* Transaction Header (+ favourite heart beside it) */}
+                                                        <div className="flex items-center pr-2">
                                                         <button
                                                             onClick={() => setExpandedTxn(isExpanded ? null : txn.id)}
-                                                            className="w-full flex items-center gap-4 p-4 text-left transition-colors"
+                                                            aria-expanded={isExpanded}
+                                                            className="flex-1 min-w-0 flex items-center gap-4 p-4 text-left transition-colors"
                                                         >
                                                             <div className="hidden sm:flex w-10 h-10 rounded-xl bg-gray-50 items-center justify-center flex-shrink-0 border border-gray-100">
                                                                 <ShoppingBag size={16} className="text-gray-400" />
@@ -706,6 +719,10 @@ const UserProfile: React.FC = () => {
                                                                 />
                                                             </div>
                                                         </button>
+                                                        {txn.status !== 'cancelled' && (
+                                                            <OrderFavoriteButton orderId={txn.id} storeName={txn.vendorName} variant="icon" />
+                                                        )}
+                                                        </div>
 
                                                         {/* Expanded Details */}
                                                         {isExpanded && (
@@ -785,7 +802,7 @@ const UserProfile: React.FC = () => {
                                                                             {reorderingId === txn.id ? <Loader2 size={12} className="animate-spin" /> : <RotateCcw size={12} />}
                                                                             Order again
                                                                         </button>
-                                                                        <OrderFavoriteButton orderId={txn.id} />
+                                                                        <OrderFavoriteButton orderId={txn.id} storeName={txn.vendorName} />
                                                                         <button
                                                                             type="button"
                                                                             onClick={() => navigate(`/orders/${txn.id}`)}

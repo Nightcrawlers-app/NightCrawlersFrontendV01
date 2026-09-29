@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { Search, ChevronDown, ShoppingBasket, X, Clock, Heart, Trash2, Tag } from 'lucide-react';
+import StoreFavoriteHeart from '../../components/ui/StoreFavoriteHeart';
+import { Search, ChevronDown, ShoppingBasket, X, Clock, Trash2, Tag } from 'lucide-react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
@@ -55,6 +56,7 @@ const CategoryItem: React.FC<CategoryItemProps> = ({ name, icon, imageSrc, bgCol
 };
 
 interface StoreCardProps {
+  storeId: string;
   name: string;
   rating: number;
   time: string;
@@ -66,7 +68,7 @@ interface StoreCardProps {
   onClick: () => void;
 }
 
-const StoreCard: React.FC<StoreCardProps> = ({ name, rating, time, image, badge, matchedItems, onClick }) => {
+const StoreCard: React.FC<StoreCardProps> = ({ storeId, name, rating, time, image, badge, matchedItems, onClick }) => {
   return (
     <div className="flex flex-col gap-[8px] sm:gap-[12px] w-full max-w-[280px] group cursor-pointer" onClick={onClick}>
       <div className="relative w-full h-[140px] sm:h-[160px] md:h-[180px] rounded-[8px] sm:rounded-[10px] md:rounded-[12px] overflow-hidden">
@@ -76,9 +78,11 @@ const StoreCard: React.FC<StoreCardProps> = ({ name, rating, time, image, badge,
             <Tag size={11} /> {badge}
           </span>
         )}
-        <button className="absolute top-[8px] right-[8px] sm:top-[12px] sm:right-[12px] w-[28px] h-[28px] sm:w-[32px] sm:h-[32px] bg-white/80 rounded-full flex items-center justify-center hover:bg-white transition-colors">
-          <Heart size={14} className="text-[#E00B0B]" />
-        </button>
+        <StoreFavoriteHeart
+          storeId={storeId}
+          storeName={name}
+          className="absolute top-[8px] right-[8px] sm:top-[12px] sm:right-[12px] w-[32px] h-[32px] sm:w-[36px] sm:h-[36px]"
+        />
       </div>
       <div className="flex flex-col gap-[3px] sm:gap-[4px]">
         <div className="flex items-center justify-between">
@@ -463,6 +467,7 @@ const Explore: React.FC = () => {
                   {displayedStores.map((store) => (
                     <StoreCard
                       key={store.id}
+                      storeId={store.id}
                       name={store.name}
                       rating={4.5}
                       time="15-25 mins"

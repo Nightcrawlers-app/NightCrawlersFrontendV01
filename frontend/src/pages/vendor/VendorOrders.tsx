@@ -194,6 +194,11 @@ const VendorOrders: React.FC = () => {
                     <Countdown deadline={order.acceptDeadline} className="text-base" />
                 </div>
             )}
+            {order.status === 'preparing' && order.alerts?.some((a) => a.type === 'prep_late') && (
+                <p className="mt-4 text-sm text-amber-900 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2" role="status">
+                    This order is taking longer than usual and the customer is waiting. Tap "Mark as Ready" as soon as it's packed.
+                </p>
+            )}
             {order.status === 'cancelled' && order.cancelReason && (
                 <p className="mt-4 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
                     {order.cancelledBy === 'system' ? 'Cancelled automatically: ' : 'Cancelled: '}

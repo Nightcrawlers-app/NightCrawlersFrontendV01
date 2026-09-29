@@ -8,8 +8,9 @@ import Loader from '../../components/ui/Loader';
 import PromotionsManager from '../../components/admin/PromotionsManager';
 import PlacementsManager from '../../components/admin/PlacementsManager';
 import RefundsManager from '../../components/admin/RefundsManager';
-import { Megaphone, Wallet } from 'lucide-react';
-import { getRefunds } from '../../services/api';
+import AlertsManager from '../../components/admin/AlertsManager';
+import { Megaphone, Wallet, BellRing } from 'lucide-react';
+import { getRefunds, getOpsAlerts } from '../../services/api';
 
 const formatCurrency = (amount: number): string => {
     if (amount >= 1000000) {
@@ -43,6 +44,15 @@ const AdminDashboard: React.FC = () => {
     const [refundsNeedingYou, setRefundsNeedingYou] = useState(0);
     useEffect(() => {
         getRefunds('attention').then((r) => setRefundsNeedingYou(r.attention)).catch(() => undefined);
+    }, []);
+    // Orders running late — checked every minute while the dashboard is open
+    const [showAlerts, setShowAlerts] = useState(false);
+    const [openAlerts, setOpenAlerts] = useState(0);
+    useEffect(() => {
+        const check = () => getOpsAlerts().then((r) => setOpenAlerts(r.open)).catch(() => undefined);
+        check();
+        const t = window.setInterval(check, 60000);
+        return () => window.clearInterval(t);
     }, []);
     const [allEarnings, setAllEarnings] = useState<EntityEarnings[]>([]);
     const [allStoreEarnings, setAllStoreEarnings] = useState<StoreEarnings[]>([]);
@@ -301,6 +311,13 @@ const AdminDashboard: React.FC = () => {
 
                 {/* Promotions entry point */}
                 <div className="flex flex-wrap justify-end gap-2 mb-4">
+                    <button
+                        onClick={() => setShowAlerts(true)}
+                        className={`relative inline-flex items-center gap-2 text-sm font-semibold px-4 py-2.5 rounded-xl shadow-sm border ${openAlerts > 0 ? 'bg-[#E00B0B] text-white border-[#E00B0B]' : 'bg-white text-[#222222] border-gray-200 hover:border-[#E00B0B]'}`}
+                    >
+                        <BellRing size={16} className={openAlerts > 0 ? 'motion-safe:animate-pulse' : ''} />
+                        {openAlerts > 0 ? `${openAlerts} running late` : 'Alerts'}
+                    </button>
                     <button
                         onClick={() => setShowRefunds(true)}
                         className="relative inline-flex items-center gap-2 bg-white text-[#222222] border border-gray-200 text-sm font-semibold px-4 py-2.5 rounded-xl hover:border-[#E00B0B] shadow-sm"
@@ -1034,6 +1051,7 @@ const AdminDashboard: React.FC = () => {
             {showPromotions && <PromotionsManager onClose={() => setShowPromotions(false)} />}
             {showAds && <PlacementsManager onClose={() => setShowAds(false)} />}
             {showRefunds && <RefundsManager onClose={() => setShowRefunds(false)} onCountChange={setRefundsNeedingYou} />}
+            {showAlerts && <AlertsManager onClose={() => setShowAlerts(false)} onCountChange={setOpenAlerts} />}
         </div>
     );
 };

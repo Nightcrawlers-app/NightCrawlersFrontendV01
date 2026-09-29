@@ -1,10 +1,11 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import Countdown from '../../components/ui/Countdown';
 import { Link, useNavigate, useParams } from 'react-router-dom';
-import { CheckCircle2, Circle, Clock, Loader2, Phone, Store, Bike, MapPin, XCircle, RefreshCw } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, Loader2, Phone, Store, Bike, MapPin, XCircle, RefreshCw, AlertTriangle } from 'lucide-react';
+import { useToast } from '../../context/ToastContext';
 import Header from '../../components/layout/Header';
 import Footer from '../../components/layout/Footer';
-import { getOrderTracking, formatPaymentMethod, toErrorMessage, ApiError } from '../../services/api';
+import { getOrderTracking, formatPaymentMethod, toErrorMessage, ApiError, cancelMyOrder } from '../../services/api';
 import type { OrderTracking } from '../../services/api';
 import TripMap from '../../components/map/TripMap';
 
@@ -54,6 +55,9 @@ const OrderTrackingPage: React.FC = () => {
   const [refreshing, setRefreshing] = useState(false);
   const [updatedAt, setUpdatedAt] = useState<Date | null>(null);
   const timer = useRef<number | undefined>(undefined);
+  const toast = useToast();
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
+  const [cancelling, setCancelling] = useState(false);
 
   const load = useCallback(async () => {
     setRefreshing(true);
@@ -151,6 +155,68 @@ const OrderTrackingPage: React.FC = () => {
             </p>
           )}
         </section>
+
+        {/* Running late — say so plainly, and offer a way out where fair */}
+        {!cancelled && data.delays && (data.delays.prepLate || data.delays.findingRider || data.delays.deliveryDelayed) && (
+          <section className="rounded-2xl border border-amber-200 bg-amber-50 p-4 flex gap-3" role="status">
+            <AlertTriangle size={20} className="text-amber-600 flex-shrink-0 mt-0.5" />
+            <p className="text-sm text-amber-900">
+              {data.delays.prepLate && `${data.store?.name ?? 'The store'} is taking longer than usual with your order. We've reminded them.`}
+              {data.delays.findingRider &&
+                (data.delays.canCancel
+                  ? "Sorry, it's taking a long time to find a rider. You can keep waiting, or cancel for a full refund."
+                  : "Your order is ready and we're finding a rider. We've alerted riders nearby.")}
+              {data.delays.deliveryDelayed && "Your delivery is taking longer than expected. Our team is checking with your rider."}
+            </p>
+          </section>
+        )}
+
+        {/* Customer can cancel: before the store accepts, or after a long rider search */}
+        {!cancelled && data.delays?.canCancel && (
+          <section className="bg-white border border-gray-100 rounded-2xl p-4">
+            {!confirmingCancel ? (
+              <button
+                type="button"
+                onClick={() => setConfirmingCancel(true)}
+                className="w-full py-2.5 rounded-xl border border-red-200 text-[#E00B0B] text-sm font-semibold hover:bg-red-50"
+              >
+                Cancel order
+              </button>
+            ) : (
+              <div className="space-y-3">
+                <p className="text-sm text-gray-800">
+                  Cancel this order?{data.paymentStatus === 'paid' ? ` Your ₦${data.total.toLocaleString()} will be refunded in full.` : ''}
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    type="button"
+                    disabled={cancelling}
+                    onClick={async () => {
+                      setCancelling(true);
+                      try {
+                        await cancelMyOrder(data.id);
+                        toast.success(data.paymentStatus === 'paid' ? 'Order cancelled. Your refund has started.' : 'Order cancelled.', { id: 'order' });
+                        setConfirmingCancel(false);
+                        await load();
+                      } catch (e) {
+                        toast.error(toErrorMessage(e, "Couldn't cancel the order."), { id: 'order' });
+                        await load();
+                      } finally {
+                        setCancelling(false);
+                      }
+                    }}
+                    className="flex-1 inline-flex items-center justify-center gap-2 py-2.5 rounded-xl bg-[#E00B0B] text-white text-sm font-semibold hover:bg-[#B80909] disabled:opacity-60"
+                  >
+                    {cancelling && <Loader2 size={15} className="animate-spin" />} Yes, cancel
+                  </button>
+                  <button type="button" onClick={() => setConfirmingCancel(false)} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-sm font-semibold text-gray-700">
+                    Keep waiting
+                  </button>
+                </div>
+              </div>
+            )}
+          </section>
+        )}
 
         {/* Live trip: road route, rider position, time and distance left */}
         {data.trip && !cancelled && data.status !== 'delivered' && (

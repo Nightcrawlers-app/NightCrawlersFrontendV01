@@ -248,6 +248,8 @@ export type Order = {
     cancelledBy?: 'customer' | 'vendor' | 'admin' | 'system' | null;
     refundStatus?: RefundStatus;
     refundAmount?: number;
+    /** Running-late alerts raised on this order (see backend utils/orderAlerts.js). */
+    alerts?: { type: string; at: string; message: string; resolvedAt: string | null }[];
     /** Everything the customer pays (food + delivery + service − discount). */
     totalPaid?: number | null;
     /** How the customer pays — see PaymentMethod. */
@@ -667,6 +669,8 @@ export type OrderTracking = {
     refundStatus?: RefundStatus;
     refundAmount?: number;
     acceptDeadline?: string | null;
+    /** Running late, and whether the customer may cancel themselves. */
+    delays?: { prepLate: boolean; findingRider: boolean; deliveryDelayed: boolean; canCancel: boolean };
     total: number;
     serverTime: string;
 };
@@ -707,4 +711,24 @@ export type RefundRow = {
     refundError: string;
     refundNote: string;
     createdAt: string;
+};
+
+/** Admin → Alerts: one thing the team should look at. */
+export type OpsAlert = {
+    orderId: string;
+    type: 'prep_very_late' | 'no_rider_admin' | 'delivery_stalled' | 'cancelled_after_ready';
+    message: string;
+    at: string;
+    /** false = it sorted itself out (e.g. the order moved on) — just dismiss */
+    stillHappening: boolean;
+    status: OrderStatus;
+    storeName: string;
+    vendorPhone: string;
+    customerName: string;
+    customerPhone: string;
+    customerAddress: string;
+    total: number;
+    paymentMethod: string;
+    refundStatus: RefundStatus;
+    rider: { name: string; phone: string; lastLocation: { latitude: number; longitude: number; at: string | null } | null } | null;
 };

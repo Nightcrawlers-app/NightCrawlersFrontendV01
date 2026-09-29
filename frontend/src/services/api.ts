@@ -61,6 +61,7 @@ import type {
     CampaignCode,
     IssueCodesInput,
     RefundRow,
+    OpsAlert,
 } from '../types/models';
 
 // Re-export types so existing imports keep working
@@ -111,6 +112,7 @@ export type {
     CampaignCode,
     IssueCodesInput,
     RefundRow,
+    OpsAlert,
 };
 
 // Re-export the constants
@@ -693,6 +695,23 @@ export const deletePlacement = (id: string): Promise<void> =>
     apiFetch<void>(`/api/admin/placements/${id}`, { method: 'DELETE' });
 
 // ─── Promotions ──────────────────────────────────────────────────────────────
+
+// ─── Running-late alerts ─────────────────────────────────────────────────────
+
+/** Customer cancels their own order (before the store accepts, or after a long rider search). */
+export const cancelMyOrder = (orderId: string): Promise<Order> =>
+    apiFetch<Order>(`/api/orders/${orderId}/cancel`, { method: 'POST' });
+
+/** Admin: orders running late. `open` = ones still happening. */
+export const getOpsAlerts = (): Promise<{ open: number; alerts: OpsAlert[] }> => apiFetch('/api/admin/alerts');
+
+/** Admin: cancel an order with a reason the customer sees (paid orders are refunded). */
+export const adminCancelOrder = (orderId: string, reason: string): Promise<Order> =>
+    apiFetch<Order>(`/api/orders/${orderId}/status`, { method: 'PATCH', body: { status: 'cancelled', reason } });
+
+/** Admin: mark an alert handled. */
+export const resolveOpsAlert = (orderId: string, type: OpsAlert['type'], note = ''): Promise<void> =>
+    apiFetch<void>(`/api/admin/alerts/${orderId}/resolve`, { method: 'POST', body: { type, note } });
 
 // ─── Refunds (admin) ─────────────────────────────────────────────────────────
 

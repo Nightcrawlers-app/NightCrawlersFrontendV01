@@ -1,8 +1,9 @@
 import React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { X, ShoppingCart, User, LogOut, CreditCard } from 'lucide-react';
+import { X, ShoppingCart, User, LogOut, Package } from 'lucide-react';
 import { NAVIGATION_LINKS } from '../../utils/constants';
 import { useAuth, getInitials } from '../../context/AuthContext';
+import { activeOrdersOf } from '../profile/CurrentOrders';
 
 interface MobileMenuProps {
   isOpen: boolean;
@@ -12,9 +13,24 @@ interface MobileMenuProps {
 
 const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onCartClick }) => {
   const location = useLocation();
-  const { user, isAuthenticated, logout } = useAuth();
+  const { user, isAuthenticated, logout, transactions } = useAuth();
 
   if (!isOpen) return null;
+
+  // "Orders" goes where the customer most likely wants to be:
+  //   one order on its way   → its live tracking page
+  //   several on their way   → the current-orders card on the profile
+  //   none                   → order history
+  const active = activeOrdersOf(transactions);
+  const ordersLink =
+    active.length === 1
+      ? `/orders/${active[0].id}`
+      : active.length > 1
+        ? '/user-profile?tab=profile#current-orders'
+        : '/user-profile?tab=transactions';
+  const onOrdersPage =
+    location.pathname.startsWith('/orders/') ||
+    (location.pathname === '/user-profile' && new URLSearchParams(location.search).get('tab') === 'transactions');
 
   return (
     <div className="fixed inset-0 z-50 md:hidden">
@@ -88,12 +104,21 @@ const MobileMenu: React.FC<MobileMenuProps> = ({ isOpen, onClose, onCartClick })
                   My Profile
                 </Link>
                 <Link
-                  to="/order-summary"
+                  to={ordersLink}
                   onClick={onClose}
-                  className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-gray-700 hover:text-[#E00B0B] hover:bg-gray-50 transition-colors"
+                  className={`flex items-center gap-3 px-4 py-3 text-sm font-medium transition-colors ${onOrdersPage
+                      ? 'text-[#E00B0B] bg-red-50 border-r-4 border-[#E00B0B]'
+                      : 'text-gray-700 hover:text-[#E00B0B] hover:bg-gray-50'
+                    }`}
                 >
-                  <CreditCard size={18} />
-                  Orders
+                  <Package size={18} />
+                  <span className="flex-1">Orders</span>
+                  {active.length > 0 && (
+                    <span className="flex items-center gap-1.5 rounded-full bg-[#E00B0B] px-2 py-0.5 text-[11px] font-bold text-white">
+                      <span className="h-1.5 w-1.5 rounded-full bg-white motion-safe:animate-pulse" aria-hidden />
+                      {active.length} active
+                    </span>
+                  )}
                 </Link>
               </div>
             )}
