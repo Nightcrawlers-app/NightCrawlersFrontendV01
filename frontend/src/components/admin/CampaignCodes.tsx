@@ -117,7 +117,11 @@ const CampaignCodes: React.FC<{ promo: Promotion; onChanged?: () => void }> = ({
                 <p className="text-sm font-semibold text-gray-900">{promo.title}</p>
                 <p className="text-xs text-gray-500">
                     {describeDiscount(promo)}. Each person gets their own code that only works on their account, once.
-                    {promo.endsAt ? ` Codes stop working when the promo ends (${fmt(promo.endsAt)}).` : ' Set an end date on the promo to make codes expire.'}
+                    {promo.birthday
+                        ? ` 🎂 Sent automatically on each customer's birthday; each code works for ${promo.codeValidDays ?? 7} days.`
+                        : promo.endsAt
+                            ? ` Codes stop working when the promo ends (${fmt(promo.endsAt)}).`
+                            : ' Set an end date on the promo to make codes expire.'}
                 </p>
             </div>
 
@@ -245,8 +249,12 @@ const CampaignCodes: React.FC<{ promo: Promotion; onChanged?: () => void }> = ({
                                         <td className="px-3 py-2 text-xs">
                                             {c.usedAt ? (
                                                 <span className="text-green-700 font-semibold">Used {fmt(c.usedAt)}</span>
+                                            ) : c.expiresAt && new Date(c.expiresAt) < new Date() ? (
+                                                <span className="text-gray-400">Expired {fmt(c.expiresAt)}</span>
                                             ) : (
-                                                <span className="text-gray-600">Unused{c.emailedAt ? ', emailed' : ''}</span>
+                                                <span className="text-gray-600">
+                                                    Unused{c.emailedAt ? ', emailed' : ''}{c.expiresAt ? ` · until ${fmt(c.expiresAt)}` : ''}
+                                                </span>
                                             )}
                                         </td>
                                         <td className="px-3 py-2 text-right">

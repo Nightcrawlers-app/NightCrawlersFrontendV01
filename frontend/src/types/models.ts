@@ -340,6 +340,8 @@ export type CustomerProfile = {
     favoriteOrders: string[];
     rewards: RewardBalances;
     referralCode: string | null;
+    /** Day and month only; null until they add it. */
+    birthday?: { day: number; month: number } | null;
     notifications: NotificationPreferences;
 };
 
@@ -520,6 +522,9 @@ export type Promotion = {
     customerIds?: string[];
     /** true → no shared code; each chosen customer gets their own single-use code. */
     isCampaign?: boolean;
+    /** Campaign sent automatically on each customer's birthday; codes last codeValidDays. */
+    birthday?: boolean;
+    codeValidDays?: number;
     /** Admin list only, for campaigns. */
     codesIssued?: number;
     codesUsed?: number;
@@ -534,7 +539,7 @@ export type MyCode = Pick<
 > & {
     code: string;
     /** 'personal' = single-use, just for them; 'account' = only their account can use it */
-    kind: 'personal' | 'account';
+    kind: 'personal' | 'account' | 'birthday';
     promotionId: string;
 };
 
@@ -548,6 +553,7 @@ export type CampaignCode = {
     usedAt: string | null;
     orderId: string | null;
     emailedAt: string | null;
+    expiresAt?: string | null;
     createdAt: string;
     customer: { id: string; name: string; email: string } | null;
 };

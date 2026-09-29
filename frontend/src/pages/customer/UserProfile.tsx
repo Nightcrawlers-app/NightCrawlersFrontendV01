@@ -20,6 +20,7 @@ import CurrentOrders, { activeOrdersOf } from '../../components/profile/CurrentO
 import FavoritesPanel from '../../components/profile/FavoritesPanel';
 import RewardsPanel from '../../components/profile/RewardsPanel';
 import OrderFavoriteButton from '../../components/profile/OrderFavoriteButton';
+import BirthdayField from '../../components/profile/BirthdayField';
 import { useReorder } from '../../hooks/useReorder';
 import { Gift, Loader2 } from 'lucide-react';
 
@@ -557,6 +558,7 @@ const UserProfile: React.FC = () => {
                                                 </div>
                                             )}
                                         </div>
+                                        <BirthdayField />
                                     </div>
                                 </div>
 

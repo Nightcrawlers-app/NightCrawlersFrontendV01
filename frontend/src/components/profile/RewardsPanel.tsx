@@ -93,7 +93,7 @@ const RewardsPanel: React.FC = () => {
                         {codes.map((c) => (
                             <li key={c.code} className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl bg-[#FFF8F8] border border-[#FDE2E2]">
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-sm font-semibold text-gray-900">{c.title}</p>
+                                    <p className="text-sm font-semibold text-gray-900">{c.kind === 'birthday' ? `🎂 ${c.title}` : c.title}</p>
                                     <p className="text-xs text-gray-600">{describeDiscount(c)}</p>
                                     <p className="text-[11px] text-gray-400 mt-0.5">
                                         {c.kind === 'personal' ? 'One use. ' : ''}

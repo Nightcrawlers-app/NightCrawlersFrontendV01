@@ -52,6 +52,8 @@ type FormState = {
     listed: boolean;
     codeMode: CodeMode;
     customers: CustomerLookup[];
+    birthday: boolean;
+    codeValidDays: string;
 };
 
 const EMPTY: FormState = {
@@ -79,6 +81,8 @@ const EMPTY: FormState = {
     listed: true,
     codeMode: 'shared',
     customers: [],
+    birthday: false,
+    codeValidDays: '7',
 };
 
 // <input type="datetime-local"> wants "YYYY-MM-DDTHH:mm" in local time.
@@ -114,6 +118,8 @@ const fromPromotion = (p: Promotion): FormState => ({
     listed: p.listed !== false,
     codeMode: p.isCampaign ? 'campaign' : (p.customerIds?.length ? 'locked' : 'shared'),
     customers: (p.customerIds || []).map((id) => ({ id, name: '', email: '' })), // names filled in by openEdit
+    birthday: Boolean(p.birthday),
+    codeValidDays: String(p.codeValidDays ?? 7),
 });
 
 const toInput = (f: FormState): PromotionInput => ({
@@ -136,6 +142,8 @@ const toInput = (f: FormState): PromotionInput => ({
     priority: Number(f.priority) || 0,
     code: f.codeMode === 'campaign' ? null : f.code.trim().toUpperCase() || null,
     isCampaign: f.codeMode === 'campaign',
+    birthday: f.codeMode === 'campaign' && f.birthday,
+    codeValidDays: Math.min(60, Math.max(1, Math.floor(Number(f.codeValidDays) || 7))),
     customerIds: f.codeMode === 'locked' ? f.customers.map((c) => c.id) : [],
     audience: f.audience,
     usageLimit: Number(f.usageLimit) > 0 ? Math.floor(Number(f.usageLimit)) : null,
@@ -326,7 +334,7 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
                                                         )}
                                                         {p.isCampaign && (
                                                             <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-gray-900 text-white">
-                                                                Personal codes: {p.codesUsed ?? 0}/{p.codesIssued ?? 0} used
+                                                                {p.birthday ? '🎂 Birthday codes' : 'Personal codes'}: {p.codesUsed ?? 0}/{p.codesIssued ?? 0} used
                                                             </span>
                                                         )}
                                                     </div>
@@ -509,10 +517,30 @@ const PromotionsManager: React.FC<PromotionsManagerProps> = ({ onClose }) => {
                                     </div>
                                 </div>
                                 {form.codeMode === 'campaign' ? (
-                                    <p className="sm:col-span-2 text-[12px] text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-2">
-                                        After you save, you'll choose who gets a code (people you pick, a list of emails, lapsed customers or everyone).
-                                        Codes look like <span className="font-mono font-semibold">ADA-7K2Q</span>, work once, only on that person's account, and show up in their Rewards tab.
-                                    </p>
+                                    <div className="sm:col-span-2 space-y-3">
+                                        <label className="flex items-start gap-2 text-sm text-gray-700 bg-white border border-gray-200 rounded-lg px-3 py-2">
+                                            <input type="checkbox" checked={form.birthday} onChange={(e) => set('birthday', e.target.checked)} className="accent-[#E00B0B] w-4 h-4 mt-0.5" />
+                                            <span>
+                                                <span className="font-medium text-gray-900">🎂 Birthday promo</span>
+                                                <span className="block text-[11px] text-gray-500">
+                                                    Sent automatically on each customer's birthday (to those who've added it to their profile), by email and SMS. One per customer per year.
+                                                </span>
+                                            </span>
+                                        </label>
+                                        {form.birthday && (
+                                            <label className="flex items-center gap-2 text-sm text-gray-700">
+                                                Each code works for
+                                                <input type="number" min={1} max={60} value={form.codeValidDays} onChange={(e) => set('codeValidDays', e.target.value)} className="w-16 px-2 py-1.5 border border-gray-200 rounded-lg text-sm bg-white" />
+                                                days from their birthday
+                                            </label>
+                                        )}
+                                        <p className="text-[12px] text-gray-600 bg-white border border-gray-200 rounded-lg px-3 py-2">
+                                            {form.birthday
+                                                ? 'Leave the promo running (no end date) and it works every year. You can still hand out extra codes by hand after saving.'
+                                                : "After you save, you'll choose who gets a code (people you pick, a list of emails, lapsed customers or everyone)."}{' '}
+                                            Codes look like <span className="font-mono font-semibold">{form.birthday ? 'ADA-HBD7K2' : 'ADA-7K2Q'}</span>, work once, only on that person's account, and show up in their Rewards tab.
+                                        </p>
+                                    </div>
                                 ) : (
                                 <div>
                                     <label className={labelCls} htmlFor="promo-code-field">{form.codeMode === 'locked' ? 'Promo code' : 'Promo code (optional)'}</label>
