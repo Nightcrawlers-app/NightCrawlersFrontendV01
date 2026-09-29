@@ -13,6 +13,7 @@ const DEFAULTS: AppConfig = {
     paystackTestMode: false,
     delivery: { baseFee: 500, perKm: 150, includedKm: 2, minFee: 500, maxFee: 3000, maxKm: 20 },
     serviceFeePercent: 5,
+    timers: { enabled: true, vendorAcceptMin: 10, paymentTimeoutMin: 30 },
 };
 
 let cached: AppConfig | null = null;

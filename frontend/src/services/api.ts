@@ -60,6 +60,7 @@ import type {
     CustomerLookup,
     CampaignCode,
     IssueCodesInput,
+    RefundRow,
 } from '../types/models';
 
 // Re-export types so existing imports keep working
@@ -109,6 +110,7 @@ export type {
     CustomerLookup,
     CampaignCode,
     IssueCodesInput,
+    RefundRow,
 };
 
 // Re-export the constants
@@ -691,6 +693,20 @@ export const deletePlacement = (id: string): Promise<void> =>
     apiFetch<void>(`/api/admin/placements/${id}`, { method: 'DELETE' });
 
 // ─── Promotions ──────────────────────────────────────────────────────────────
+
+// ─── Refunds (admin) ─────────────────────────────────────────────────────────
+
+/** attention = failed or stuck; the count is always the number needing attention. */
+export const getRefunds = (status: 'attention' | 'pending' | 'done' | 'all' = 'attention'): Promise<{ attention: number; orders: RefundRow[] }> =>
+    apiFetch('/api/admin/refunds', { params: { status } });
+
+/** Ask Paystack to refund again. */
+export const retryRefund = (orderId: string): Promise<RefundRow> =>
+    apiFetch(`/api/admin/refunds/${orderId}/retry`, { method: 'POST' });
+
+/** Record a refund you made yourself (bank transfer, etc.). */
+export const markRefundedManually = (orderId: string, note: string): Promise<RefundRow> =>
+    apiFetch(`/api/admin/refunds/${orderId}/manual`, { method: 'POST', body: { note } });
 
 /** GET /api/users/me/codes — codes tied to the signed-in customer's account. */
 export const getMyCodes = (): Promise<MyCode[]> => apiFetch<MyCode[]>('/api/users/me/codes');

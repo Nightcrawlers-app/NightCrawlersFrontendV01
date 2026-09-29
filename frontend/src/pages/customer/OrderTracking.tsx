@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+import Countdown from '../../components/ui/Countdown';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 import { CheckCircle2, Circle, Clock, Loader2, Phone, Store, Bike, MapPin, XCircle, RefreshCw } from 'lucide-react';
 import Header from '../../components/layout/Header';
@@ -16,14 +17,33 @@ const time = (iso: string | null | undefined) =>
 
 /** What to tell the customer at each stage. */
 const HEADLINE: Record<string, { title: string; detail: (t: OrderTracking) => string }> = {
-  pending: { title: 'Order placed', detail: (t) => `Waiting for ${t.store?.name ?? 'the store'} to confirm your order.` },
+  pending: {
+    title: 'Order placed',
+    detail: (t) =>
+      `Waiting for ${t.store?.name ?? 'the store'} to confirm your order.` +
+      (t.acceptDeadline ? ` If they don't respond in time, we'll cancel it${t.paymentStatus === 'paid' ? ' and refund you automatically' : ''}.` : ''),
+  },
   preparing: { title: 'Being prepared', detail: (t) => `${t.store?.name ?? 'The store'} is getting your order ready.` },
   ready: { title: 'Ready for pickup', detail: () => 'Your order is packed. We’re assigning a rider.' },
   accepted: { title: 'Rider on the way to the store', detail: (t) => `${t.rider?.firstName ?? 'Your rider'} is heading to pick up your order.` },
   picked_up: { title: 'On its way to you', detail: (t) => `${t.rider?.firstName ?? 'Your rider'} has your order.` },
   in_transit: { title: 'On its way to you', detail: (t) => `${t.rider?.firstName ?? 'Your rider'} has your order.` },
   delivered: { title: 'Delivered', detail: () => 'Enjoy! Thanks for ordering with Nightcrawlers.' },
-  cancelled: { title: 'Order cancelled', detail: () => 'This order was cancelled. If you paid online, contact support about a refund.' },
+  cancelled: {
+    title: 'Order cancelled',
+    detail: (t) => {
+      const why = t.cancelReason || 'This order was cancelled.';
+      const amount = t.refundAmount ? `₦${t.refundAmount.toLocaleString()}` : 'your payment';
+      const refund: Record<string, string> = {
+        requesting: ` We're refunding ${amount} now.`,
+        pending: ` Your refund of ${amount} has started; your bank usually shows it within a few working days.`,
+        processed: ` ${amount} has been refunded to you.`,
+        manual: ` ${amount} has been refunded to you.`,
+        failed: ` We're sorting out your refund of ${amount} and will be in touch.`,
+      };
+      return why + (refund[t.refundStatus ?? 'none'] ?? (t.paymentStatus === 'paid' ? '' : " You weren't charged."));
+    },
+  },
 };
 
 const OrderTrackingPage: React.FC = () => {
@@ -124,6 +144,11 @@ const OrderTrackingPage: React.FC = () => {
           )}
           {data.status === 'delivered' && data.steps.delivered && (
             <p className="mt-4 text-sm">Delivered at {time(data.steps.delivered)}</p>
+          )}
+          {data.status === 'pending' && data.acceptDeadline && (
+            <p className="mt-4 text-sm text-white/85">
+              Store confirms within <Countdown deadline={data.acceptDeadline} urgentBelow={0} className="text-white" />
+            </p>
           )}
         </section>
 

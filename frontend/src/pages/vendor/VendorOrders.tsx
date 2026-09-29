@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import Countdown from '../../components/ui/Countdown';
 import { useNavigate } from 'react-router-dom';
 import { useGlobalLoader } from '../../context/GlobalLoaderContext';
 import {
@@ -185,6 +186,20 @@ const VendorOrders: React.FC = () => {
                     </p>
                 </div>
             </div>
+
+            {/* Accept clock: the order is cancelled automatically if not accepted in time */}
+            {order.status === 'pending' && order.acceptDeadline && (
+                <div className="mt-4 flex items-center justify-between gap-3 rounded-lg bg-amber-50 border border-amber-200 px-3 py-2 text-sm text-amber-900" role="status">
+                    <span>Accept this order or it will be cancelled automatically.</span>
+                    <Countdown deadline={order.acceptDeadline} className="text-base" />
+                </div>
+            )}
+            {order.status === 'cancelled' && order.cancelReason && (
+                <p className="mt-4 text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
+                    {order.cancelledBy === 'system' ? 'Cancelled automatically: ' : 'Cancelled: '}
+                    {order.cancelReason}
+                </p>
+            )}
 
             {isActive && (
                 <div className="flex gap-2 mt-4 pt-4 border-t border-gray-100">

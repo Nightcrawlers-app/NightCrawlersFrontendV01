@@ -1,4 +1,6 @@
 import React, { useEffect, useState, useCallback, useRef } from 'react';
+import Countdown from '../../components/ui/Countdown';
+import { useToast } from '../../context/ToastContext';
 import PageNav from '../../components/ui/PageNav';
 import ApprovalChecklist from '../../components/ui/ApprovalChecklist';
 import { Link, useNavigate } from 'react-router-dom';
@@ -30,6 +32,9 @@ const RiderDashboard: React.FC = () => {
     const [isOnline, setIsOnline] = useState(false);
     const [pendingOrders, setPendingOrders] = useState<Order[]>([]);
     const [activeOrders, setActiveOrders] = useState<Order[]>([]);
+    // Last list of our jobs, to notice one taken away (pick-up time ran out)
+    const lastActiveRef = useRef<Order[]>([]);
+    const toast = useToast();
     const [completedToday, setCompletedToday] = useState(0);
     const [todayEarnings, setTodayEarnings] = useState(0);
 
@@ -62,7 +67,16 @@ const RiderDashboard: React.FC = () => {
             if (cancelledRef.current) return;
 
             setPendingOrders(pending);
-            setActiveOrders(myOrders.filter(o => ['accepted', 'picked_up', 'in_transit'].includes(o.status)));
+            const nowActive = myOrders.filter(o => ['accepted', 'picked_up', 'in_transit'].includes(o.status));
+            // A job waiting for pick-up that's no longer ours: the pick-up time ran out.
+            const stillMine = new Set(myOrders.map(o => o.id));
+            for (const prev of lastActiveRef.current) {
+                if (prev.status === 'accepted' && !stillMine.has(prev.id)) {
+                    toast.info(`Pick-up time ran out on the ${prev.storeName} order, so it went to another rider.`, { id: `released-${prev.id}`, duration: 8000 });
+                }
+            }
+            lastActiveRef.current = nowActive;
+            setActiveOrders(nowActive);
 
             // Calculate today's stats
             const today = new Date();
@@ -545,6 +559,13 @@ const RiderDashboard: React.FC = () => {
                                             </div>
                                         );
                                     })()}
+
+                                    {order.status === 'accepted' && order.pickupDeadline && (
+                                        <div className="mb-3 flex items-center justify-between gap-3 rounded-xl bg-black/20 px-3 py-2 text-sm" role="status">
+                                            <span>Pick up within</span>
+                                            <Countdown deadline={order.pickupDeadline} urgentBelow={180} className="text-lg text-white" />
+                                        </div>
+                                    )}
 
                                     <div className="flex gap-2">
                                         {order.status === 'accepted' && (

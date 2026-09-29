@@ -240,6 +240,14 @@ export type Order = {
     /** Notes from the customer. */
     noteForVendor?: string;
     noteForRider?: string;
+    /** Store must accept by this time or the order is cancelled automatically. */
+    acceptDeadline?: string | null;
+    /** Rider must pick up by this time or the job goes to another rider. */
+    pickupDeadline?: string | null;
+    cancelReason?: string;
+    cancelledBy?: 'customer' | 'vendor' | 'admin' | 'system' | null;
+    refundStatus?: RefundStatus;
+    refundAmount?: number;
     /** Everything the customer pays (food + delivery + service − discount). */
     totalPaid?: number | null;
     /** How the customer pays — see PaymentMethod. */
@@ -610,6 +618,8 @@ export type AppConfig = {
     /** Delivery pricing: base fee, plus perKm for every km after includedKm. */
     delivery: { baseFee: number; perKm: number; includedKm: number; minFee: number; maxFee: number; maxKm: number };
     serviceFeePercent: number;
+    /** Order timers (minutes). Older servers don't send this. */
+    timers?: { enabled: boolean; vendorAcceptMin: number; paymentTimeoutMin: number };
 };
 
 /** GET /api/orders/:id/track — the customer's live view of an order. */
@@ -652,6 +662,11 @@ export type OrderTracking = {
     rewardDiscount?: number;
     noteForVendor?: string;
     noteForRider?: string;
+    cancelReason?: string;
+    cancelledBy?: 'customer' | 'vendor' | 'admin' | 'system' | null;
+    refundStatus?: RefundStatus;
+    refundAmount?: number;
+    acceptDeadline?: string | null;
     total: number;
     serverTime: string;
 };
@@ -668,4 +683,28 @@ export type RiderTrip = {
     arrived: boolean | null;
     source: string;
     updatedAt: string;
+};
+
+/** Where a refund for a cancelled online order is. */
+export type RefundStatus = 'none' | 'requesting' | 'pending' | 'processed' | 'failed' | 'manual';
+
+/** Admin → Refunds: one order that needed (or needs) a refund. */
+export type RefundRow = {
+    id: string;
+    storeName: string;
+    customerName: string;
+    customerPhone: string;
+    totalPaid: number;
+    paystackReference: string | null;
+    status: OrderStatus;
+    cancelReason: string;
+    cancelledBy: string | null;
+    cancelledAt: string | null;
+    refundStatus: RefundStatus;
+    refundAmount: number;
+    refundRequestedAt: string | null;
+    refundedAt: string | null;
+    refundError: string;
+    refundNote: string;
+    createdAt: string;
 };

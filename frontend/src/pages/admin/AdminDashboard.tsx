@@ -7,7 +7,9 @@ import Footer from '../../components/layout/Footer';
 import Loader from '../../components/ui/Loader';
 import PromotionsManager from '../../components/admin/PromotionsManager';
 import PlacementsManager from '../../components/admin/PlacementsManager';
-import { Megaphone } from 'lucide-react';
+import RefundsManager from '../../components/admin/RefundsManager';
+import { Megaphone, Wallet } from 'lucide-react';
+import { getRefunds } from '../../services/api';
 
 const formatCurrency = (amount: number): string => {
     if (amount >= 1000000) {
@@ -36,6 +38,12 @@ const AdminDashboard: React.FC = () => {
     const [showEarningsModal, setShowEarningsModal] = useState(false);
     const [showPromotions, setShowPromotions] = useState(false);
     const [showAds, setShowAds] = useState(false);
+    const [showRefunds, setShowRefunds] = useState(false);
+    // Refunds Paystack refused or that got stuck — shown as a red badge
+    const [refundsNeedingYou, setRefundsNeedingYou] = useState(0);
+    useEffect(() => {
+        getRefunds('attention').then((r) => setRefundsNeedingYou(r.attention)).catch(() => undefined);
+    }, []);
     const [allEarnings, setAllEarnings] = useState<EntityEarnings[]>([]);
     const [allStoreEarnings, setAllStoreEarnings] = useState<StoreEarnings[]>([]);
     const [earningsTab, setEarningsTab] = useState<'vendors' | 'stores' | 'riders'>('vendors');
@@ -293,6 +301,17 @@ const AdminDashboard: React.FC = () => {
 
                 {/* Promotions entry point */}
                 <div className="flex flex-wrap justify-end gap-2 mb-4">
+                    <button
+                        onClick={() => setShowRefunds(true)}
+                        className="relative inline-flex items-center gap-2 bg-white text-[#222222] border border-gray-200 text-sm font-semibold px-4 py-2.5 rounded-xl hover:border-[#E00B0B] shadow-sm"
+                    >
+                        <Wallet size={16} /> Refunds
+                        {refundsNeedingYou > 0 && (
+                            <span className="absolute -top-2 -right-2 min-w-[20px] h-5 px-1 rounded-full bg-[#E00B0B] text-white text-[11px] font-bold flex items-center justify-center" aria-label={`${refundsNeedingYou} need attention`}>
+                                {refundsNeedingYou}
+                            </span>
+                        )}
+                    </button>
                     <button
                         onClick={() => setShowAds(true)}
                         className="inline-flex items-center gap-2 bg-white text-[#222222] border border-gray-200 text-sm font-semibold px-4 py-2.5 rounded-xl hover:border-[#E00B0B] shadow-sm"
@@ -1014,6 +1033,7 @@ const AdminDashboard: React.FC = () => {
             <Footer />
             {showPromotions && <PromotionsManager onClose={() => setShowPromotions(false)} />}
             {showAds && <PlacementsManager onClose={() => setShowAds(false)} />}
+            {showRefunds && <RefundsManager onClose={() => setShowRefunds(false)} onCountChange={setRefundsNeedingYou} />}
         </div>
     );
 };
